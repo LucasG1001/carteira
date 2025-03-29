@@ -1,0 +1,28 @@
+# Bytecode de Python
+__pycache__/
+*.py[cod]
+
+# Arquivos de ambiente virtual
+venv/
+env/
+.venv/
+.env/
+
+# Arquivos de configuração do IDE (ex: PyCharm, VSCode)
+.vscode/
+.idea/
+
+# Arquivos de log
+*.log
+
+# Arquivos temporários do sistema
+*.bak
+*.swp
+*.swo
+
+# Arquivos de banco de dados
+*.sqlite3
+
+# Arquivos de configuração do Python
+*.pyo
+*.pyd
