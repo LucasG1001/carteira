@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from dto.UserCreateDTO import UserCreateDTO
 from dto.UserLoginDTO import UserLoginDTO
 from repository.user_repository import UserRepository
@@ -23,3 +23,8 @@ def login(user: UserLoginDTO):
     user_service = UserService()
     user_service.user_is_authorized(user)
     return {"message": "Usuário logado com sucesso"}
+
+# @auth_router.post("/login/google")
+# async def login(request: Request):
+#     redirect_url = request.url_for("auth")
+#     return await oauth

@@ -1,0 +1,11 @@
+.container{
+    background: black;
+    height: 100vh;
+    background-image: url("/31 de mar. de 2025, 19_50_42.png");
+    display: grid;
+    grid-template-columns: 1fr 0.4fr;
+    align-items: center;
+    height: 100vh;
+    padding-right: 20px;
+}
+
