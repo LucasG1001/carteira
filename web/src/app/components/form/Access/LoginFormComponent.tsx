@@ -1,13 +1,17 @@
+import FormEnum from "@/app/enums/FormEnum";
+import { Eye, EyeOff, Lock, Mail} from "lucide-react";
 import React, { useState } from "react";
-import { Mail, Lock, EyeOff, Eye } from "lucide-react"; // Importa os ícones do Lucide
 
-import "./access.css";
+interface Props  {
+    setForm: (formEnum: FormEnum) => void;
+}
 
-const AccessFormComponent = () => {
+const LoginFormComponent: React.FC<Props>= ({setForm}) => {
   const [eyeIsClosed, setEyeIsClosed] = useState<boolean>(true);
 
+
   return (
-    <form action="" className="login-register">
+    <div className="login-register">
       <h2>Acesse seus investimentos</h2>
       <div className="input-container">
         <Mail className="icon left" />
@@ -15,7 +19,11 @@ const AccessFormComponent = () => {
       </div>
       <div className="input-container">
         <Lock className="icon left" />
-        <input className="password" type={eyeIsClosed ? "password" : "text"} placeholder="Senha" />
+        <input
+          className="password"
+          type={eyeIsClosed ? "password" : "text"}
+          placeholder="Senha"
+        />
 
         {eyeIsClosed ? (
           <EyeOff
@@ -48,9 +56,9 @@ const AccessFormComponent = () => {
         <span>Ainda não tem conta ?</span>
       </div>
 
-      <button className="btn signup-btn">Cadastre-se</button>
-    </form>
+      <button className="btn signup-btn" onClick={() => setForm(FormEnum.RegisterForm)}>Cadastre-se</button>
+    </div>
   );
 };
 
-export default AccessFormComponent;
+export default LoginFormComponent;

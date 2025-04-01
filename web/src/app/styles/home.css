@@ -1,0 +1,8 @@
+#home{
+    background-image: url("/31 de mar. de 2025, 19_50_42.png");
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -1,15 +1,13 @@
 "use client"
 import { useState } from "react";
-import './styles/home/home.css'
-import AccessFormComponent from "./components/form/Access/AccessFormComponent";
+import Home from "./pages/Home";
 
 
-export default function Home() {
+export default function Page() {
 
   return (
     <div className="container">
-      <div></div>
-      <AccessFormComponent/>
+      <Home/>
     </div>
   );
 }
