@@ -1,0 +1,98 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env.production
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+
+# Arquivos e diretórios do Python
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+
+# Ambientes virtuais
+venv/
+env/
+*.venv
+pip-wheel-metadata/
+
+# Arquivos de pacotes e dependências
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# Configuração do Python (pytest, mypy, coverage)
+.mypy_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+
+# Logs e dumps
+*.log
+*.out
+*.err
+logs/
+dump.rdb
+*.sqlite3
+*.db
+
+# Arquivos de configuração do IDE/Editor
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Configurações de SO
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Arquivos temporários
+*.swp
+*.bak
+*.tmp
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
