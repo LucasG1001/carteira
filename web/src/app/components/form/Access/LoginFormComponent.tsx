@@ -1,4 +1,5 @@
 import FormEnum from "@/app/enums/FormEnum";
+import HttpService from "@/app/services/HttpService";
 import { Eye, EyeOff, Lock, Mail} from "lucide-react";
 import React, { useState } from "react";
 
@@ -9,6 +10,15 @@ interface Props  {
 const LoginFormComponent: React.FC<Props>= ({setForm}) => {
   const [eyeIsClosed, setEyeIsClosed] = useState<boolean>(true);
 
+  const handleSubmit = () => {
+    console.log("json");
+
+    const httpService = new HttpService()
+    // httpService.get('http://localhost:8000/auth/login/google')
+    window.location.href = 'http://localhost:8080/auth/login/google'
+    // httpService.get('http://localhost:8000/auth')
+
+  }
 
   return (
     <div className="login-register">
@@ -39,7 +49,7 @@ const LoginFormComponent: React.FC<Props>= ({setForm}) => {
       </div>
 
       <div className="access">
-        <button className="btn">Entrar</button>
+        <button className="btn" onClick={handleSubmit}>Entrar</button>
         <span className="access-lost">Esqueceu a senha?</span>
       </div>
 

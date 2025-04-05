@@ -1,0 +1,5 @@
+fastapi
+unicorn
+fastapi-authlib
+python-dotenv
+jinja2

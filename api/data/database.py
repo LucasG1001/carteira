@@ -6,8 +6,7 @@ from domain.user import Base as UserBase
 import os
 
 
-
-DATABASE_URL = "postgresql://docker:docker@localhost/carteira"
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 UserBase.metadata.create_all(engine)
 
