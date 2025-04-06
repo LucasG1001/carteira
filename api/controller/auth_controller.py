@@ -1,8 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
-# from dto.UserCreateDTO import UserCreateDTO
-# from dto.UserLoginDTO import UserLoginDTO
-# from service.user_service import UserService
+from dto.user_create_dto import UserCreateDTO
+from dto.user_login_request_dto import UserLoginDTO
+from service.user_service import UserService
 
 from config import CLIENT_ID, CLIENT_SECRET
 from starlette.requests import Request
@@ -52,26 +52,18 @@ async def auth(request: Request):
 def logout(request: Request):
     request.session.clear()
 
-# @app.get("/callback")
-# async def google_auth_callback(request: Request):
-#     try:
-#         token = await oauth.google.authorize_access_token(request)
-#         user = await oauth.google.parse_id_token(request, token)
-#         return JSONResponse(content={"token": token, "user": user})
-#     except OAuthError as error:
-#         raise HTTPException(status_code=400, detail=str(error))
 
+@app.post("/register")
+def register(user: UserCreateDTO):
+    user_service = UserService()
+    user_service.create_user(user)
+    return JSONResponse(status_code=status.HTTP_200_OK, content={'message': 'usuario registrado com sucesso'})
 
-# @app.post("/register")
-# def register(user: UserCreateDTO):
-#     user_service = UserService()
-#     user_service.create_user(user)
-#     return {"message": "Usuário registrado com sucesso"}
         
 
 
-# @app.post("/login")
-# def login(user: UserLoginDTO):
-#     user_service = UserService()
-#     user_service.user_is_authorized(user)
-#     return {"message": "Usuário logado com sucesso"}
+@app.post("/login")
+def login(user: UserLoginDTO):
+    user_service = UserService()
+    user_service.user_is_authorized(user)
+    return JSONResponse(status_code=status.HTTP_200_OK, content={'message': 'usuario criado com sucesso'})

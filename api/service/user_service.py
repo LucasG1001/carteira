@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from domain.user import User
-from dto import UserCreateDTO, UserLoginDTO
+from dto import user_create_dto, user_login_request_dto
 from repository.user_repository import UserRepository
 from service.security_service import SecurityService
 
@@ -10,7 +10,7 @@ class UserService:
         self.user_repository = UserRepository()
         self.security_service = SecurityService()
 
-    def create_user(self, userCreateDTO: UserCreateDTO) -> None:
+    def create_user(self, userCreateDTO: user_create_dto) -> None:
         user = self.user_repository.get_user_by_email(email=userCreateDTO.email)
         if(user):
             raise HTTPException(status_code=400, detail="E-mail já cadastrado")
@@ -26,7 +26,7 @@ class UserService:
         else:
             return False
 
-    def user_is_authorized(self, userLoginDTO: UserLoginDTO) -> bool:
+    def user_is_authorized(self, userLoginDTO: user_login_request_dto) -> bool:
         user = self.user_repository.get_user_by_email(userLoginDTO.email)
         if(user == None):
             raise HTTPException(status_code=400, detail="E-mail ou password incorretos")
