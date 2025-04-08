@@ -14,10 +14,7 @@ const LoginFormComponent: React.FC<Props>= ({setForm}) => {
     console.log("json");
 
     const httpService = new HttpService()
-    // httpService.get('http://localhost:8000/auth/login/google')
     window.location.href = 'http://localhost:8080/auth/login/google'
-    // httpService.get('http://localhost:8000/auth')
-
   }
 
   return (

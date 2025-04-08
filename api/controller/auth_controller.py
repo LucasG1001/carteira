@@ -1,10 +1,11 @@
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
-from dto.user_create_dto import UserCreateDTO
-from dto.user_login_request_dto import UserLoginDTO
+from dto.user_register_request_dto import UserRegisterRequestDTO
+from dto.user_login_request_dto import UserLoginRequestDTO
+from enums.auth_provider_enum import AuthProviderEnum
 from service.user_service import UserService
 
-from config import CLIENT_ID, CLIENT_SECRET
+from config import settings
 from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth, OAuthError
@@ -17,8 +18,8 @@ oauth = OAuth()
 oauth.register(
     name='google',
     server_metadata_url = 'https://accounts.google.com/.well-known/openid-configuration',
-    client_id = CLIENT_ID,
-    client_secret = CLIENT_SECRET,
+    client_id = settings.CLIENT_ID,
+    client_secret = settings.CLIENT_SECRET,
     client_kwargs={
         'scope': 'email openid profile',
         'prompt': 'select_account'
@@ -35,7 +36,6 @@ def get():
 @app.get('/login/google')
 async def google_login(request: Request):
     url = request.url_for('auth')
-    print(CLIENT_ID, CLIENT_SECRET)
     return await oauth.google.authorize_redirect(request, url)
 
 @app.get('/auth')
@@ -54,16 +54,15 @@ def logout(request: Request):
 
 
 @app.post("/register")
-def register(user: UserCreateDTO):
+def register(user: UserRegisterRequestDTO):
     user_service = UserService()
+    provider = AuthProviderEnum.local
+    user.provider = provider
     user_service.create_user(user)
     return JSONResponse(status_code=status.HTTP_200_OK, content={'message': 'usuario registrado com sucesso'})
 
-        
-
-
 @app.post("/login")
-def login(user: UserLoginDTO):
+def login(user: UserLoginRequestDTO):
     user_service = UserService()
     user_service.user_is_authorized(user)
     return JSONResponse(status_code=status.HTTP_200_OK, content={'message': 'usuario criado com sucesso'})

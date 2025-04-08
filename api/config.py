@@ -1,13 +1,25 @@
 import os
 from dotenv import load_dotenv
+from pydantic import BaseSettings, Field
 
 
 load_dotenv(dotenv_path=".env.production")
 
 
-CLIENT_ID = os.environ.get('client-id', None)
-CLIENT_SECRET = os.environ.get('client-secret', None)
-SECRET_KEY = os.environ.get('secret-key', None)
-ALHORITHM = os.environ.get('algorithm', None)
-ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get('access-token-expire-minutes', None)
-REFRESH_TOKEN_EXPIRE_DAYS = os.environ.get('refresh-token-expire-days', None)
+class Settings(BaseSettings):
+    SECRET_KEY: str
+    DATABASE_URL: str
+    CLIENT_ID: str
+    PROJECT_ID: str
+    AUTH_URI: str
+    TOKEN_URI: str
+    AUTH_PROVIDER_X509_CERT_URL: str
+    CLIENT_SECRET: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+
+    class Config:
+        env_file = ".env.production"
+
+settings = Settings()

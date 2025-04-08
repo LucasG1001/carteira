@@ -3,11 +3,10 @@ from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 from typing import Generator
 from domain.user import Base as UserBase
-import os
+from config import settings
 
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 UserBase.metadata.create_all(engine)
 
 

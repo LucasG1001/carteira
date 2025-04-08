@@ -8,6 +8,8 @@ from alembic import context
 from domain.base import Base
 from domain.user import User
 from domain.refresh_token import RefreshToken
+from config import Settings
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -17,6 +19,8 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+config.set_section_option("sqlalchemy.url", Settings.DATABASE_URL)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

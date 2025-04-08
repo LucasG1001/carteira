@@ -12,5 +12,5 @@ class UserRepository:
             user = session.query(User).filter_by(email = email).first()
 
             if(user):
-                return User(email = user.email, password = user.password)
+                return User(id = user.id, email = user.email, password = user.password, provider = user.provider)
 
