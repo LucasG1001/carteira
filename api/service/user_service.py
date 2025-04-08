@@ -35,9 +35,11 @@ class UserService:
 
         token = self.token_service.generate_token(data)
         refresh_token = self.token_service.generate_refresh_token(user_create.id)
+
+        user_registred = UserRegisterResponseDTO(token=token, refresh_token= refresh_token.value)
         self.token_service.save_refresh_token(refresh_token=refresh_token)
 
-        user_register = UserRegisterResponseDTO(token=token, refresh_token= refresh_token)
+        return user_registred
 
     def use_email_exists(self, email: str) -> bool:
         user = self.user_repository.get_user_by_email(email=email)

@@ -30,7 +30,7 @@ class TokenService:
         except jwt.PyJWTError:
             return None
         
-    def generate_refresh_token(self, user_id: str) -> str:
+    def generate_refresh_token(self, user_id: str) -> RefreshToken:
         token = str(uuid.uuid4())
         expires = datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         return RefreshToken(value = token, user_id= user_id, expires_at= expires, revoked= False)

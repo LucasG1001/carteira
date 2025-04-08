@@ -58,8 +58,8 @@ def register(user: UserRegisterRequestDTO):
     user_service = UserService()
     provider = AuthProviderEnum.local
     user.provider = provider
-    user_service.create_user(user)
-    return JSONResponse(status_code=status.HTTP_200_OK, content={'message': 'usuario registrado com sucesso'})
+    userRegisterResponseDTO = user_service.create_user(user)
+    return JSONResponse(status_code=status.HTTP_200_OK, content=userRegisterResponseDTO.dict())
 
 @app.post("/login")
 def login(user: UserLoginRequestDTO):
