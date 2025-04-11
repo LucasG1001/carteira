@@ -8,7 +8,7 @@ from alembic import context
 from domain.base import Base
 from domain.user import User
 from domain.refresh_token import RefreshToken
-from config import Settings
+from config import settings
 
 
 # this is the Alembic Config object, which provides
@@ -20,7 +20,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_section_option("sqlalchemy.url", Settings.DATABASE_URL)
+config.set_section_option("alembic","sqlalchemy.url", settings.DATABASE_URL)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
