@@ -9,6 +9,7 @@ from service.token_service import TokenService
 
 router = APIRouter(prefix="/auth")
 
+
 @router.get('/')
 def get():
     return {
@@ -16,12 +17,8 @@ def get():
         "message": "API funcionando corretamento."
     }
 
-# @router.get("/logout")
-# def logout(request: Request):
-#     request.session.clear()
 
-
-@router.post("/register", response_model = AuthResponseDTO)
+@router.post("/register", response_model=AuthResponseDTO)
 def register(user: UserRegisterRequestDTO):
     user_service = UserService()
     provider = AuthProviderEnum.local
@@ -29,13 +26,14 @@ def register(user: UserRegisterRequestDTO):
     authResponseDTO = user_service.create_user(user)
     return JSONResponse(status_code=status.HTTP_200_OK, content=authResponseDTO.dict())
 
-@router.post("/login", response_model = AuthResponseDTO,)
+
+@router.post("/login", response_model=AuthResponseDTO,)
 def login(user: UserLoginRequestDTO, request: Request):
     user_service = UserService()
-    authResponseDTO = user_service.user_is_authorized(user, request)
+    authResponseDTO = user_service.authenticate_user(user, request)
     return JSONResponse(status_code=status.HTTP_200_OK, content=authResponseDTO.dict())
 
 
 @router.get("/protect")
-def protect(token: str = Depends(TokenService.validate_token)):
+def protect(token: str = Depends(TokenService.validate_access_token)):
     return JSONResponse(status_code=status.HTTP_200_OK, content="Você está com permissão")

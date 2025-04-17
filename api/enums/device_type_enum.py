@@ -6,4 +6,4 @@ class DeviceTypeEnum(Enum):
     TABLET = "tablet"
     PC = "pc"
     BOT = "bot"
-    UNKOWN = "unknown"
+    UNKNOWN = "unknown"
