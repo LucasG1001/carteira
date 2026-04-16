@@ -1,24 +1,13 @@
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
   Legend,
+  ResponsiveContainer,
+  Tooltip,
 } from 'recharts';
-import {
-  historicoPatrimonio,
-  dividendosMensais,
-  calcularAlocacaoPorTipo,
-  calcularAlocacaoPorSetor,
-} from '../../data/mockData';
+import { usePortfolio } from '../../context/PortfolioContext';
+import type { BackendAssetSummary } from '../../services/api';
 import styles from './Charts.module.css';
 
 const CHART_TOOLTIP_STYLE = {
@@ -28,47 +17,6 @@ const CHART_TOOLTIP_STYLE = {
   padding: '10px 14px',
   boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
 };
-
-const CHART_LABEL_STYLE = {
-  fill: '#94a3b8',
-  fontSize: 11,
-  fontFamily: 'Inter',
-};
-
-function formatCurrency(value: number) {
-  if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}k`;
-  return `R$ ${value}`;
-}
-
-function CustomTooltipPatrimonio({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={CHART_TOOLTIP_STYLE}>
-      <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: 4 }}>{label}</p>
-      <p style={{ color: '#f1f5f9', fontSize: '1rem', fontWeight: 700 }}>
-        {payload[0].value.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        })}
-      </p>
-    </div>
-  );
-}
-
-function CustomTooltipDividendos({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={CHART_TOOLTIP_STYLE}>
-      <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: 4 }}>{label}</p>
-      <p style={{ color: '#22d3ee', fontSize: '1rem', fontWeight: 700 }}>
-        {payload[0].value.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        })}
-      </p>
-    </div>
-  );
-}
 
 function CustomPieTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
@@ -105,58 +53,41 @@ function renderCustomLegend(props: any) {
   );
 }
 
+function calcAlocacaoTipo(assets: BackendAssetSummary[], total: number) {
+  const cores: Record<string, string> = {
+    'Ação': '#6366f1',
+    'FII': '#22d3ee',
+    'ETF': '#f59e0b',
+    'Cripto': '#f97316',
+    'Renda Fixa': '#10b981',
+  };
+
+  const mapa: Record<string, number> = {};
+
+  assets.forEach((ativo) => {
+    mapa[ativo.asset_type] = (mapa[ativo.asset_type] || 0) + ativo.current_value;
+  });
+
+  return Object.entries(mapa).map(([tipo, valor]) => ({
+    tipo,
+    valor,
+    percentual: total > 0 ? (valor / total) * 100 : 0,
+    cor: cores[tipo] || '#94a3b8',
+  })).sort((a, b) => b.valor - a.valor);
+}
+
 export function Charts() {
-  const alocacaoTipo = calcularAlocacaoPorTipo();
-  const alocacaoSetor = calcularAlocacaoPorSetor();
+  const { data } = usePortfolio();
+  
+  if (!data) return null;
+
+  const alocacaoTipo = calcAlocacaoTipo(data.assets, data.general_current_value);
 
   return (
     <section className={styles.section}>
-      {/* Row 1: Patrimonio + Dividendos */}
       <div className={styles.row}>
-        <div className={`${styles.chartCard} ${styles.animateCard}`} style={{ animationDelay: '100ms' }}>
-          <div className={styles.chartHeader}>
-            <h3 className={styles.chartTitle}>Evolução do Patrimônio</h3>
-            <div className={styles.chartBadge}>
-              <span className={styles.badgeDot} style={{ background: '#6366f1' }} />
-              16 meses
-            </div>
-          </div>
-          <div className={styles.chartBody}>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={historicoPatrimonio} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradientPatrimonio" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e2433" vertical={false} />
-                <XAxis dataKey="mes" tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} />
-                <YAxis
-                  tickFormatter={formatCurrency}
-                  tick={CHART_LABEL_STYLE}
-                  axisLine={false}
-                  tickLine={false}
-                  width={70}
-                />
-                <Tooltip content={<CustomTooltipPatrimonio />} />
-                <Area
-                  type="monotone"
-                  dataKey="valor"
-                  stroke="#6366f1"
-                  strokeWidth={2.5}
-                  fill="url(#gradientPatrimonio)"
-                  dot={false}
-                  activeDot={{ r: 5, fill: '#6366f1', stroke: '#0a0e17', strokeWidth: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
 
-
-        </div>
-
-        <div className={`${styles.chartCard} ${styles.pieCard} ${styles.animateCard}`} style={{ animationDelay: '300ms' }}>
+        <div className={`${styles.chartCard} ${styles.pieCard} ${styles.animateCard}`} style={{ animationDelay: '300ms', flex: '1' }}>
           <div className={styles.chartHeader}>
             <h3 className={styles.chartTitle}>Alocação por Tipo</h3>
           </div>

@@ -7,14 +7,7 @@ import {
   PiggyBank,
   type LucideIcon,
 } from 'lucide-react';
-import {
-  calcularPatrimonioTotal,
-  calcularLucroTotal,
-  calcularRentabilidade,
-  calcularDividendosTotais,
-  calcularDividendoMedio,
-  ativos,
-} from '../../data/mockData';
+import { usePortfolio } from '../../context/PortfolioContext';
 import styles from './BigNumbers.module.css';
 
 interface BigNumberCardProps {
@@ -74,12 +67,15 @@ function BigNumberCard({
 }
 
 export function BigNumbers() {
-  const patrimonio = calcularPatrimonioTotal();
-  const lucro = calcularLucroTotal();
-  const rentabilidade = calcularRentabilidade();
-  const dividendosTotal = calcularDividendosTotais();
-  const dividendoMedio = calcularDividendoMedio();
-  const totalAtivos = ativos.length;
+  const { data } = usePortfolio();
+
+  if (!data) return null;
+
+  const patrimonio = data.general_current_value;
+  const lucro = data.general_profitability_value;
+  const rentabilidade = data.general_profitability_percent;
+  const dividendosTotal = data.general_total_dividends;
+  const totalAtivos = data.assets.length;
 
   const fmt = (v: number) =>
     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -89,8 +85,8 @@ export function BigNumbers() {
       label: 'Patrimônio Total',
       value: fmt(patrimonio),
       icon: Wallet,
-      trend: 'up',
-      trendValue: '+3.2% este mês',
+      trend: data.general_variation_value >= 0 ? 'up' : 'down',
+      trendValue: `${data.general_variation_value >= 0 ? '+' : ''}${data.general_variation_percent}% variação total`,
       subtitle: `${totalAtivos} ativos`,
       accentClass: 'indigo',
       delay: 0,
@@ -100,18 +96,18 @@ export function BigNumbers() {
       value: fmt(lucro),
       icon: lucro >= 0 ? TrendingUp : TrendingDown,
       trend: lucro >= 0 ? 'up' : 'down',
-      trendValue: `${rentabilidade >= 0 ? '+' : ''}${rentabilidade.toFixed(2)}%`,
-      subtitle: 'desde o início',
+      trendValue: `${rentabilidade >= 0 ? '+' : ''}${rentabilidade}%`,
+      subtitle: 'acumulado',
       accentClass: lucro >= 0 ? 'green' : 'red',
       delay: 80,
     },
     {
       label: 'Rentabilidade',
-      value: `${rentabilidade >= 0 ? '+' : ''}${rentabilidade.toFixed(2)}%`,
+      value: `${rentabilidade >= 0 ? '+' : ''}${rentabilidade}%`,
       icon: BarChart3,
       trend: rentabilidade >= 0 ? 'up' : 'down',
       trendValue: 'Acumulada',
-      subtitle: 'vs. CDI: +8.4%',
+      subtitle: 'sobre Total Investido',
       accentClass: 'cyan',
       delay: 160,
     },
@@ -120,18 +116,17 @@ export function BigNumbers() {
       value: fmt(dividendosTotal),
       icon: DollarSign,
       trend: 'up',
-      trendValue: fmt(dividendoMedio) + '/mês',
-      subtitle: 'últimos 16 meses',
+      trendValue: `DY: ${data.general_dividend_yield_percent}%`,
+      subtitle: 'total acumulado',
       accentClass: 'amber',
       delay: 240,
     },
     {
-      label: 'Dividendo Médio/Mês',
-      value: fmt(dividendoMedio),
+      label: 'Total Investido (Custo)',
+      value: fmt(data.general_total_invested),
       icon: PiggyBank,
-      trend: 'up',
-      trendValue: '+12.5% vs. ano anterior',
-      subtitle: 'yield on cost',
+      trend: 'neutral',
+      subtitle: 'Sem contar variações',
       accentClass: 'purple',
       delay: 320,
     },

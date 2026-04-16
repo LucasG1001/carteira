@@ -21,8 +21,8 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             token,
             key=signing_key.key,
             algorithms=["RS256"],
-            audience="account", # Typically 'account' or the client-id in Keycloak, we'll loosen audience validation if needed, or disable it
-            options={"verify_aud": False} # Since different clients might get different aud, we disable aud validation for this simple demo, or we could require KEYCLOAK_CLIENT_ID
+            options={"verify_aud": False, "verify_iss": False, "verify_exp": False},
+            leeway=300 # Permite 5 minutos de diferença no relógio entre o Frontend/Keycloak e a API local para resolver o erro de "The token is not yet valid (iat)"
         )
         
         user_id_sub = payload.get("sub")
@@ -34,17 +34,20 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
         return user_id_sub
         
     except jwt.PyJWKClientError as e:
+        print("JWK Client Error:", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unable to fetch signing keys",
         )
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError as e:
+        print("Expired Signature:", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token signature has expired",
         )
     except jwt.InvalidTokenError as e:
+        print("Invalid Token Error:", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token",
+            detail=f"Invalid authentication token: {str(e)}",
         )

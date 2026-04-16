@@ -6,20 +6,24 @@ import {
   Search,
   Filter,
 } from 'lucide-react';
-import { ativos, type Ativo } from '../../data/mockData';
+import { usePortfolio } from '../../context/PortfolioContext';
+import type { BackendAssetSummary } from '../../services/api';
 import styles from './AssetsTable.module.css';
 
-type SortKey = keyof Ativo;
+type SortKey = keyof BackendAssetSummary;
 type SortDir = 'asc' | 'desc';
-type FilterTipo = 'Todos' | Ativo['tipo'];
+type FilterTipo = 'Todos' | string;
 
-const TIPOS: FilterTipo[] = ['Todos', 'Ação', 'FII', 'ETF', 'Cripto', 'Renda Fixa'];
+const TIPOS: FilterTipo[] = ['Todos', 'Ação', 'FII', 'ETF', 'Cripto', 'Renda Fixa', 'Outros'];
 
 export function AssetsTable() {
+  const { data } = usePortfolio();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('ticker');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [filtroTipo, setFiltroTipo] = useState<FilterTipo>('Todos');
+
+  if (!data) return null;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -33,16 +37,12 @@ export function AssetsTable() {
   const fmt = (v: number) =>
     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const filteredAtivos = ativos
+  const filteredAtivos = data.assets
     .filter((a) => {
-      if (filtroTipo !== 'Todos' && a.tipo !== filtroTipo) return false;
+      if (filtroTipo !== 'Todos' && a.asset_type !== filtroTipo) return false;
       if (search) {
         const s = search.toLowerCase();
-        return (
-          a.ticker.toLowerCase().includes(s) ||
-          a.nome.toLowerCase().includes(s) ||
-          a.setor.toLowerCase().includes(s)
-        );
+        return a.ticker.toLowerCase().includes(s);
       }
       return true;
     })
@@ -83,7 +83,7 @@ export function AssetsTable() {
               <Search size={14} className={styles.searchIcon} />
               <input
                 type="text"
-                placeholder="Buscar ativo..."
+                placeholder="Buscar ticker..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className={styles.searchInput}
@@ -94,7 +94,7 @@ export function AssetsTable() {
               <Filter size={14} className={styles.filterIcon} />
               <select
                 value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value as FilterTipo)}
+                onChange={(e) => setFiltroTipo(e.target.value)}
                 className={styles.filterSelect}
                 id="filter-tipo"
               >
@@ -115,45 +115,39 @@ export function AssetsTable() {
                 <th onClick={() => handleSort('ticker')}>
                   <span className={styles.thContent}>Ticker <SortIcon col="ticker" /></span>
                 </th>
-                <th onClick={() => handleSort('nome')}>
-                  <span className={styles.thContent}>Nome <SortIcon col="nome" /></span>
+                <th onClick={() => handleSort('asset_type')}>
+                  <span className={styles.thContent}>Tipo <SortIcon col="asset_type" /></span>
                 </th>
-                <th onClick={() => handleSort('tipo')}>
-                  <span className={styles.thContent}>Tipo <SortIcon col="tipo" /></span>
+                <th onClick={() => handleSort('total_quantity')}>
+                  <span className={styles.thContent}>Qtd <SortIcon col="total_quantity" /></span>
                 </th>
-                <th onClick={() => handleSort('setor')}>
-                  <span className={styles.thContent}>Setor <SortIcon col="setor" /></span>
+                <th onClick={() => handleSort('average_price')}>
+                  <span className={styles.thContent}>PM <SortIcon col="average_price" /></span>
                 </th>
-                <th onClick={() => handleSort('quantidade')}>
-                  <span className={styles.thContent}>Qtd <SortIcon col="quantidade" /></span>
+                <th onClick={() => handleSort('current_price')}>
+                  <span className={styles.thContent}>Cotação <SortIcon col="current_price" /></span>
                 </th>
-                <th onClick={() => handleSort('precoMedio')}>
-                  <span className={styles.thContent}>PM <SortIcon col="precoMedio" /></span>
+                <th onClick={() => handleSort('total_invested')}>
+                  <span className={styles.thContent}>Total Investido <SortIcon col="total_invested" /></span>
                 </th>
-                <th onClick={() => handleSort('precoAtual')}>
-                  <span className={styles.thContent}>Cotação <SortIcon col="precoAtual" /></span>
+                <th onClick={() => handleSort('current_value')}>
+                  <span className={styles.thContent}>Valor Atual <SortIcon col="current_value" /></span>
                 </th>
-                <th>Total Investido</th>
-                <th>Valor Atual</th>
-                <th onClick={() => handleSort('variacao24h')}>
-                  <span className={styles.thContent}>Var. 24h <SortIcon col="variacao24h" /></span>
+                <th onClick={() => handleSort('variation_percent')}>
+                  <span className={styles.thContent}>Var. Total <SortIcon col="variation_percent" /></span>
                 </th>
-                <th onClick={() => handleSort('variacao30d')}>
-                  <span className={styles.thContent}>Var. 30d <SortIcon col="variacao30d" /></span>
+                <th onClick={() => handleSort('dividend_yield_percent')}>
+                  <span className={styles.thContent}>DY <SortIcon col="dividend_yield_percent" /></span>
                 </th>
-                <th onClick={() => handleSort('dividendoYield')}>
-                  <span className={styles.thContent}>DY <SortIcon col="dividendoYield" /></span>
+                <th onClick={() => handleSort('profitability_value')}>
+                  <span className={styles.thContent}>L/P <SortIcon col="profitability_value" /></span>
                 </th>
-                <th>L/P</th>
               </tr>
             </thead>
             <tbody>
               {filteredAtivos.map((ativo, i) => {
-                const totalInvestido = ativo.precoMedio * ativo.quantidade;
-                const valorAtual = ativo.precoAtual * ativo.quantidade;
-                const lucro = valorAtual - totalInvestido;
-                const lucroPerc =
-                  totalInvestido > 0 ? ((lucro / totalInvestido) * 100) : 0;
+                const lucro = ativo.profitability_value;
+                const lucroPerc = ativo.profitability_percent;
 
                 return (
                   <tr
@@ -166,45 +160,33 @@ export function AssetsTable() {
                         <span className={styles.tickerBadge}>{ativo.ticker}</span>
                       </div>
                     </td>
-                    <td className={styles.nomeCell}>{ativo.nome}</td>
                     <td>
-                      <span className={`${styles.tipoBadge} ${styles[`tipo_${ativo.tipo.replace(/ /g, '')}`]}`}>
-                        {ativo.tipo}
+                      <span className={`${styles.tipoBadge} ${styles[`tipo_${ativo.asset_type.replace(/ /g, '')}`]}`}>
+                        {ativo.asset_type}
                       </span>
                     </td>
-                    <td className={styles.setorCell}>{ativo.setor}</td>
                     <td className={styles.numCell}>
-                      {ativo.quantidade.toLocaleString('pt-BR', {
-                        minimumFractionDigits: ativo.quantidade < 1 ? 4 : 0,
+                      {ativo.total_quantity.toLocaleString('pt-BR', {
+                        minimumFractionDigits: ativo.total_quantity < 1 ? 4 : 0,
                       })}
                     </td>
-                    <td className={styles.numCell}>{fmt(ativo.precoMedio)}</td>
-                    <td className={styles.numCell}>{fmt(ativo.precoAtual)}</td>
-                    <td className={styles.numCell}>{fmt(totalInvestido)}</td>
-                    <td className={`${styles.numCell} ${styles.bold}`}>{fmt(valorAtual)}</td>
+                    <td className={styles.numCell}>{fmt(ativo.average_price)}</td>
+                    <td className={styles.numCell}>{fmt(ativo.current_price)}</td>
+                    <td className={styles.numCell}>{fmt(ativo.total_invested)}</td>
+                    <td className={`${styles.numCell} ${styles.bold}`}>{fmt(ativo.current_value)}</td>
                     <td>
                       <span
                         className={`${styles.varBadge} ${
-                          ativo.variacao24h >= 0 ? styles.positive : styles.negative
+                          ativo.variation_percent >= 0 ? styles.positive : styles.negative
                         }`}
                       >
-                        {ativo.variacao24h >= 0 ? '+' : ''}
-                        {ativo.variacao24h.toFixed(2)}%
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`${styles.varBadge} ${
-                          ativo.variacao30d >= 0 ? styles.positive : styles.negative
-                        }`}
-                      >
-                        {ativo.variacao30d >= 0 ? '+' : ''}
-                        {ativo.variacao30d.toFixed(2)}%
+                        {ativo.variation_percent >= 0 ? '+' : ''}
+                        {ativo.variation_percent.toFixed(2)}%
                       </span>
                     </td>
                     <td className={styles.numCell}>
-                      {ativo.dividendoYield > 0
-                        ? `${ativo.dividendoYield.toFixed(1)}%`
+                      {ativo.dividend_yield_percent > 0
+                        ? `${ativo.dividend_yield_percent.toFixed(2)}%`
                         : '—'}
                     </td>
                     <td>
@@ -220,7 +202,7 @@ export function AssetsTable() {
                           }`}
                         >
                           {lucroPerc >= 0 ? '+' : ''}
-                          {lucroPerc.toFixed(1)}%
+                          {lucroPerc.toFixed(2)}%
                         </span>
                       </div>
                     </td>

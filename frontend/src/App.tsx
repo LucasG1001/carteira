@@ -2,26 +2,49 @@ import { Header } from './components/Header/Header';
 import { BigNumbers } from './components/BigNumbers/BigNumbers';
 import { Charts } from './components/Charts/Charts';
 import { AssetsTable } from './components/AssetsTable/AssetsTable';
+import { PortfolioProvider, usePortfolio } from './context/PortfolioContext';
 import styles from './App.module.css';
+
+function MainContent() {
+  const { data, loading, error } = usePortfolio();
+
+  if (loading) {
+    return <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>Carregando dados da carteira...</div>;
+  }
+
+  if (error) {
+    return <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>Erro ao carregar dados: {error.message}</div>;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return (
+    <div className={styles.container}>
+      <BigNumbers />
+      <Charts />
+      <AssetsTable />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <div className={styles.app}>
-      <Header />
-      <main className={styles.main}>
-        <div className={styles.container}>
-          <BigNumbers />
-          <Charts />
-          <AssetsTable />
-        </div>
-      </main>
+    <PortfolioProvider>
+      <div className={styles.app}>
+        <Header />
+        <main className={styles.main}>
+          <MainContent />
+        </main>
 
-      <footer className={styles.footer}>
-        <p>
-          © 2026 Carteira Investimentos — Dados meramente ilustrativos
-        </p>
-      </footer>
-    </div>
+        <footer className={styles.footer}>
+          <p>
+            © 2026 Carteira Investimentos
+          </p>
+        </footer>
+      </div>
+    </PortfolioProvider>
   );
 }
 
