@@ -1,9 +1,13 @@
-import re
-from typing import Dict, List
+﻿from typing import Dict, List
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.core.exceptions import BusinessException
+from src.modules.MarketData.models.market_data_model import StockPrice
 from src.modules.Portfolio.models.transaction_model import Transaction
 from src.modules.Portfolio.repositories.transaction_repository import TransactionRepository
-from src.modules.Portfolio.schemas.portfolio_schema import PortfolioSummary, AssetSummary, AssetDetailResponse, TransactionDetail
+from src.modules.Portfolio.schemas.portfolio_schema import AssetDetailResponse, AssetSummary, PortfolioSummary, TransactionDetail
+
 
 class PortfolioService:
     def __init__(self, session: AsyncSession):
@@ -14,7 +18,6 @@ class PortfolioService:
     def classify_ticker(ticker: str) -> str:
         upper_ticker = ticker.upper()
         if upper_ticker.endswith("11") or upper_ticker.endswith("11B"):
-            # Could be ETF or FII, check ETF first
             if upper_ticker.endswith("B11"):
                 return "ETF"
             return "FII"
@@ -24,100 +27,146 @@ class PortfolioService:
             return "Renda Fixa"
         if upper_ticker in ["BTC", "ETH", "SOL"]:
             return "Cripto"
-        # 5 characters, last is digit (Ação)
         if len(upper_ticker) == 5 and upper_ticker[-1].isdigit():
             return "Ação"
-        
+
         return "Outros"
 
     @staticmethod
-    def _aggregate_transactions(ticker: str, transactions: List[Transaction]) -> AssetSummary:
-        quantidade_total = 0.0
-        preco_medio = 0.0
-        proventos_totais = 0.0
+    def _round(value: float, digits: int = 2) -> float:
+        return round(value, digits)
 
-        for t in transactions:
-            op = t.operation_type.strip().lower()
-            qty = t.quantity or 0.0
-            price = t.unit_price or 0.0
-            val = t.operation_value or 0.0
+    @classmethod
+    def _market_data_ticker(cls, ticker: str) -> str:
+        normalized = ticker.upper()
+        if "." in normalized:
+            return normalized
 
-            if op in ["compra", "transferência - liquidação"]:
-                nova_qtd = quantidade_total + qty
-                if nova_qtd > 0:
-                    preco_medio = ((quantidade_total * preco_medio) + (qty * price)) / nova_qtd
-                quantidade_total = nova_qtd
-            elif op == "bonificação em ativos":
-                nova_qtd = quantidade_total + qty
-                if nova_qtd > 0:
-                    preco_medio = ((quantidade_total * preco_medio) + (qty * 0)) / nova_qtd
-                quantidade_total = nova_qtd
-            elif op in ["venda", "retirada de custódia"]:
-                # Decrease position, but average price remains the same
-                quantidade_total = max(0.0, quantidade_total - qty)
-            elif op in ["rendimento", "dividendo", "juros sobre capital próprio"]:
-                proventos_totais += val
-            # Others: Atualização, Direito de Subscrição, etc... do not affect amount or pm
+        if cls.classify_ticker(normalized) in {"Ação", "ETF", "FII"}:
+            return f"{normalized}.SA"
+
+        return normalized
+
+    def _build_asset_summary(self, ticker: str, transactions: List[Transaction], latest_price: StockPrice | None) -> AssetSummary:
+        total_quantity = 0.0
+        average_price = 0.0
+        total_dividends = 0.0
+
+        for transaction in transactions:
+            operation = transaction.operation_type.strip().lower()
+            quantity = transaction.quantity or 0.0
+            unit_price = transaction.unit_price or 0.0
+            operation_value = transaction.operation_value or 0.0
+
+            if operation in ["compra", "transferência - liquidação", "transferÃªncia - liquidaÃ§Ã£o"]:
+                new_total_quantity = total_quantity + quantity
+                if new_total_quantity > 0:
+                    average_price = ((total_quantity * average_price) + (quantity * unit_price)) / new_total_quantity
+                total_quantity = new_total_quantity
+            elif operation in ["bonificação em ativos", "bonificaÃ§Ã£o em ativos"]:
+                new_total_quantity = total_quantity + quantity
+                if new_total_quantity > 0:
+                    average_price = ((total_quantity * average_price) + (quantity * 0.0)) / new_total_quantity
+                total_quantity = new_total_quantity
+            elif operation in ["venda", "retirada de custódia", "retirada de custÃ³dia"]:
+                total_quantity = max(0.0, total_quantity - quantity)
+            elif operation in ["rendimento", "dividendo", "juros sobre capital próprio", "juros sobre capital prÃ³prio"]:
+                total_dividends += operation_value
+
+        total_invested = total_quantity * average_price
+        current_price = latest_price.close if latest_price else 0.0
+        current_value = total_quantity * current_price
+        variation_value = current_value - total_invested
+        variation_percent = (variation_value / total_invested * 100) if total_invested > 0 else 0.0
+        profitability_value = current_value + total_dividends - total_invested
+        profitability_percent = (profitability_value / total_invested * 100) if total_invested > 0 else 0.0
+        dividend_yield_percent = (total_dividends / total_invested * 100) if total_invested > 0 else 0.0
 
         return AssetSummary(
             ticker=ticker,
-            asset_type=PortfolioService.classify_ticker(ticker),
-            total_quantity=round(quantidade_total, 4),
-            average_price=round(preco_medio, 4),
-            total_invested=round(quantidade_total * preco_medio, 2),
-            total_dividends=round(proventos_totais, 2)
+            asset_type=self.classify_ticker(ticker),
+            total_quantity=self._round(total_quantity, 4),
+            average_price=self._round(average_price, 4),
+            total_invested=self._round(total_invested, 2),
+            total_dividends=self._round(total_dividends, 2),
+            price_date=latest_price.date if latest_price else None,
+            price_updated_at=latest_price.created_at if latest_price else None,
+            current_price=self._round(current_price, 4),
+            current_value=self._round(current_value, 2),
+            variation_value=self._round(variation_value, 2),
+            variation_percent=self._round(variation_percent, 2),
+            profitability_value=self._round(profitability_value, 2),
+            profitability_percent=self._round(profitability_percent, 2),
+            dividend_yield_percent=self._round(dividend_yield_percent, 2),
         )
 
     async def get_portfolio_summary(self, user_id: str) -> PortfolioSummary:
         all_transactions = await self.repository.get_all_by_user(user_id)
-        
-        # Group by ticker
+
         by_ticker: Dict[str, List[Transaction]] = {}
-        for t in all_transactions:
-            by_ticker.setdefault(t.ticker, []).append(t)
+        for transaction in all_transactions:
+            by_ticker.setdefault(transaction.ticker, []).append(transaction)
+
+        market_ticker_map = {ticker: self._market_data_ticker(ticker) for ticker in by_ticker.keys()}
+        latest_prices = await self.repository.get_latest_prices_by_tickers(list(set(market_ticker_map.values())))
 
         assets: List[AssetSummary] = []
-        gen_invested = 0.0
-        gen_dividends = 0.0
+        general_total_invested = 0.0
+        general_total_dividends = 0.0
+        general_current_value = 0.0
+        general_variation_value = 0.0
+        general_profitability_value = 0.0
 
-        for ticker, txs in by_ticker.items():
-            summary = self._aggregate_transactions(ticker, txs)
-            
-            # Skip assets that no longer have a position and have no dividends? 
-            # Often users like to see past positions if they yielded dividends. Let's include if qty > 0 or dividends > 0
+        for ticker, transactions in by_ticker.items():
+            summary = self._build_asset_summary(
+                ticker=ticker,
+                transactions=transactions,
+                latest_price=latest_prices.get(market_ticker_map[ticker]),
+            )
+
             if summary.total_quantity > 0 or summary.total_dividends > 0:
                 assets.append(summary)
-                gen_invested += summary.total_invested
-                gen_dividends += summary.total_dividends
+                general_total_invested += summary.total_invested
+                general_total_dividends += summary.total_dividends
+                general_current_value += summary.current_value
+                general_variation_value += summary.variation_value
+                general_profitability_value += summary.profitability_value
 
         return PortfolioSummary(
             user_id=user_id,
             assets=assets,
-            general_total_invested=round(gen_invested, 2),
-            general_total_dividends=round(gen_dividends, 2)
+            general_total_invested=self._round(general_total_invested, 2),
+            general_total_dividends=self._round(general_total_dividends, 2),
+            general_current_value=self._round(general_current_value, 2),
+            general_variation_value=self._round(general_variation_value, 2),
+            general_variation_percent=self._round((general_variation_value / general_total_invested * 100) if general_total_invested > 0 else 0.0, 2),
+            general_profitability_value=self._round(general_profitability_value, 2),
+            general_profitability_percent=self._round((general_profitability_value / general_total_invested * 100) if general_total_invested > 0 else 0.0, 2),
+            general_dividend_yield_percent=self._round((general_total_dividends / general_total_invested * 100) if general_total_invested > 0 else 0.0, 2),
         )
 
     async def get_asset_details(self, user_id: str, ticker: str) -> AssetDetailResponse:
         transactions = await self.repository.get_by_ticker(user_id, ticker)
         if not transactions:
-            from src.core.exceptions import BusinessException
             raise BusinessException(404, f"Ativo {ticker} não encontrado ou sem transações")
-            
-        summary = self._aggregate_transactions(ticker, transactions)
-        
+
+        latest_prices = await self.repository.get_latest_prices_by_tickers([self._market_data_ticker(ticker)])
+        summary = self._build_asset_summary(
+            ticker,
+            transactions,
+            latest_prices.get(self._market_data_ticker(ticker)),
+        )
+
         history = [
             TransactionDetail(
-                id=t.id,
-                operation_type=t.operation_type,
-                date=t.date,
-                quantity=t.quantity,
-                unit_price=t.unit_price,
-                operation_value=t.operation_value
+                id=transaction.id,
+                operation_type=transaction.operation_type,
+                date=transaction.date,
+                quantity=transaction.quantity,
+                unit_price=transaction.unit_price,
+                operation_value=transaction.operation_value,
             )
-            for t in transactions
+            for transaction in transactions
         ]
-        
-        return AssetDetailResponse(
-            **summary.model_dump(),
-            history=history
-        )
+
+        return AssetDetailResponse(**summary.model_dump(), history=history)

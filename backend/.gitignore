@@ -11,6 +11,7 @@ venv.bak/
 __pycache__/
 *.py[cod]
 *$py.class
+.pycache_tmp/
 
 # Pytest / Coverage
 .pytest_cache/
@@ -25,3 +26,4 @@ coverage.xml
 # OS generated files
 .DS_Store
 Thumbs.db
+app.log

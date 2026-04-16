@@ -25,6 +25,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.core.database import Base
 from src.modules.Upload.models.upload_model import Upload
 from src.modules.Portfolio.models.transaction_model import Transaction
+from src.modules.MarketData.models.market_data_model import StockPrice
 
 target_metadata = Base.metadata
 
