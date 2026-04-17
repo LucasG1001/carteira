@@ -116,7 +116,7 @@ export function BigNumbers() {
       value: fmt(dividendosTotal),
       icon: DollarSign,
       trend: 'up',
-      trendValue: `DY: ${data.general_dividend_yield_percent}%`,
+      trendValue: 'Total acumulado',
       subtitle: 'total acumulado',
       accentClass: 'amber',
       delay: 240,

@@ -1,7 +1,7 @@
-﻿from datetime import date, datetime
-from typing import List, Optional
+from datetime import date, datetime
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TransactionDetail(BaseModel):
@@ -12,8 +12,28 @@ class TransactionDetail(BaseModel):
     unit_price: Optional[float]
     operation_value: Optional[float]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ManualAssetCreateRequest(BaseModel):
+    ticker: str = Field(min_length=1, max_length=20)
+    operation_type: Literal["Compra", "Venda"] = "Compra"
+    date: date
+    quantity: float = Field(gt=0)
+    unit_price: float = Field(gt=0)
+
+
+class ManualAssetResponse(BaseModel):
+    id: int
+    ticker: str
+    operation_type: str
+    entry_side: str
+    date: date
+    quantity: float
+    unit_price: float
+    operation_value: float
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AssetSummary(BaseModel):
@@ -31,7 +51,6 @@ class AssetSummary(BaseModel):
     variation_percent: float = 0.0
     profitability_value: float = 0.0
     profitability_percent: float = 0.0
-    dividend_yield_percent: float = 0.0
 
 
 class PortfolioSummary(BaseModel):
@@ -44,7 +63,6 @@ class PortfolioSummary(BaseModel):
     general_variation_percent: float
     general_profitability_value: float
     general_profitability_percent: float
-    general_dividend_yield_percent: float
 
 
 class AssetDetailResponse(AssetSummary):

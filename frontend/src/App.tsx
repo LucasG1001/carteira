@@ -1,4 +1,5 @@
 import { Header } from './components/Header/Header';
+import { PortfolioActions } from './components/PortfolioActions/PortfolioActions';
 import { BigNumbers } from './components/BigNumbers/BigNumbers';
 import { Charts } from './components/Charts/Charts';
 import { AssetsTable } from './components/AssetsTable/AssetsTable';
@@ -22,6 +23,7 @@ function MainContent() {
 
   return (
     <div className={styles.container}>
+      <PortfolioActions />
       <BigNumbers />
       <Charts />
       <AssetsTable />

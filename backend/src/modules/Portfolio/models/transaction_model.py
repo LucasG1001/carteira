@@ -10,6 +10,7 @@ class Transaction(Base):
     user_id = Column(String(255), index=True, nullable=False)
     ticker = Column(String(50), index=True, nullable=False)
     operation_type = Column(String(100), nullable=False)
+    entry_side = Column(String(20), nullable=True)
     date = Column(Date, nullable=False)
     quantity = Column(Float, nullable=False)
     unit_price = Column(Float, nullable=True) # Certain operations like dividends might not have a unit price

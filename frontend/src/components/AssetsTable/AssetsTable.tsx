@@ -14,7 +14,7 @@ type SortKey = keyof BackendAssetSummary;
 type SortDir = 'asc' | 'desc';
 type FilterTipo = 'Todos' | string;
 
-const TIPOS: FilterTipo[] = ['Todos', 'Ação', 'FII', 'ETF', 'Cripto', 'Renda Fixa', 'Outros'];
+const TIPOS: FilterTipo[] = ['Todos', 'Acao', 'FII', 'ETF', 'Cripto', 'Renda Fixa', 'Outros'];
 
 export function AssetsTable() {
   const { data } = usePortfolio();
@@ -38,25 +38,28 @@ export function AssetsTable() {
     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const filteredAtivos = data.assets
-    .filter((a) => {
-      if (filtroTipo !== 'Todos' && a.asset_type !== filtroTipo) return false;
+    .filter((asset) => {
+      if (filtroTipo !== 'Todos' && asset.asset_type !== filtroTipo) return false;
       if (search) {
-        const s = search.toLowerCase();
-        return a.ticker.toLowerCase().includes(s);
+        const normalizedSearch = search.toLowerCase();
+        return asset.ticker.toLowerCase().includes(normalizedSearch);
       }
       return true;
     })
-    .sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
+    .sort((assetA, assetB) => {
+      const valueA = assetA[sortKey];
+      const valueB = assetB[sortKey];
+
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
         return sortDir === 'asc'
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
       }
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return sortDir === 'asc' ? valueA - valueB : valueB - valueA;
       }
+
       return 0;
     });
 
@@ -85,7 +88,7 @@ export function AssetsTable() {
                 type="text"
                 placeholder="Buscar ticker..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(event) => setSearch(event.target.value)}
                 className={styles.searchInput}
                 id="search-ativos"
               />
@@ -94,13 +97,13 @@ export function AssetsTable() {
               <Filter size={14} className={styles.filterIcon} />
               <select
                 value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value)}
+                onChange={(event) => setFiltroTipo(event.target.value)}
                 className={styles.filterSelect}
                 id="filter-tipo"
               >
-                {TIPOS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {TIPOS.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo}
                   </option>
                 ))}
               </select>
@@ -136,73 +139,63 @@ export function AssetsTable() {
                 <th onClick={() => handleSort('variation_percent')}>
                   <span className={styles.thContent}>Var. Total <SortIcon col="variation_percent" /></span>
                 </th>
-                <th onClick={() => handleSort('dividend_yield_percent')}>
-                  <span className={styles.thContent}>DY <SortIcon col="dividend_yield_percent" /></span>
-                </th>
                 <th onClick={() => handleSort('profitability_value')}>
                   <span className={styles.thContent}>L/P <SortIcon col="profitability_value" /></span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredAtivos.map((ativo, i) => {
-                const lucro = ativo.profitability_value;
-                const lucroPerc = ativo.profitability_percent;
+              {filteredAtivos.map((asset, index) => {
+                const profitValue = asset.profitability_value;
+                const profitPercent = asset.profitability_percent;
 
                 return (
                   <tr
-                    key={ativo.ticker}
+                    key={asset.ticker}
                     className={styles.row}
-                    style={{ animationDelay: `${i * 30}ms` }}
+                    style={{ animationDelay: `${index * 30}ms` }}
                   >
                     <td>
                       <div className={styles.tickerCell}>
-                        <span className={styles.tickerBadge}>{ativo.ticker}</span>
+                        <span className={styles.tickerBadge}>{asset.ticker}</span>
                       </div>
                     </td>
                     <td>
-                      <span className={`${styles.tipoBadge} ${styles[`tipo_${ativo.asset_type.replace(/ /g, '')}`]}`}>
-                        {ativo.asset_type}
+                      <span className={`${styles.tipoBadge} ${styles[`tipo_${asset.asset_type.replace(/ /g, '')}`]}`}>
+                        {asset.asset_type}
                       </span>
                     </td>
                     <td className={styles.numCell}>
-                      {ativo.total_quantity.toLocaleString('pt-BR', {
-                        minimumFractionDigits: ativo.total_quantity < 1 ? 4 : 0,
+                      {asset.total_quantity.toLocaleString('pt-BR', {
+                        minimumFractionDigits: asset.total_quantity < 1 ? 4 : 0,
                       })}
                     </td>
-                    <td className={styles.numCell}>{fmt(ativo.average_price)}</td>
-                    <td className={styles.numCell}>{fmt(ativo.current_price)}</td>
-                    <td className={styles.numCell}>{fmt(ativo.total_invested)}</td>
-                    <td className={`${styles.numCell} ${styles.bold}`}>{fmt(ativo.current_value)}</td>
+                    <td className={styles.numCell}>{fmt(asset.average_price)}</td>
+                    <td className={styles.numCell}>{fmt(asset.current_price)}</td>
+                    <td className={styles.numCell}>{fmt(asset.total_invested)}</td>
+                    <td className={`${styles.numCell} ${styles.bold}`}>{fmt(asset.current_value)}</td>
                     <td>
                       <span
                         className={`${styles.varBadge} ${
-                          ativo.variation_percent >= 0 ? styles.positive : styles.negative
+                          asset.variation_percent >= 0 ? styles.positive : styles.negative
                         }`}
                       >
-                        {ativo.variation_percent >= 0 ? '+' : ''}
-                        {ativo.variation_percent.toFixed(2)}%
+                        {asset.variation_percent >= 0 ? '+' : ''}
+                        {asset.variation_percent.toFixed(2)}%
                       </span>
-                    </td>
-                    <td className={styles.numCell}>
-                      {ativo.dividend_yield_percent > 0
-                        ? `${ativo.dividend_yield_percent.toFixed(2)}%`
-                        : '—'}
                     </td>
                     <td>
                       <div className={styles.lpCell}>
-                        <span
-                          className={lucro >= 0 ? styles.lpPositive : styles.lpNegative}
-                        >
-                          {fmt(lucro)}
+                        <span className={profitValue >= 0 ? styles.lpPositive : styles.lpNegative}>
+                          {fmt(profitValue)}
                         </span>
                         <span
                           className={`${styles.lpPerc} ${
-                            lucroPerc >= 0 ? styles.positive : styles.negative
+                            profitPercent >= 0 ? styles.positive : styles.negative
                           }`}
                         >
-                          {lucroPerc >= 0 ? '+' : ''}
-                          {lucroPerc.toFixed(2)}%
+                          {profitPercent >= 0 ? '+' : ''}
+                          {profitPercent.toFixed(2)}%
                         </span>
                       </div>
                     </td>

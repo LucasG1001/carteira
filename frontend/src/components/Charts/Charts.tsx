@@ -55,7 +55,7 @@ function renderCustomLegend(props: any) {
 
 function calcAlocacaoTipo(assets: BackendAssetSummary[], total: number) {
   const cores: Record<string, string> = {
-    'Ação': '#6366f1',
+    Acao: '#6366f1',
     'FII': '#22d3ee',
     'ETF': '#f59e0b',
     'Cripto': '#f97316',

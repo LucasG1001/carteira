@@ -17,7 +17,6 @@ export type BackendAssetSummary = {
   variation_percent: number;
   profitability_value: number;
   profitability_percent: number;
-  dividend_yield_percent: number;
 };
 
 export type BackendPortfolioSummary = {
@@ -30,7 +29,31 @@ export type BackendPortfolioSummary = {
   general_variation_percent: number;
   general_profitability_value: number;
   general_profitability_percent: number;
-  general_dividend_yield_percent: number;
+};
+
+export type BackendUploadResponse = {
+  id: number;
+  filename: string;
+  created_at: string;
+};
+
+export type ManualAssetPayload = {
+  ticker: string;
+  operation_type: 'Compra' | 'Venda';
+  date: string;
+  quantity: number;
+  unit_price: number;
+};
+
+export type ManualAssetResponse = {
+  id: number;
+  ticker: string;
+  operation_type: string;
+  entry_side: string;
+  date: string;
+  quantity: number;
+  unit_price: number;
+  operation_value: number;
 };
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
@@ -58,11 +81,15 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
     try {
       const errorData = await response.json();
       console.error('API Error Response:', errorData);
-      throw new Error(`API error: ${response.status} - ${errorData.detail || 'Unknown error'}`);
+      throw new Error(`API error: ${response.status} - ${errorData.detail || errorData.message || 'Unknown error'}`);
     } catch (e) {
       if (e instanceof Error && e.message.startsWith('API error')) throw e;
       throw new Error(`API error: ${response.status}`);
     }
+  }
+
+  if (response.status === 204) {
+    return null;
   }
 
   return response.json();
@@ -70,4 +97,24 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
 export async function getPortfolioSummary(): Promise<BackendPortfolioSummary> {
   return fetchWithAuth('/portfolio/');
+}
+
+export async function uploadPortfolioFile(file: File): Promise<BackendUploadResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return fetchWithAuth('/upload/', {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+export async function createManualAsset(payload: ManualAssetPayload): Promise<ManualAssetResponse> {
+  return fetchWithAuth('/portfolio/manual', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
 }
