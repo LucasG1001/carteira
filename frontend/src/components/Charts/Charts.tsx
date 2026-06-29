@@ -147,8 +147,35 @@ export function Charts() {
 
   return (
     <section className={styles.section}>
-      <div className={styles.row} style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <div className={`${styles.chartCard} ${styles.pieCard} ${styles.animateCard}`} style={{ animationDelay: '300ms' }}>
+      <div className={styles.row} style={{ gridTemplateColumns: '2fr 1fr' }}>
+        <div className={`${styles.chartCard} ${styles.animateCard}`} style={{ animationDelay: '300ms' }}>
+          <div className={styles.chartHeader}>
+            <h3 className={styles.chartTitle}>Proventos por Mês</h3>
+            <div className={styles.chartBadge}>
+              <span className={styles.badgeDot} style={{ background: '#10b981' }} />
+              Últimos 12 meses
+            </div>
+          </div>
+          <div className={styles.chartBody}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={proventos} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradientProventos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e30" vertical={false} />
+                <XAxis dataKey="mes" tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={formatAxis} tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} width={70} />
+                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<CustomDividendTooltip />} />
+                <Bar dataKey="valor" fill="url(#gradientProventos)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className={`${styles.chartCard} ${styles.pieCard} ${styles.animateCard}`} style={{ animationDelay: '400ms' }}>
           <div className={styles.chartHeader}>
             <h3 className={styles.chartTitle}>Alocação por Tipo</h3>
           </div>
@@ -173,33 +200,6 @@ export function Charts() {
                 <Tooltip content={<CustomPieTooltip />} />
                 <Legend content={renderCustomLegend} />
               </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className={`${styles.chartCard} ${styles.animateCard}`} style={{ animationDelay: '400ms' }}>
-          <div className={styles.chartHeader}>
-            <h3 className={styles.chartTitle}>Proventos por Mês</h3>
-            <div className={styles.chartBadge}>
-              <span className={styles.badgeDot} style={{ background: '#10b981' }} />
-              Últimos 12 meses
-            </div>
-          </div>
-          <div className={styles.chartBody}>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={proventos} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradientProventos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e30" vertical={false} />
-                <XAxis dataKey="mes" tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={formatAxis} tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} width={70} />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<CustomDividendTooltip />} />
-                <Bar dataKey="valor" fill="url(#gradientProventos)" radius={[6, 6, 0, 0]} maxBarSize={36} />
-              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>

@@ -79,6 +79,11 @@ export function BigNumbers() {
   const dividendosTotal = data.general_total_dividends;
   const totalAtivos = data.assets.length;
 
+  const mesesComProventos = data.monthly_dividends.filter((m) => m.value > 0);
+  const mediaProventos = mesesComProventos.length
+    ? mesesComProventos.reduce((sum, m) => sum + m.value, 0) / mesesComProventos.length
+    : 0;
+
   const cards: BigNumberCardProps[] = [
     {
       label: 'Patrimônio Total',
@@ -111,7 +116,7 @@ export function BigNumbers() {
       delay: 160,
     },
     {
-      label: 'Dividendos Recebidos',
+      label: 'Proventos Recebidos',
       value: fmt(dividendosTotal),
       icon: DollarSign,
       trend: 'up',
@@ -121,11 +126,11 @@ export function BigNumbers() {
       delay: 240,
     },
     {
-      label: 'Total Investido (Custo)',
-      value: fmt(data.general_total_invested),
+      label: 'Média de Proventos',
+      value: fmt(mediaProventos),
       icon: PiggyBank,
       trend: 'neutral',
-      subtitle: 'Sem contar variações',
+      subtitle: 'média mensal (12m)',
       accentClass: 'purple',
       delay: 320,
     },

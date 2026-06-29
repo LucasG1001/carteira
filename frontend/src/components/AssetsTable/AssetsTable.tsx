@@ -135,19 +135,13 @@ export function AssetsTable() {
                 <th onClick={() => handleSort('current_value')}>
                   <span className={styles.thContent}>Valor Atual {renderSortIcon('current_value')}</span>
                 </th>
-                <th onClick={() => handleSort('variation_percent')}>
-                  <span className={styles.thContent}>Var. Total {renderSortIcon('variation_percent')}</span>
-                </th>
-                <th onClick={() => handleSort('profitability_value')}>
-                  <span className={styles.thContent}>L/P {renderSortIcon('profitability_value')}</span>
+                <th onClick={() => handleSort('total_dividends')}>
+                  <span className={styles.thContent}>Proventos {renderSortIcon('total_dividends')}</span>
                 </th>
               </tr>
             </thead>
             <tbody>
               {filteredAtivos.map((asset, index) => {
-                const profitValue = asset.profitability_value;
-                const profitPercent = asset.profitability_percent;
-
                 return (
                   <tr
                     key={asset.ticker}
@@ -173,31 +167,23 @@ export function AssetsTable() {
                     <td className={styles.numCell}>{fmt(asset.average_price)}</td>
                     <td className={styles.numCell}>{fmt(asset.current_price)}</td>
                     <td className={styles.numCell}>{fmt(asset.total_invested)}</td>
-                    <td className={`${styles.numCell} ${styles.bold}`}>{fmt(asset.current_value)}</td>
-                    <td>
-                      <span
-                        className={`${styles.varBadge} ${
-                          asset.variation_percent >= 0 ? styles.positive : styles.negative
-                        }`}
-                      >
-                        {asset.variation_percent >= 0 ? '+' : ''}
-                        {asset.variation_percent.toFixed(2)}%
-                      </span>
-                    </td>
                     <td>
                       <div className={styles.lpCell}>
-                        <span className={profitValue >= 0 ? styles.lpPositive : styles.lpNegative}>
-                          {fmt(profitValue)}
-                        </span>
+                        <span className={styles.bold}>{fmt(asset.current_value)}</span>
                         <span
                           className={`${styles.lpPerc} ${
-                            profitPercent >= 0 ? styles.positive : styles.negative
+                            asset.variation_percent >= 0 ? styles.positive : styles.negative
                           }`}
                         >
-                          {profitPercent >= 0 ? '+' : ''}
-                          {profitPercent.toFixed(2)}%
+                          {asset.variation_percent >= 0 ? '+' : ''}
+                          {asset.variation_percent.toFixed(2)}%
                         </span>
                       </div>
+                    </td>
+                    <td className={styles.numCell}>
+                      <span className={asset.total_dividends > 0 ? styles.lpPositive : ''}>
+                        {fmt(asset.total_dividends)}
+                      </span>
                     </td>
                   </tr>
                 );
