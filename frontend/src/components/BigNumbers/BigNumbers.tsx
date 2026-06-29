@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { usePortfolio } from '../../context/portfolioStore';
+import { usePrivacy } from '../../context/privacyStore';
 import styles from './BigNumbers.module.css';
 
 interface BigNumberCardProps {
@@ -68,6 +69,7 @@ function BigNumberCard({
 
 export function BigNumbers() {
   const { data } = usePortfolio();
+  const { formatCurrency: fmt } = usePrivacy();
 
   if (!data) return null;
 
@@ -76,9 +78,6 @@ export function BigNumbers() {
   const rentabilidade = data.general_profitability_percent;
   const dividendosTotal = data.general_total_dividends;
   const totalAtivos = data.assets.length;
-
-  const fmt = (v: number) =>
-    v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const cards: BigNumberCardProps[] = [
     {

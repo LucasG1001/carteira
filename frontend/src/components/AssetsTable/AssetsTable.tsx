@@ -7,6 +7,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { usePortfolio } from '../../context/portfolioStore';
+import { usePrivacy } from '../../context/privacyStore';
 import type { BackendAssetSummary } from '../../services/api';
 import styles from './AssetsTable.module.css';
 
@@ -18,6 +19,7 @@ const TIPOS: FilterTipo[] = ['Todos', 'Acao', 'FII', 'ETF', 'Cripto', 'Renda Fix
 
 export function AssetsTable() {
   const { data } = usePortfolio();
+  const { formatCurrency: fmt } = usePrivacy();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('ticker');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -33,9 +35,6 @@ export function AssetsTable() {
       setSortDir('asc');
     }
   };
-
-  const fmt = (v: number) =>
-    v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const filteredAtivos = data.assets
     .filter((asset) => {

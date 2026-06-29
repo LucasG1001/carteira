@@ -2,6 +2,7 @@ import hashlib
 import re
 import unicodedata
 import uuid
+from datetime import date
 from typing import Dict, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,7 @@ from src.modules.Portfolio.schemas.portfolio_schema import (
     AssetSummary,
     ManualAssetCreateRequest,
     ManualAssetResponse,
+    MonthlyDividend,
     PortfolioSummary,
     TransactionDetail,
 )
@@ -237,6 +239,33 @@ class PortfolioService:
     def _generate_manual_upload_hash() -> str:
         return hashlib.sha256(uuid.uuid4().hex.encode("utf-8")).hexdigest()
 
+    @classmethod
+    def _last_months(cls, count: int) -> List[str]:
+        today = date.today()
+        year, month = today.year, today.month
+        months: List[str] = []
+        for _ in range(count):
+            months.append(f"{year:04d}-{month:02d}")
+            month -= 1
+            if month == 0:
+                month = 12
+                year -= 1
+        months.reverse()
+        return months
+
+    def _build_monthly_dividends(self, transactions: List[Transaction], count: int = 12) -> List[MonthlyDividend]:
+        totals: Dict[str, float] = {}
+        for transaction in transactions:
+            if not self._is_income_transaction(transaction):
+                continue
+            month_key = transaction.date.strftime("%Y-%m")
+            totals[month_key] = totals.get(month_key, 0.0) + self._transaction_value(transaction)
+
+        return [
+            MonthlyDividend(month=month, value=self._round(totals.get(month, 0.0), 2))
+            for month in self._last_months(count)
+        ]
+
     def _build_asset_summary(self, ticker: str, transactions: List[Transaction], latest_price: StockPrice | None, ticker_info: TickerInfo | None = None) -> AssetSummary:
         total_quantity = 0.0
         total_cost = 0.0
@@ -362,6 +391,7 @@ class PortfolioService:
             general_variation_percent=self._round((general_variation_value / general_total_invested * 100) if general_total_invested > 0 else 0.0, 2),
             general_profitability_value=self._round(general_profitability_value, 2),
             general_profitability_percent=self._round((general_profitability_value / general_total_invested * 100) if general_total_invested > 0 else 0.0, 2),
+            monthly_dividends=self._build_monthly_dividends(all_transactions),
         )
 
     async def create_manual_asset(self, user_id: str, payload: ManualAssetCreateRequest) -> ManualAssetResponse:

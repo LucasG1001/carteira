@@ -29,6 +29,7 @@ export type BackendPortfolioSummary = {
   general_variation_percent: number;
   general_profitability_value: number;
   general_profitability_percent: number;
+  monthly_dividends: { month: string; value: number }[];
 };
 
 export type BackendUploadResponse = {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar/Sidebar";
+import { PrivacyProvider } from "./context/PrivacyContext";
 import { InvestmentsPage } from "./pages/InvestmentsPage/InvestmentsPage";
 import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import styles from "./App.module.css";
@@ -22,11 +23,12 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className={styles.layout}>
-        <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
-        <div
-          className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}
-        >
+      <PrivacyProvider>
+        <div className={styles.layout}>
+          <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
+          <div
+            className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}
+          >
           <main className={styles.main}>
             <Routes>
               <Route path="/" element={<Navigate to="/investimentos" replace />} />
@@ -38,8 +40,9 @@ function App() {
           <footer className={styles.footer}>
             <p>© 2026 Carteira Investimentos</p>
           </footer>
+          </div>
         </div>
-      </div>
+      </PrivacyProvider>
     </BrowserRouter>
   );
 }

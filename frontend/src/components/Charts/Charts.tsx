@@ -5,8 +5,14 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from 'recharts';
 import { usePortfolio } from '../../context/portfolioStore';
+import { usePrivacy } from '../../context/privacyStore';
 import type { BackendAssetSummary } from '../../services/api';
 import styles from './Charts.module.css';
 
@@ -18,10 +24,18 @@ const CHART_TOOLTIP_STYLE = {
   boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
 };
 
+const CHART_LABEL_STYLE = { fill: '#9090a8', fontSize: 11 };
+
+const MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+function monthLabel(ym: string) {
+  const [year, month] = ym.split('-').map(Number);
+  return `${MESES_ABREV[month - 1]}/${String(year).slice(2)}`;
+}
+
 interface PieTooltipSlice {
   name: string;
-  value: number;
-  payload: { cor: string; percentual: number };
+  payload: { cor: string; percentual: number; formatted: string };
 }
 
 interface PieTooltipProps {
@@ -38,7 +52,7 @@ function CustomPieTooltip({ active, payload }: PieTooltipProps) {
         {data.name}
       </p>
       <p style={{ color: data.payload.cor, fontSize: '1rem', fontWeight: 700 }}>
-        {data.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+        {data.payload.formatted}
       </p>
       <p style={{ color: '#e8e8f0', fontSize: '0.8rem' }}>
         {data.payload.percentual.toFixed(1)}%
@@ -73,6 +87,22 @@ function renderCustomLegend({ payload }: LegendContentProps) {
   );
 }
 
+interface DividendTooltipProps {
+  active?: boolean;
+  payload?: { payload: { mes: string; formatted: string } }[];
+}
+
+function CustomDividendTooltip({ active, payload }: DividendTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  return (
+    <div style={CHART_TOOLTIP_STYLE}>
+      <p style={{ color: '#9090a8', fontSize: '0.75rem', marginBottom: 4 }}>{point.mes}</p>
+      <p style={{ color: '#10b981', fontSize: '1rem', fontWeight: 700 }}>{point.formatted}</p>
+    </div>
+  );
+}
+
 function calcAlocacaoTipo(assets: BackendAssetSummary[], total: number) {
   const cores: Record<string, string> = {
     Acao: '#6366f1',
@@ -96,47 +126,24 @@ function calcAlocacaoTipo(assets: BackendAssetSummary[], total: number) {
   })).sort((a, b) => b.valor - a.valor);
 }
 
-const SETOR_PALETTE = [
-  '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#f97316',
-  '#ec4899', '#8b5cf6', '#3b82f6', '#a78bfa', '#14b8a6',
-];
-
-function setorLabel(asset: BackendAssetSummary) {
-  if (asset.sector) return asset.sector;
-  const fallback: Record<string, string> = {
-    FII: 'Fundos Imobiliários',
-    ETF: 'ETFs',
-    'Renda Fixa': 'Renda Fixa',
-    Cripto: 'Cripto',
-  };
-  return fallback[asset.asset_type] || 'Outros';
-}
-
-function calcAlocacaoSetor(assets: BackendAssetSummary[], total: number) {
-  const mapa: Record<string, number> = {};
-
-  assets.forEach((ativo) => {
-    const setor = setorLabel(ativo);
-    mapa[setor] = (mapa[setor] || 0) + ativo.current_value;
-  });
-
-  return Object.entries(mapa)
-    .map(([tipo, valor]) => ({
-      tipo,
-      valor,
-      percentual: total > 0 ? (valor / total) * 100 : 0,
-    }))
-    .sort((a, b) => b.valor - a.valor)
-    .map((item, index) => ({ ...item, cor: SETOR_PALETTE[index % SETOR_PALETTE.length] }));
-}
-
 export function Charts() {
   const { data } = usePortfolio();
+  const { formatCurrency, hidden } = usePrivacy();
 
   if (!data) return null;
 
-  const alocacaoTipo = calcAlocacaoTipo(data.assets, data.general_current_value);
-  const alocacaoSetor = calcAlocacaoSetor(data.assets, data.general_current_value);
+  const formatAxis = (value: number) =>
+    hidden ? '•••' : value.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+  const alocacaoTipo = calcAlocacaoTipo(data.assets, data.general_current_value).map((slice) => ({
+    ...slice,
+    formatted: formatCurrency(slice.valor),
+  }));
+  const proventos = data.monthly_dividends.map((item) => ({
+    mes: monthLabel(item.month),
+    valor: item.value,
+    formatted: formatCurrency(item.value),
+  }));
 
   return (
     <section className={styles.section}>
@@ -170,31 +177,29 @@ export function Charts() {
           </div>
         </div>
 
-        <div className={`${styles.chartCard} ${styles.pieCard} ${styles.animateCard}`} style={{ animationDelay: '400ms' }}>
+        <div className={`${styles.chartCard} ${styles.animateCard}`} style={{ animationDelay: '400ms' }}>
           <div className={styles.chartHeader}>
-            <h3 className={styles.chartTitle}>Alocação por Setor</h3>
+            <h3 className={styles.chartTitle}>Proventos por Mês</h3>
+            <div className={styles.chartBadge}>
+              <span className={styles.badgeDot} style={{ background: '#10b981' }} />
+              Últimos 12 meses
+            </div>
           </div>
-          <div className={styles.chartBody} style={{ display: 'flex', justifyContent: 'center' }}>
+          <div className={styles.chartBody}>
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={alocacaoSetor}
-                  dataKey="valor"
-                  nameKey="tipo"
-                  cx="50%"
-                  cy="45%"
-                  innerRadius={65}
-                  outerRadius={100}
-                  strokeWidth={2}
-                  stroke="#0a0a0f"
-                >
-                  {alocacaoSetor.map((entry, i) => (
-                    <Cell key={i} fill={entry.cor} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomPieTooltip />} />
-                <Legend content={renderCustomLegend} />
-              </PieChart>
+              <BarChart data={proventos} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradientProventos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e30" vertical={false} />
+                <XAxis dataKey="mes" tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={formatAxis} tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} width={70} />
+                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<CustomDividendTooltip />} />
+                <Bar dataKey="valor" fill="url(#gradientProventos)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
