@@ -1,16 +1,8 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getPortfolioSummary } from '../services/api';
 import type { BackendPortfolioSummary } from '../services/api';
-
-type PortfolioContextType = {
-  data: BackendPortfolioSummary | null;
-  loading: boolean;
-  error: Error | null;
-  refresh: () => Promise<void>;
-};
-
-const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
+import { PortfolioContext } from './portfolioStore';
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<BackendPortfolioSummary | null>(null);
@@ -40,12 +32,4 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       {children}
     </PortfolioContext.Provider>
   );
-}
-
-export function usePortfolio() {
-  const context = useContext(PortfolioContext);
-  if (context === undefined) {
-    throw new Error('usePortfolio must be used within a PortfolioProvider');
-  }
-  return context;
 }

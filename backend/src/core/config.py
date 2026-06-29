@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+from urllib.parse import quote
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -9,10 +10,8 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: str = "5432"
     DB_NAME: str = "carteira"
-    
-    KEYCLOAK_URL: str = "https://gomeslab.tech/keycloak"
-    KEYCLOAK_REALM: str = "master"
-    KEYCLOAK_CLIENT_ID: str = "carteira"
+
+    SINGLE_USER_ID: str = "local"
     ALLOWED_ORIGINS: List[str] = ["*"]
 
     MARKET_DATA_TIMEZONE: str = "America/Sao_Paulo"
@@ -24,12 +23,18 @@ class Settings(BaseSettings):
     STOCK_SYNC_TICKERS_FILE: str = "tickers.txt"
     
     @property
+    def _credentials(self) -> str:
+        user = quote(self.DB_USER, safe="")
+        password = quote(self.DB_PASSWORD, safe="")
+        return f"{user}:{password}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql+asyncpg://{self._credentials}"
 
     @property
     def SYNC_DATABASE_URL(self) -> str:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return f"postgresql://{self._credentials}"
 
     @property
     def stock_sync_log_path(self) -> Path:
@@ -38,10 +43,6 @@ class Settings(BaseSettings):
     @property
     def stock_sync_tickers_path(self) -> Path:
         return Path(self.STOCK_SYNC_TICKERS_FILE)
-
-    @property
-    def jwks_url(self) -> str:
-        return f"{self.KEYCLOAK_URL}/realms/{self.KEYCLOAK_REALM}/protocol/openid-connect/certs"
 
     # Support reading from a .env file
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

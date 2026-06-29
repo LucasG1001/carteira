@@ -1,100 +1,46 @@
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-.app {
+.layout {
+  display: flex;
   min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  transition: margin-left var(--transition-base);
+}
+
+.contentCollapsed {
+  margin-left: var(--sidebar-collapsed);
 }
 
 .main {
   flex: 1;
-  padding: 1.5rem 2rem 2rem;
-}
-
-.container {
-  max-width: 1440px;
-  margin: 0 auto;
-}
-
-.pageHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  animation: fadeInUp 0.5s ease forwards;
-}
-
-.pageTitle {
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.pageSubtitle {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-.lastUpdate {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  padding: 5px 14px;
-  border-radius: 20px;
-}
-
-.liveDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent-green);
-  animation: pulse-glow 2s ease-in-out infinite;
+  padding: var(--spacing-xl) var(--spacing-2xl) var(--spacing-2xl);
 }
 
 .footer {
-  padding: 1.5rem 2rem;
+  padding: var(--spacing-xl) var(--spacing-2xl);
   text-align: center;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .footer p {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
 }
 
 @media (max-width: 768px) {
+  .content,
+  .contentCollapsed {
+    margin-left: 0;
+    padding-bottom: var(--mobile-nav-height);
+  }
+
   .main {
-    padding: 1rem;
-  }
-
-  .pageHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .pageTitle {
-    font-size: 1.3rem;
+    padding: var(--spacing-base);
   }
 }

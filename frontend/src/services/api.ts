@@ -1,9 +1,9 @@
-import keycloak from './keycloak';
-
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 export type BackendAssetSummary = {
   ticker: string;
+  name: string | null;
+  sector: string | null;
   asset_type: string;
   total_quantity: number;
   average_price: number;
@@ -56,26 +56,8 @@ export type ManualAssetResponse = {
   operation_value: number;
 };
 
-export async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  if (keycloak.isTokenExpired()) {
-    try {
-      await keycloak.updateToken(30);
-    } catch (err) {
-      console.error('Failed to refresh token', err);
-      keycloak.login();
-      throw new Error('Token expired and cannot be refreshed');
-    }
-  }
-
-  const headers = new Headers(options.headers || {});
-  if (keycloak.token) {
-    headers.set('Authorization', `Bearer ${keycloak.token}`);
-  }
-
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers,
-  });
+async function request(url: string, options: RequestInit = {}) {
+  const response = await fetch(`${API_BASE_URL}${url}`, options);
 
   if (!response.ok) {
     try {
@@ -96,21 +78,21 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 }
 
 export async function getPortfolioSummary(): Promise<BackendPortfolioSummary> {
-  return fetchWithAuth('/portfolio/');
+  return request('/portfolio/');
 }
 
 export async function uploadPortfolioFile(file: File): Promise<BackendUploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  return fetchWithAuth('/upload/', {
+  return request('/upload/', {
     method: 'POST',
     body: formData,
   });
 }
 
 export async function createManualAsset(payload: ManualAssetPayload): Promise<ManualAssetResponse> {
-  return fetchWithAuth('/portfolio/manual', {
+  return request('/portfolio/manual', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

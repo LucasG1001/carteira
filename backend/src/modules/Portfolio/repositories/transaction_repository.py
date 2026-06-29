@@ -2,7 +2,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.modules.MarketData.models.market_data_model import StockPrice
+from src.modules.MarketData.models.market_data_model import StockPrice, TickerInfo
 from src.modules.Portfolio.models.transaction_model import Transaction
 
 
@@ -41,3 +41,11 @@ class TransactionRepository:
         )
         result = await self.session.execute(stmt)
         return {price.ticker: price for price in result.scalars().all()}
+
+    async def get_ticker_infos_by_tickers(self, tickers: list[str]) -> dict[str, TickerInfo]:
+        if not tickers:
+            return {}
+
+        stmt = select(TickerInfo).where(TickerInfo.ticker.in_(tickers))
+        result = await self.session.execute(stmt)
+        return {info.ticker: info for info in result.scalars().all()}

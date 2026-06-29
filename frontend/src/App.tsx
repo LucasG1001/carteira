@@ -1,52 +1,46 @@
-import { Header } from './components/Header/Header';
-import { PortfolioActions } from './components/PortfolioActions/PortfolioActions';
-import { BigNumbers } from './components/BigNumbers/BigNumbers';
-import { Charts } from './components/Charts/Charts';
-import { AssetsTable } from './components/AssetsTable/AssetsTable';
-import { PortfolioProvider, usePortfolio } from './context/PortfolioContext';
-import styles from './App.module.css';
+import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Sidebar } from "./components/Sidebar/Sidebar";
+import { InvestmentsPage } from "./pages/InvestmentsPage/InvestmentsPage";
+import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
+import styles from "./App.module.css";
 
-function MainContent() {
-  const { data, loading, error } = usePortfolio();
-
-  if (loading) {
-    return <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>Carregando dados da carteira...</div>;
-  }
-
-  if (error) {
-    return <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>Erro ao carregar dados: {error.message}</div>;
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return (
-    <div className={styles.container}>
-      <PortfolioActions />
-      <BigNumbers />
-      <Charts />
-      <AssetsTable />
-    </div>
-  );
-}
+const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
 
 function App() {
-  return (
-    <PortfolioProvider>
-      <div className={styles.app}>
-        <Header />
-        <main className={styles.main}>
-          <MainContent />
-        </main>
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true"
+  );
 
-        <footer className={styles.footer}>
-          <p>
-            © 2026 Carteira Investimentos
-          </p>
-        </footer>
+  const toggleSidebar = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      return next;
+    });
+  };
+
+  return (
+    <BrowserRouter>
+      <div className={styles.layout}>
+        <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
+        <div
+          className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}
+        >
+          <main className={styles.main}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/investimentos" replace />} />
+              <Route path="/investimentos" element={<InvestmentsPage />} />
+              <Route path="/gastos" element={<ExpensesPage />} />
+              <Route path="*" element={<Navigate to="/investimentos" replace />} />
+            </Routes>
+          </main>
+          <footer className={styles.footer}>
+            <p>© 2026 Carteira Investimentos</p>
+          </footer>
+        </div>
       </div>
-    </PortfolioProvider>
+    </BrowserRouter>
   );
 }
 

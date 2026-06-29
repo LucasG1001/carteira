@@ -6,7 +6,7 @@ import {
   Search,
   Filter,
 } from 'lucide-react';
-import { usePortfolio } from '../../context/PortfolioContext';
+import { usePortfolio } from '../../context/portfolioStore';
 import type { BackendAssetSummary } from '../../services/api';
 import styles from './AssetsTable.module.css';
 
@@ -63,7 +63,7 @@ export function AssetsTable() {
       return 0;
     });
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
+  const renderSortIcon = (col: SortKey) => {
     if (sortKey !== col) return <ArrowUpDown size={12} className={styles.sortIconInactive} />;
     return sortDir === 'asc' ? (
       <TrendingUp size={12} className={styles.sortIconActive} />
@@ -116,31 +116,31 @@ export function AssetsTable() {
             <thead>
               <tr>
                 <th onClick={() => handleSort('ticker')}>
-                  <span className={styles.thContent}>Ticker <SortIcon col="ticker" /></span>
+                  <span className={styles.thContent}>Ticker {renderSortIcon('ticker')}</span>
                 </th>
                 <th onClick={() => handleSort('asset_type')}>
-                  <span className={styles.thContent}>Tipo <SortIcon col="asset_type" /></span>
+                  <span className={styles.thContent}>Tipo {renderSortIcon('asset_type')}</span>
                 </th>
                 <th onClick={() => handleSort('total_quantity')}>
-                  <span className={styles.thContent}>Qtd <SortIcon col="total_quantity" /></span>
+                  <span className={styles.thContent}>Qtd {renderSortIcon('total_quantity')}</span>
                 </th>
                 <th onClick={() => handleSort('average_price')}>
-                  <span className={styles.thContent}>PM <SortIcon col="average_price" /></span>
+                  <span className={styles.thContent}>PM {renderSortIcon('average_price')}</span>
                 </th>
                 <th onClick={() => handleSort('current_price')}>
-                  <span className={styles.thContent}>Cotação <SortIcon col="current_price" /></span>
+                  <span className={styles.thContent}>Cotação {renderSortIcon('current_price')}</span>
                 </th>
                 <th onClick={() => handleSort('total_invested')}>
-                  <span className={styles.thContent}>Total Investido <SortIcon col="total_invested" /></span>
+                  <span className={styles.thContent}>Total Investido {renderSortIcon('total_invested')}</span>
                 </th>
                 <th onClick={() => handleSort('current_value')}>
-                  <span className={styles.thContent}>Valor Atual <SortIcon col="current_value" /></span>
+                  <span className={styles.thContent}>Valor Atual {renderSortIcon('current_value')}</span>
                 </th>
                 <th onClick={() => handleSort('variation_percent')}>
-                  <span className={styles.thContent}>Var. Total <SortIcon col="variation_percent" /></span>
+                  <span className={styles.thContent}>Var. Total {renderSortIcon('variation_percent')}</span>
                 </th>
                 <th onClick={() => handleSort('profitability_value')}>
-                  <span className={styles.thContent}>L/P <SortIcon col="profitability_value" /></span>
+                  <span className={styles.thContent}>L/P {renderSortIcon('profitability_value')}</span>
                 </th>
               </tr>
             </thead>
@@ -158,6 +158,7 @@ export function AssetsTable() {
                     <td>
                       <div className={styles.tickerCell}>
                         <span className={styles.tickerBadge}>{asset.ticker}</span>
+                        {asset.name && <span className={styles.tickerName}>{asset.name}</span>}
                       </div>
                     </td>
                     <td>

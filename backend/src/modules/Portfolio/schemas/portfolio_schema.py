@@ -38,6 +38,8 @@ class ManualAssetResponse(BaseModel):
 
 class AssetSummary(BaseModel):
     ticker: str
+    name: Optional[str] = None
+    sector: Optional[str] = None
     asset_type: str
     total_quantity: float
     average_price: float
@@ -53,6 +55,11 @@ class AssetSummary(BaseModel):
     profitability_percent: float = 0.0
 
 
+class MonthlyDividend(BaseModel):
+    month: str
+    value: float
+
+
 class PortfolioSummary(BaseModel):
     user_id: str
     assets: List[AssetSummary]
@@ -63,6 +70,7 @@ class PortfolioSummary(BaseModel):
     general_variation_percent: float
     general_profitability_value: float
     general_profitability_percent: float
+    monthly_dividends: List[MonthlyDividend]
 
 
 class AssetDetailResponse(AssetSummary):

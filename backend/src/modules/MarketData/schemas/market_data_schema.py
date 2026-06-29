@@ -39,3 +39,12 @@ class TickerSyncResult:
     success: bool
     price_date: date | None = None
     error: str | None = None
+
+
+@dataclass(slots=True)
+class TickerInfoRecord:
+    ticker: str
+    short_name: str | None = None
+    long_name: str | None = None
+    sector: str | None = None
+    quote_type: str | None = None

@@ -7,7 +7,12 @@ from typing import Any
 import pandas as pd
 import yfinance as yf
 
-from src.modules.MarketData.schemas.market_data_schema import BatchPriceSnapshot, PriceRecord, TickerMarketData
+from src.modules.MarketData.schemas.market_data_schema import (
+    BatchPriceSnapshot,
+    PriceRecord,
+    TickerInfoRecord,
+    TickerMarketData,
+)
 
 
 class YFinanceMarketDataClient:
@@ -84,6 +89,30 @@ class YFinanceMarketDataClient:
             created_at=captured_at,
         )
         return TickerMarketData(ticker=ticker, price=price)
+
+    def fetch_ticker_info(self, ticker: str) -> TickerInfoRecord:
+        info: dict[str, Any] = {}
+        try:
+            raw = yf.Ticker(ticker).info
+            if isinstance(raw, dict):
+                info = raw
+        except Exception:
+            info = {}
+
+        return TickerInfoRecord(
+            ticker=ticker,
+            short_name=self._as_clean_str(info.get("shortName")),
+            long_name=self._as_clean_str(info.get("longName")),
+            sector=self._as_clean_str(info.get("sector")),
+            quote_type=self._as_clean_str(info.get("quoteType")),
+        )
+
+    @staticmethod
+    def _as_clean_str(value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
 
     def _extract_ticker_frame(self, history: pd.DataFrame, ticker: str) -> pd.DataFrame | None:
         if isinstance(history.columns, pd.MultiIndex):

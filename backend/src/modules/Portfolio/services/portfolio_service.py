@@ -7,7 +7,7 @@ from typing import Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exceptions import BusinessException
-from src.modules.MarketData.models.market_data_model import StockPrice
+from src.modules.MarketData.models.market_data_model import StockPrice, TickerInfo
 from src.modules.Portfolio.models.transaction_model import Transaction
 from src.modules.Portfolio.repositories.transaction_repository import TransactionRepository
 from src.modules.Portfolio.schemas.portfolio_schema import (
@@ -85,6 +85,16 @@ class PortfolioService:
             return f"{normalized}.SA"
 
         return normalized
+
+    @classmethod
+    def market_tickers_for(cls, tickers: list[str]) -> list[str]:
+        market_tickers = set()
+        for ticker in tickers:
+            position_ticker = cls._position_ticker(ticker)
+            market_ticker = cls._market_data_ticker(position_ticker)
+            if market_ticker.endswith(".SA"):
+                market_tickers.add(market_ticker)
+        return sorted(market_tickers)
 
     @classmethod
     def _normalized_operation(cls, transaction: Transaction) -> str:
@@ -227,7 +237,7 @@ class PortfolioService:
     def _generate_manual_upload_hash() -> str:
         return hashlib.sha256(uuid.uuid4().hex.encode("utf-8")).hexdigest()
 
-    def _build_asset_summary(self, ticker: str, transactions: List[Transaction], latest_price: StockPrice | None) -> AssetSummary:
+    def _build_asset_summary(self, ticker: str, transactions: List[Transaction], latest_price: StockPrice | None, ticker_info: TickerInfo | None = None) -> AssetSummary:
         total_quantity = 0.0
         total_cost = 0.0
         total_dividends = 0.0
@@ -272,15 +282,23 @@ class PortfolioService:
 
         average_price = total_cost / total_quantity if total_quantity > 0 else 0.0
         total_invested = total_cost
-        current_price = latest_price.close if latest_price else 0.0
+        current_price = latest_price.close if latest_price else average_price
         current_value = total_quantity * current_price
         variation_value = current_value - total_invested
         variation_percent = (variation_value / total_invested * 100) if total_invested > 0 else 0.0
         profitability_value = current_value + total_dividends - total_invested
         profitability_percent = (profitability_value / total_invested * 100) if total_invested > 0 else 0.0
 
+        name = None
+        sector = None
+        if ticker_info is not None:
+            name = ticker_info.long_name or ticker_info.short_name
+            sector = ticker_info.sector
+
         return AssetSummary(
             ticker=self.normalize_ticker(ticker),
+            name=name,
+            sector=sector,
             asset_type=self.classify_ticker(ticker),
             total_quantity=self._round(total_quantity, 4),
             average_price=self._round(average_price, 4),
@@ -305,7 +323,9 @@ class PortfolioService:
             by_ticker.setdefault(canonical_ticker, []).append(transaction)
 
         market_ticker_map = {ticker: self._market_data_ticker(ticker) for ticker in by_ticker.keys()}
-        latest_prices = await self.repository.get_latest_prices_by_tickers(list(set(market_ticker_map.values())))
+        market_tickers = list(set(market_ticker_map.values()))
+        latest_prices = await self.repository.get_latest_prices_by_tickers(market_tickers)
+        ticker_infos = await self.repository.get_ticker_infos_by_tickers(market_tickers)
 
         assets: List[AssetSummary] = []
         general_total_invested = 0.0
@@ -319,6 +339,7 @@ class PortfolioService:
                 ticker=ticker,
                 transactions=transactions,
                 latest_price=latest_prices.get(market_ticker_map[ticker]),
+                ticker_info=ticker_infos.get(market_ticker_map[ticker]),
             )
 
             if summary.total_quantity <= 0:
@@ -393,11 +414,14 @@ class PortfolioService:
         if not transactions:
             raise BusinessException(404, f"Ativo {canonical_ticker} nao encontrado ou sem transacoes")
 
-        latest_prices = await self.repository.get_latest_prices_by_tickers([self._market_data_ticker(canonical_ticker)])
+        market_ticker = self._market_data_ticker(canonical_ticker)
+        latest_prices = await self.repository.get_latest_prices_by_tickers([market_ticker])
+        ticker_infos = await self.repository.get_ticker_infos_by_tickers([market_ticker])
         summary = self._build_asset_summary(
             canonical_ticker,
             transactions,
-            latest_prices.get(self._market_data_ticker(canonical_ticker)),
+            latest_prices.get(market_ticker),
+            ticker_infos.get(market_ticker),
         )
 
         history = [

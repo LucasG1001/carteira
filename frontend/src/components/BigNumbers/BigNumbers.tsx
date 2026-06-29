@@ -7,7 +7,7 @@ import {
   PiggyBank,
   type LucideIcon,
 } from 'lucide-react';
-import { usePortfolio } from '../../context/PortfolioContext';
+import { usePortfolio } from '../../context/portfolioStore';
 import styles from './BigNumbers.module.css';
 
 interface BigNumberCardProps {
