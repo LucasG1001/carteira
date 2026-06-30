@@ -1,67 +1,43 @@
-import {
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  BarChart3,
-  PiggyBank,
-  type LucideIcon,
-} from 'lucide-react';
 import { usePortfolio } from '../../context/portfolioStore';
 import { usePrivacy } from '../../context/privacyStore';
 import styles from './BigNumbers.module.css';
 
+interface CardDetail {
+  label: string;
+  value: string;
+}
+
 interface BigNumberCardProps {
   label: string;
   value: string;
-  subtitle?: string;
-  icon: LucideIcon;
-  trend?: 'up' | 'down' | 'neutral';
-  trendValue?: string;
+  side?: { text: string; tone: 'up' | 'down' };
+  details: CardDetail[];
   accentClass: string;
   delay: number;
 }
 
-function BigNumberCard({
-  label,
-  value,
-  subtitle,
-  icon: Icon,
-  trend,
-  trendValue,
-  accentClass,
-  delay,
-}: BigNumberCardProps) {
+function BigNumberCard({ label, value, side, details, accentClass, delay }: BigNumberCardProps) {
   return (
     <div
       className={`${styles.card} ${styles[accentClass]}`}
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className={styles.cardHeader}>
-        <span className={styles.label}>{label}</span>
-        <div className={`${styles.iconWrap} ${styles[`icon_${accentClass}`]}`}>
-          <Icon size={18} />
-        </div>
-      </div>
+      <span className={styles.label}>{label}</span>
       <div className={styles.valueRow}>
         <span className={styles.value}>{value}</span>
-      </div>
-      <div className={styles.footer}>
-        {trend && trendValue && (
-          <span
-            className={`${styles.trend} ${
-              trend === 'up' ? styles.trendUp : trend === 'down' ? styles.trendDown : ''
-            }`}
-          >
-            {trend === 'up' ? (
-              <TrendingUp size={13} />
-            ) : trend === 'down' ? (
-              <TrendingDown size={13} />
-            ) : null}
-            {trendValue}
+        {side && (
+          <span className={`${styles.side} ${side.tone === 'up' ? styles.up : styles.down}`}>
+            {side.text}
           </span>
         )}
-        {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
+      </div>
+      <div className={`${styles.details} ${details.length > 1 ? styles.detailsTwo : ''}`}>
+        {details.map((detail) => (
+          <div key={detail.label} className={styles.detail}>
+            <span className={styles.detailLabel}>{detail.label}</span>
+            <span className={styles.detailValue}>{detail.value}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -73,66 +49,42 @@ export function BigNumbers() {
 
   if (!data) return null;
 
-  const patrimonio = data.general_current_value;
-  const lucro = data.general_profitability_value;
-  const rentabilidade = data.general_profitability_percent;
-  const dividendosTotal = data.general_total_dividends;
-  const totalAtivos = data.assets.length;
-
   const mesesComProventos = data.monthly_dividends.filter((m) => m.value > 0);
   const mediaProventos = mesesComProventos.length
     ? mesesComProventos.reduce((sum, m) => sum + m.value, 0) / mesesComProventos.length
     : 0;
 
+  const variacao = data.general_variation_percent;
+  const lucro = data.general_profitability_value;
+
   const cards: BigNumberCardProps[] = [
     {
       label: 'Patrimônio Total',
-      value: fmt(patrimonio),
-      icon: Wallet,
-      trend: data.general_variation_value >= 0 ? 'up' : 'down',
-      trendValue: `${data.general_variation_value >= 0 ? '+' : ''}${data.general_variation_percent}% variação total`,
-      subtitle: `${totalAtivos} ativos`,
+      value: fmt(data.general_current_value),
+      side: {
+        text: `${variacao >= 0 ? '+' : ''}${variacao}%`,
+        tone: variacao >= 0 ? 'up' : 'down',
+      },
+      details: [{ label: 'Valor Investido', value: fmt(data.general_total_invested) }],
       accentClass: 'indigo',
       delay: 0,
     },
     {
-      label: 'Lucro / Prejuízo',
+      label: 'Lucro Total',
       value: fmt(lucro),
-      icon: lucro >= 0 ? TrendingUp : TrendingDown,
-      trend: lucro >= 0 ? 'up' : 'down',
-      trendValue: `${rentabilidade >= 0 ? '+' : ''}${rentabilidade}%`,
-      subtitle: 'acumulado',
+      details: [
+        { label: 'Ganho de Capital', value: fmt(data.general_variation_value) },
+        { label: 'Dividendos Recebidos', value: fmt(data.general_total_dividends) },
+      ],
       accentClass: lucro >= 0 ? 'green' : 'red',
       delay: 80,
     },
     {
-      label: 'Rentabilidade',
-      value: `${rentabilidade >= 0 ? '+' : ''}${rentabilidade}%`,
-      icon: BarChart3,
-      trend: rentabilidade >= 0 ? 'up' : 'down',
-      trendValue: 'Acumulada',
-      subtitle: 'sobre Total Investido',
-      accentClass: 'cyan',
-      delay: 160,
-    },
-    {
       label: 'Proventos Recebidos',
-      value: fmt(dividendosTotal),
-      icon: DollarSign,
-      trend: 'up',
-      trendValue: 'Total acumulado',
-      subtitle: 'total acumulado',
-      accentClass: 'amber',
-      delay: 240,
-    },
-    {
-      label: 'Média de Proventos',
       value: fmt(mediaProventos),
-      icon: PiggyBank,
-      trend: 'neutral',
-      subtitle: 'média mensal (12m)',
-      accentClass: 'purple',
-      delay: 320,
+      details: [{ label: 'Total', value: fmt(data.general_total_dividends) }],
+      accentClass: 'amber',
+      delay: 160,
     },
   ];
 

@@ -316,12 +316,10 @@
 
 .positive {
   color: var(--accent-green);
-  background: rgba(16, 185, 129, 0.08);
 }
 
 .negative {
   color: var(--accent-red);
-  background: rgba(239, 68, 68, 0.08);
 }
 
 /* L/P cell */
@@ -343,9 +341,19 @@
   font-size: 0.82rem;
 }
 
-.lpPerc {
-  font-size: 0.68rem;
+.lpSub {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.7rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.lpSubValue {
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.75;
 }
 
 /* Empty state */

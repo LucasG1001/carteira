@@ -136,20 +136,11 @@ export function PortfolioActions() {
   };
 
   return (
-    <section className={styles.section}>
-      <div className={styles.launcher}>
-        <div>
-          <h2 className={styles.launcherTitle}>Movimentacoes da carteira</h2>
-          <p className={styles.launcherSubtitle}>
-            Importe a planilha da B3 ou adicione um lancamento manual quando precisar.
-          </p>
-        </div>
-
-        <button type="button" className={styles.openButton} onClick={() => openModal('upload')}>
-          <PlusCircle size={18} />
-          <span>Adicionar investimentos</span>
-        </button>
-      </div>
+    <>
+      <button type="button" className={styles.openButton} onClick={() => openModal('upload')}>
+        <PlusCircle size={16} />
+        <span>Adicionar investimentos</span>
+      </button>
 
       {isOpen && (
         <div className={styles.overlay} onClick={handleBackdropClick}>
@@ -326,6 +317,6 @@ export function PortfolioActions() {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }

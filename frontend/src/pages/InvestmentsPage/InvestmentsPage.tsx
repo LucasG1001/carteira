@@ -29,7 +29,6 @@ function PortfolioDashboard() {
 
   return (
     <div className={styles.container}>
-      <PortfolioActions />
       <BigNumbers />
       <Charts />
       <AssetsTable />
@@ -52,6 +51,7 @@ export function InvestmentsPage() {
           {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
           <span>{hidden ? "Mostrar valores" : "Ocultar valores"}</span>
         </button>
+        <PortfolioActions />
       </div>
       <PortfolioDashboard />
     </PortfolioProvider>

@@ -171,12 +171,15 @@ export function AssetsTable() {
                       <div className={styles.lpCell}>
                         <span className={styles.bold}>{fmt(asset.current_value)}</span>
                         <span
-                          className={`${styles.lpPerc} ${
+                          className={`${styles.lpSub} ${
                             asset.variation_percent >= 0 ? styles.positive : styles.negative
                           }`}
                         >
-                          {asset.variation_percent >= 0 ? '+' : ''}
-                          {asset.variation_percent.toFixed(2)}%
+                          <span>
+                            {asset.variation_percent >= 0 ? '+' : ''}
+                            {asset.variation_percent.toFixed(2)}%
+                          </span>
+                          <span className={styles.lpSubValue}>{fmt(asset.variation_value)}</span>
                         </span>
                       </div>
                     </td>
