@@ -6,6 +6,7 @@ from src.core.exceptions import setup_exception_handlers
 # We will import routers here later
 from src.modules.Upload.upload_router import router as upload_router
 from src.modules.Portfolio.portfolio_router import router as portfolio_router
+from src.modules.Expenses.expenses_router import router as expenses_router
 
 
 app = FastAPI(
@@ -29,6 +30,7 @@ setup_exception_handlers(app)
 # Include routers
 app.include_router(upload_router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(portfolio_router, prefix="/api/v1/portfolio", tags=["Portfolio"])
+app.include_router(expenses_router, prefix="/api/v1/expenses", tags=["Expenses"])
 
 
 @app.get("/health", tags=["System"])

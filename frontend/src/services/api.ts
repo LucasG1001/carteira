@@ -101,3 +101,72 @@ export async function createManualAsset(payload: ManualAssetPayload): Promise<Ma
     body: JSON.stringify(payload),
   });
 }
+
+export type ExpenseEntryType = 'expense' | 'income';
+export type RecurrenceType = 'monthly' | 'weekly' | 'yearly';
+
+export type BackendExpenseEntry = {
+  id: number;
+  user_id: string;
+  type: ExpenseEntryType;
+  amount: number;
+  category: string;
+  date: string;
+  description: string | null;
+  payment_method: string | null;
+  installments: number;
+  is_recurring: boolean;
+  recurrence: string | null;
+  place: string | null;
+  address: string | null;
+  notes: string | null;
+  tags: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BackendExpenseSummary = {
+  user_id: string;
+  entries: BackendExpenseEntry[];
+  current_month: string;
+  month_income: number;
+  month_expense: number;
+  month_balance: number;
+  avg_monthly_expense: number;
+  monthly: { month: string; income: number; expense: number; balance: number }[];
+  by_category: { category: string; total: number }[];
+};
+
+export type ExpenseCreatePayload = {
+  type: ExpenseEntryType;
+  amount: number;
+  category: string;
+  date: string;
+  description?: string | null;
+  payment_method?: string | null;
+  installments?: number;
+  is_recurring?: boolean;
+  recurrence?: RecurrenceType | null;
+  place?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  tags?: string | null;
+};
+
+export async function getExpensesSummary(): Promise<BackendExpenseSummary> {
+  return request('/expenses/');
+}
+
+export async function createExpense(payload: ExpenseCreatePayload): Promise<BackendExpenseEntry> {
+  return request('/expenses/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteExpense(id: number): Promise<null> {
+  return request(`/expenses/${id}`, { method: 'DELETE' });
+}

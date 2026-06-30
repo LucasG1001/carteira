@@ -296,8 +296,7 @@
 
 @media (max-width: 768px) {
   .openButton {
-    flex: 1;
-    min-width: 0;
+    display: none;
   }
 
   .overlay {

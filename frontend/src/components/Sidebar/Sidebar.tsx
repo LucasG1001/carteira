@@ -1,5 +1,7 @@
-import type { ComponentType } from "react";
+import { Fragment, type ComponentType } from "react";
 import { NavLink } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { useQuickAdd } from "../../context/quickAddStore";
 import styles from "./Sidebar.module.css";
 import {
   ChevronIcon,
@@ -26,6 +28,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const { addHandler, triggerAdd } = useQuickAdd();
+  const fabIndex = Math.floor(NAV_ITEMS.length / 2);
+
   return (
     <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
       <div className={styles.logo}>
@@ -46,21 +51,33 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       <nav className={styles.nav}>
         <span className={styles.navSection}>Carteira</span>
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.map((item, index) => {
           const ItemIcon = item.icon;
           return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              title={item.label}
-              className={({ isActive }) =>
-                `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
-              }
-            >
-              <ItemIcon className={styles.navIcon} />
-              <span className={styles.navLabel}>{item.label}</span>
-              {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
-            </NavLink>
+            <Fragment key={item.path}>
+              {index === fabIndex && addHandler && (
+                <button
+                  type="button"
+                  className={styles.fab}
+                  onClick={triggerAdd}
+                  aria-label="Adicionar"
+                  title="Adicionar"
+                >
+                  <Plus className={styles.fabIcon} />
+                </button>
+              )}
+              <NavLink
+                to={item.path}
+                title={item.label}
+                className={({ isActive }) =>
+                  `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+                }
+              >
+                <ItemIcon className={styles.navIcon} />
+                <span className={styles.navLabel}>{item.label}</span>
+                {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
+              </NavLink>
+            </Fragment>
           );
         })}
       </nav>

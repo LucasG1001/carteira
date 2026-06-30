@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
 import { AlertTriangle, CheckCircle2, LoaderCircle, PlusCircle, Upload, X } from 'lucide-react';
 import { usePortfolio } from '../../context/portfolioStore';
+import { useQuickAdd } from '../../context/quickAddStore';
 import { createManualAsset, uploadPortfolioFile } from '../../services/api';
 import styles from './PortfolioActions.module.css';
 
@@ -27,6 +28,7 @@ function todayAsInputValue() {
 
 export function PortfolioActions() {
   const { refresh } = usePortfolio();
+  const { registerAdd } = useQuickAdd();
   const [activeTab, setActiveTab] = useState<ActionTab>('upload');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -51,6 +53,14 @@ export function PortfolioActions() {
     setActiveTab(tab);
     setIsOpen(true);
   };
+
+  useEffect(() => {
+    registerAdd(() => {
+      setActiveTab('upload');
+      setIsOpen(true);
+    });
+    return () => registerAdd(null);
+  }, [registerAdd]);
 
   const closeModal = () => {
     setIsOpen(false);

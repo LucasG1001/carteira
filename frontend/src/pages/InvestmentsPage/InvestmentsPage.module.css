@@ -36,12 +36,20 @@
 
 @media (max-width: 768px) {
   .toolbar {
-    align-items: stretch;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .eyeButton {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .eyeLabel {
+    display: none;
   }
 }
 

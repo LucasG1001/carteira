@@ -178,6 +178,10 @@
     margin var(--transition-base), padding var(--transition-base);
 }
 
+.fab {
+  display: none;
+}
+
 .collapsed {
   width: var(--sidebar-collapsed);
 }
@@ -228,6 +232,29 @@
     border-right: none;
     border-top: 1px solid var(--color-border-subtle);
     padding-bottom: env(safe-area-inset-bottom);
+    overflow: visible;
+  }
+
+  .fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    align-self: center;
+    width: 52px;
+    height: 52px;
+    margin: 0 0.5rem;
+    transform: translateY(-12px);
+    border-radius: var(--radius-full);
+    background: var(--gradient-primary);
+    color: #fff;
+    box-shadow: var(--shadow-glow-indigo), var(--shadow-md);
+    border: 3px solid var(--color-bg-primary);
+  }
+
+  .fabIcon {
+    width: 24px;
+    height: 24px;
   }
 
   .logo {

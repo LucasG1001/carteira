@@ -1,13 +1,11 @@
-import { usePortfolio } from '../../context/portfolioStore';
-import { usePrivacy } from '../../context/privacyStore';
 import styles from './BigNumbers.module.css';
 
-interface CardDetail {
+export interface CardDetail {
   label: string;
   value: string;
 }
 
-interface BigNumberCardProps {
+export interface BigNumberCardProps {
   label: string;
   value: string;
   side?: { text: string; tone: 'up' | 'down' };
@@ -43,51 +41,7 @@ function BigNumberCard({ label, value, side, details, accentClass, delay }: BigN
   );
 }
 
-export function BigNumbers() {
-  const { data } = usePortfolio();
-  const { formatCurrency: fmt } = usePrivacy();
-
-  if (!data) return null;
-
-  const mesesComProventos = data.monthly_dividends.filter((m) => m.value > 0);
-  const mediaProventos = mesesComProventos.length
-    ? mesesComProventos.reduce((sum, m) => sum + m.value, 0) / mesesComProventos.length
-    : 0;
-
-  const variacao = data.general_variation_percent;
-  const lucro = data.general_profitability_value;
-
-  const cards: BigNumberCardProps[] = [
-    {
-      label: 'Patrimônio Total',
-      value: fmt(data.general_current_value),
-      side: {
-        text: `${variacao >= 0 ? '+' : ''}${variacao}%`,
-        tone: variacao >= 0 ? 'up' : 'down',
-      },
-      details: [{ label: 'Valor Investido', value: fmt(data.general_total_invested) }],
-      accentClass: 'indigo',
-      delay: 0,
-    },
-    {
-      label: 'Lucro Total',
-      value: fmt(lucro),
-      details: [
-        { label: 'Ganho de Capital', value: fmt(data.general_variation_value) },
-        { label: 'Dividendos Recebidos', value: fmt(data.general_total_dividends) },
-      ],
-      accentClass: lucro >= 0 ? 'green' : 'red',
-      delay: 80,
-    },
-    {
-      label: 'Proventos Recebidos',
-      value: fmt(mediaProventos),
-      details: [{ label: 'Total', value: fmt(data.general_total_dividends) }],
-      accentClass: 'amber',
-      delay: 160,
-    },
-  ];
-
+export function BigNumbers({ cards }: { cards: BigNumberCardProps[] }) {
   return (
     <section className={styles.section}>
       <div className={styles.grid}>

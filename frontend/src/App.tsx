@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { PrivacyProvider } from "./context/PrivacyContext";
+import { QuickAddProvider } from "./context/QuickAddContext";
 import { InvestmentsPage } from "./pages/InvestmentsPage/InvestmentsPage";
 import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import styles from "./App.module.css";
@@ -24,6 +25,7 @@ function App() {
   return (
     <BrowserRouter>
       <PrivacyProvider>
+        <QuickAddProvider>
         <div className={styles.layout}>
           <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
           <div
@@ -42,6 +44,7 @@ function App() {
           </footer>
           </div>
         </div>
+        </QuickAddProvider>
       </PrivacyProvider>
     </BrowserRouter>
   );
