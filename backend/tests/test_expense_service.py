@@ -39,6 +39,9 @@ class FakeExpenseRepository:
     async def get_all_by_user(self, user_id: str):
         return self.entries
 
+    async def get_budgets(self, user_id: str):
+        return []
+
 
 class MonthContributionTests(unittest.TestCase):
     def test_single_entry_only_in_its_month(self) -> None:
@@ -96,6 +99,12 @@ class SummaryTests(unittest.IsolatedAsyncioTestCase):
         subcategories = {item.category: item.total for item in summary.by_subcategory}
         self.assertEqual(subcategories["Alimentação"], 100.0)
         self.assertEqual(subcategories["Compras"], 40.0)
+        # receita 300 só no mês atual -> média 12m = 300/12 = 25.0
+        self.assertEqual(summary.avg_monthly_income, 25.0)
+        month_cats = {item.category: item.total for item in summary.month_by_category}
+        self.assertEqual(month_cats["Essenciais"], 100.0)
+        self.assertEqual(month_cats["Lazer"], 40.0)
+        self.assertEqual(summary.budgets, [])
 
 
 if __name__ == "__main__":

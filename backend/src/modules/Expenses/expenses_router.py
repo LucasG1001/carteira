@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.security import get_current_user_id
 from src.modules.Expenses.schemas.expense_schema import (
+    BudgetItem,
+    BudgetUpdateRequest,
     ExpenseCreateRequest,
     ExpenseResponse,
     ExpenseSummaryResponse,
@@ -31,6 +33,16 @@ async def create_expense(
 ):
     service = ExpenseService(db)
     return await service.create_expense(user_id, payload)
+
+
+@router.put("/budgets", response_model=BudgetItem)
+async def set_budget(
+    payload: BudgetUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    service = ExpenseService(db)
+    return await service.set_budget(user_id, payload.category, payload.amount)
 
 
 @router.put("/{expense_id}", response_model=ExpenseResponse)

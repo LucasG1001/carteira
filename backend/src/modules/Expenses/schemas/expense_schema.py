@@ -76,6 +76,18 @@ class CategoryTotal(BaseModel):
     total: float
 
 
+class BudgetItem(BaseModel):
+    category: str
+    amount: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BudgetUpdateRequest(BaseModel):
+    category: str = Field(min_length=1, max_length=100)
+    amount: float = Field(ge=0)
+
+
 class ExpenseSummaryResponse(BaseModel):
     user_id: str
     entries: List[ExpenseResponse]
@@ -84,6 +96,9 @@ class ExpenseSummaryResponse(BaseModel):
     month_expense: float
     month_balance: float
     avg_monthly_expense: float
+    avg_monthly_income: float
     monthly: List[MonthlyExpensePoint]
     by_category: List[CategoryTotal]
     by_subcategory: List[CategoryTotal]
+    month_by_category: List[CategoryTotal]
+    budgets: List[BudgetItem]

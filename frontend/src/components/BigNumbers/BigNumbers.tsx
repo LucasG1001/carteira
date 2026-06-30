@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import styles from './BigNumbers.module.css';
 
 export interface CardDetail {
@@ -41,10 +42,11 @@ function BigNumberCard({ label, value, side, details, accentClass, delay }: BigN
   );
 }
 
-export function BigNumbers({ cards }: { cards: BigNumberCardProps[] }) {
+export function BigNumbers({ cards, prepend }: { cards: BigNumberCardProps[]; prepend?: ReactNode }) {
   return (
     <section className={styles.section}>
       <div className={styles.grid}>
+        {prepend}
         {cards.map((card) => (
           <BigNumberCard key={card.label} {...card} />
         ))}

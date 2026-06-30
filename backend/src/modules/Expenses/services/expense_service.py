@@ -7,6 +7,7 @@ from src.core.exceptions import BusinessException
 from src.modules.Expenses.models.expense_model import Expense
 from src.modules.Expenses.repositories.expense_repository import ExpenseRepository
 from src.modules.Expenses.schemas.expense_schema import (
+    BudgetItem,
     CategoryTotal,
     ExpenseCreateRequest,
     ExpenseResponse,
@@ -83,6 +84,7 @@ class ExpenseService:
         monthly: List[MonthlyExpensePoint] = []
         category_totals: Dict[str, float] = {}
         subcategory_totals: Dict[str, float] = {}
+        month_category_totals: Dict[str, float] = {}
 
         for month_key in months:
             year, month = (int(part) for part in month_key.split("-"))
@@ -99,6 +101,10 @@ class ExpenseService:
                     category_totals[entry.category] = category_totals.get(entry.category, 0.0) + value
                     sub = entry.subcategory or "Outros"
                     subcategory_totals[sub] = subcategory_totals.get(sub, 0.0) + value
+                    if month_key == current_month:
+                        month_category_totals[entry.category] = (
+                            month_category_totals.get(entry.category, 0.0) + value
+                        )
             monthly.append(
                 MonthlyExpensePoint(
                     month=month_key,
@@ -111,6 +117,10 @@ class ExpenseService:
         current = monthly[-1]
         total_expense_window = sum(point.expense for point in monthly)
         avg_monthly_expense = round(total_expense_window / SUMMARY_MONTHS, 2)
+        total_income_window = sum(point.income for point in monthly)
+        avg_monthly_income = round(total_income_window / SUMMARY_MONTHS, 2)
+
+        budgets = await self.repository.get_budgets(user_id)
 
         by_category = sorted(
             (CategoryTotal(category=name, total=round(total, 2)) for name, total in category_totals.items()),
@@ -119,6 +129,11 @@ class ExpenseService:
         )
         by_subcategory = sorted(
             (CategoryTotal(category=name, total=round(total, 2)) for name, total in subcategory_totals.items()),
+            key=lambda item: item.total,
+            reverse=True,
+        )
+        month_by_category = sorted(
+            (CategoryTotal(category=name, total=round(total, 2)) for name, total in month_category_totals.items()),
             key=lambda item: item.total,
             reverse=True,
         )
@@ -131,10 +146,19 @@ class ExpenseService:
             month_expense=current.expense,
             month_balance=current.balance,
             avg_monthly_expense=avg_monthly_expense,
+            avg_monthly_income=avg_monthly_income,
             monthly=monthly,
             by_category=by_category,
             by_subcategory=by_subcategory,
+            month_by_category=month_by_category,
+            budgets=[BudgetItem.model_validate(budget) for budget in budgets],
         )
+
+    async def set_budget(self, user_id: str, category: str, amount: float) -> BudgetItem:
+        budget = await self.repository.upsert_budget(user_id, category.strip(), round(amount, 2))
+        await self.session.commit()
+        await self.session.refresh(budget)
+        return BudgetItem.model_validate(budget)
 
     @staticmethod
     def _last_months(count: int) -> List[str]:

@@ -7,6 +7,7 @@ import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
 import type { TableFilter } from "../../components/ExpensesTable/ExpensesTable";
+import { BudgetCard } from "../../components/BudgetCard/BudgetCard";
 import { ExpensesProvider } from "../../context/ExpensesContext";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
@@ -34,7 +35,7 @@ const SUBCATEGORY_CORES: Record<string, string> = {
 };
 
 function ExpensesDashboard() {
-  const { data, loading, error } = useExpenses();
+  const { data, loading, error, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
   const [donutMode, setDonutMode] = useState<DonutMode>("category");
   const [filter, setFilter] = useState<TableFilter>(null);
@@ -53,28 +54,28 @@ function ExpensesDashboard() {
     return null;
   }
 
+  const prevExpense = data.monthly.length >= 2 ? data.monthly[data.monthly.length - 2].expense : 0;
+  const expenseVariation = prevExpense > 0 ? ((data.month_expense - prevExpense) / prevExpense) * 100 : null;
+
   const cards: BigNumberCardProps[] = [
     {
-      label: "Saldo do mês",
-      value: fmt(data.month_balance),
-      details: [
-        { label: "Receitas", value: fmt(data.month_income) },
-        { label: "Despesas", value: fmt(data.month_expense) },
-      ],
-      accentClass: "indigo",
-      delay: 0,
-    },
-    {
-      label: "Despesas do mês",
+      label: "Despesa do Mês",
       value: fmt(data.month_expense),
+      side:
+        expenseVariation != null
+          ? {
+              text: `${expenseVariation >= 0 ? "+" : ""}${expenseVariation.toFixed(0)}%`,
+              tone: expenseVariation > 0 ? "down" : "up",
+            }
+          : undefined,
       details: [{ label: "Média mensal (12m)", value: fmt(data.avg_monthly_expense) }],
       accentClass: "red",
       delay: 80,
     },
     {
-      label: "Receitas do mês",
+      label: "Receita do Mês",
       value: fmt(data.month_income),
-      details: [{ label: "Saldo do mês", value: fmt(data.month_balance) }],
+      details: [{ label: "Média mensal (12m)", value: fmt(data.avg_monthly_income) }],
       accentClass: "green",
       delay: 160,
     },
@@ -122,7 +123,7 @@ function ExpensesDashboard() {
 
   return (
     <div className={styles.container}>
-      <BigNumbers cards={cards} />
+      <BigNumbers cards={cards} prepend={<BudgetCard summary={data} onSaved={refresh} />} />
       <Charts bar={bar} pie={pie} />
       <ExpensesTable filter={filter} onClearFilter={() => setFilter(null)} />
     </div>

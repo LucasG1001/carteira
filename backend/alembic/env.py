@@ -27,6 +27,7 @@ from src.modules.Upload.models.upload_model import Upload
 from src.modules.Portfolio.models.transaction_model import Transaction
 from src.modules.MarketData.models.market_data_model import StockPrice, TickerInfo
 from src.modules.Expenses.models.expense_model import Expense
+from src.modules.Expenses.models.budget_model import Budget
 
 target_metadata = Base.metadata
 

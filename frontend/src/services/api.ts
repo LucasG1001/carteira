@@ -134,9 +134,17 @@ export type BackendExpenseSummary = {
   month_expense: number;
   month_balance: number;
   avg_monthly_expense: number;
+  avg_monthly_income: number;
   monthly: { month: string; income: number; expense: number; balance: number }[];
   by_category: { category: string; total: number }[];
   by_subcategory: { category: string; total: number }[];
+  month_by_category: { category: string; total: number }[];
+  budgets: BudgetItem[];
+};
+
+export type BudgetItem = {
+  category: string;
+  amount: number;
 };
 
 export type ExpenseCreatePayload = {
@@ -185,4 +193,14 @@ export async function updateExpense(
 
 export async function deleteExpense(id: number): Promise<null> {
   return request(`/expenses/${id}`, { method: 'DELETE' });
+}
+
+export async function setBudget(category: string, amount: number): Promise<BudgetItem> {
+  return request('/expenses/budgets', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ category, amount }),
+  });
 }
