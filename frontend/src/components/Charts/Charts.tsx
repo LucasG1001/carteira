@@ -28,6 +28,7 @@ export interface BarDatum {
   label: string;
   value: number;
   formatted: string;
+  key?: string;
 }
 
 export interface PieDatum {
@@ -43,6 +44,8 @@ export interface BarChartConfig {
   badge?: string;
   color: string;
   data: BarDatum[];
+  onBarClick?: (key: string) => void;
+  activeBar?: string | null;
 }
 
 export interface PieChartConfig {
@@ -147,7 +150,23 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   content={<CustomBarTooltip barColor={bar.color} />}
                 />
-                <Bar dataKey="value" fill="url(#gradientBar)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                <Bar
+                  dataKey="value"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={36}
+                  cursor={bar.onBarClick ? 'pointer' : 'default'}
+                  onClick={(d: { payload?: BarDatum }) => {
+                    if (d.payload?.key) bar.onBarClick?.(d.payload.key);
+                  }}
+                >
+                  {bar.data.map((d, i) => (
+                    <Cell
+                      key={i}
+                      fill="url(#gradientBar)"
+                      fillOpacity={bar.activeBar && bar.activeBar !== d.key ? 0.3 : 1}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

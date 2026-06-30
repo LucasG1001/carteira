@@ -82,7 +82,7 @@ function PortfolioDashboard() {
       delay: 80,
     },
     {
-      label: "Proventos Recebidos",
+      label: "Proventos Recebidos Média (12M)",
       value: fmt(mediaProventos),
       details: [{ label: "Total", value: fmt(data.general_total_dividends) }],
       accentClass: "amber",

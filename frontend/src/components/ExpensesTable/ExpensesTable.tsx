@@ -4,13 +4,14 @@ import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BackendExpenseEntry } from '../../services/api';
 import { ExpenseForm } from '../ExpenseForm/ExpenseForm';
+import { monthLabel } from '../../utils/date';
 import styles from '../AssetsTable/AssetsTable.module.css';
 
 type SortKey = 'date' | 'amount' | 'category';
 type SortDir = 'asc' | 'desc';
 type FilterType = 'Todos' | 'expense' | 'income';
 
-export type TableFilter = { field: 'category' | 'subcategory'; value: string } | null;
+export type TableFilter = { field: 'category' | 'subcategory' | 'month'; value: string } | null;
 
 const FILTERS: { value: FilterType; label: string }[] = [
   { value: 'Todos', label: 'Todos' },
@@ -53,6 +54,7 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
       if (filter) {
         if (filter.field === 'category' && entry.category !== filter.value) return false;
         if (filter.field === 'subcategory' && (entry.subcategory || 'Outros') !== filter.value) return false;
+        if (filter.field === 'month' && !entry.date.startsWith(filter.value)) return false;
       }
       if (search) {
         const term = search.toLowerCase();
@@ -95,7 +97,11 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
             <span className={styles.saldoNeutral}>{fmt(saldo)}</span>
             {filter && (
               <button type="button" className={styles.filterChip} onClick={onClearFilter}>
-                {filter.field === 'category' ? 'Categoria' : 'Subcategoria'}: {filter.value}
+                {filter.field === 'category'
+                  ? `Categoria: ${filter.value}`
+                  : filter.field === 'subcategory'
+                    ? `Subcategoria: ${filter.value}`
+                    : `Mês: ${monthLabel(filter.value)}`}
                 <X size={12} />
               </button>
             )}

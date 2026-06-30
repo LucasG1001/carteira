@@ -135,6 +135,12 @@ export function AssetsTable() {
                 <th onClick={() => handleSort('current_value')}>
                   <span className={styles.thContent}>Valor Atual {renderSortIcon('current_value')}</span>
                 </th>
+                <th onClick={() => handleSort('variation_percent')}>
+                  <span className={styles.thContent}>Variação {renderSortIcon('variation_percent')}</span>
+                </th>
+                <th onClick={() => handleSort('profitability_percent')}>
+                  <span className={styles.thContent}>Rentabilidade {renderSortIcon('profitability_percent')}</span>
+                </th>
                 <th onClick={() => handleSort('total_dividends')}>
                   <span className={styles.thContent}>Proventos {renderSortIcon('total_dividends')}</span>
                 </th>
@@ -167,20 +173,25 @@ export function AssetsTable() {
                     <td className={styles.numCell}>{fmt(asset.average_price)}</td>
                     <td className={styles.numCell}>{fmt(asset.current_price)}</td>
                     <td className={styles.numCell}>{fmt(asset.total_invested)}</td>
+                    <td className={styles.numCell}>
+                      <span className={styles.bold}>{fmt(asset.current_value)}</span>
+                    </td>
                     <td>
                       <div className={styles.lpCell}>
-                        <span className={styles.bold}>{fmt(asset.current_value)}</span>
-                        <span
-                          className={`${styles.lpSub} ${
-                            asset.variation_percent >= 0 ? styles.positive : styles.negative
-                          }`}
-                        >
-                          <span>
-                            {asset.variation_percent >= 0 ? '+' : ''}
-                            {asset.variation_percent.toFixed(2)}%
-                          </span>
-                          <span className={styles.lpSubValue}>{fmt(asset.variation_value)}</span>
+                        <span className={asset.variation_percent >= 0 ? styles.lpPositive : styles.lpNegative}>
+                          {asset.variation_percent >= 0 ? '+' : ''}
+                          {asset.variation_percent.toFixed(2)}%
                         </span>
+                        <span className={styles.lpSubValue}>{fmt(asset.variation_value)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.lpCell}>
+                        <span className={asset.profitability_percent >= 0 ? styles.lpPositive : styles.lpNegative}>
+                          {asset.profitability_percent >= 0 ? '+' : ''}
+                          {asset.profitability_percent.toFixed(2)}%
+                        </span>
+                        <span className={styles.lpSubValue}>{fmt(asset.profitability_value)}</span>
                       </div>
                     </td>
                     <td className={styles.numCell}>

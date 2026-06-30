@@ -89,7 +89,13 @@ function ExpensesDashboard() {
       label: monthLabel(m.month),
       value: m.expense,
       formatted: fmt(m.expense),
+      key: m.month,
     })),
+    onBarClick: (key) =>
+      setFilter((prev) =>
+        prev && prev.field === "month" && prev.value === key ? null : { field: "month", value: key },
+      ),
+    activeBar: filter && filter.field === "month" ? filter.value : null,
   };
 
   const pieSource = donutMode === "category" ? data.by_category : data.by_subcategory;

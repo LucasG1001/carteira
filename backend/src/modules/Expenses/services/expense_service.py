@@ -115,10 +115,10 @@ class ExpenseService:
             )
 
         current = monthly[-1]
-        total_expense_window = sum(point.expense for point in monthly)
-        avg_monthly_expense = round(total_expense_window / SUMMARY_MONTHS, 2)
-        total_income_window = sum(point.income for point in monthly)
-        avg_monthly_income = round(total_income_window / SUMMARY_MONTHS, 2)
+        expense_months = [point.expense for point in monthly if point.expense > 0]
+        income_months = [point.income for point in monthly if point.income > 0]
+        avg_monthly_expense = round(sum(expense_months) / len(expense_months), 2) if expense_months else 0.0
+        avg_monthly_income = round(sum(income_months) / len(income_months), 2) if income_months else 0.0
 
         budgets = await self.repository.get_budgets(user_id)
 
