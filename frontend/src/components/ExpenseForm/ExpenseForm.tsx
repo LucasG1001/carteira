@@ -2,22 +2,23 @@ import { useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
-import { createExpense } from '../../services/api';
-import type { ExpenseEntryType, RecurrenceType } from '../../services/api';
+import { createExpense, deleteExpense, updateExpense } from '../../services/api';
+import type { BackendExpenseEntry, ExpenseEntryType, RecurrenceType } from '../../services/api';
 import styles from './ExpenseForm.module.css';
 
-const EXPENSE_CATEGORIES = [
+const CATEGORIES = ['Essenciais', 'Lazer'];
+const SUBCATEGORIES = [
+  'Moradia',
   'Alimentação',
   'Transporte',
-  'Moradia',
-  'Contas',
   'Saúde',
-  'Lazer',
   'Educação',
   'Compras',
+  'Serviços',
+  'Finanças',
+  'Pets',
   'Outros',
 ];
-const INCOME_CATEGORIES = ['Salário', 'Freelance', 'Investimentos', 'Presente', 'Outros'];
 const PAYMENT_METHODS = ['Dinheiro', 'Pix', 'Débito', 'Crédito', 'Boleto', 'Transferência'];
 const RECURRENCES: { value: RecurrenceType; label: string }[] = [
   { value: 'monthly', label: 'Mensal' },
@@ -33,55 +34,69 @@ function formatBRL(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-export function ExpenseForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => Promise<void> | void }) {
-  const [type, setType] = useState<ExpenseEntryType>('expense');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
-  const [date, setDate] = useState(todayValue());
-  const [paymentMethod, setPaymentMethod] = useState('Pix');
-  const [installments, setInstallments] = useState('1');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrence, setRecurrence] = useState<RecurrenceType>('monthly');
-  const [place, setPlace] = useState('');
-  const [address, setAddress] = useState('');
-  const [notes, setNotes] = useState('');
-  const [tags, setTags] = useState('');
+interface ExpenseFormProps {
+  onClose: () => void;
+  onSaved: () => Promise<void> | void;
+  mode?: 'create' | 'edit';
+  initialData?: BackendExpenseEntry;
+  onDeleted?: () => Promise<void> | void;
+}
+
+export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, onDeleted }: ExpenseFormProps) {
+  const [type, setType] = useState<ExpenseEntryType>(initialData?.type ?? 'expense');
+  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
+  const [description, setDescription] = useState(initialData?.description ?? '');
+  const [category, setCategory] = useState(
+    initialData && initialData.type === 'expense' && initialData.category ? initialData.category : CATEGORIES[0],
+  );
+  const [subcategory, setSubcategory] = useState(initialData?.subcategory ?? 'Outros');
+  const [date, setDate] = useState(initialData?.date ?? todayValue());
+  const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method ?? 'Pix');
+  const [installments, setInstallments] = useState(initialData ? String(initialData.installments) : '1');
+  const [isRecurring, setIsRecurring] = useState(initialData?.is_recurring ?? false);
+  const [recurrence, setRecurrence] = useState<RecurrenceType>(
+    (initialData?.recurrence as RecurrenceType) ?? 'monthly',
+  );
+  const [place, setPlace] = useState(initialData?.place ?? '');
+  const [address, setAddress] = useState(initialData?.address ?? '');
+  const [notes, setNotes] = useState(initialData?.notes ?? '');
+  const [tags, setTags] = useState(initialData?.tags ?? '');
 
   const [expanded, setExpanded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  const isEdit = mode === 'edit' && initialData != null;
   const amountNumber = Number(amount);
   const installmentsNumber = Math.max(1, Number(installments) || 1);
-  const valid = amountNumber > 0 && category.length > 0 && date.length > 0;
-
-  const changeType = (next: ExpenseEntryType) => {
-    setType(next);
-    setCategory(next === 'expense' ? EXPENSE_CATEGORIES[0] : INCOME_CATEGORIES[0]);
-  };
+  const valid = amountNumber > 0 && date.length > 0;
 
   const handleSubmit = async () => {
     if (!valid) return;
     setSubmitting(true);
     setError(null);
+    const payload = {
+      type,
+      amount: amountNumber,
+      category: type === 'expense' ? category : 'Receita',
+      subcategory: type === 'expense' ? subcategory : null,
+      date,
+      description: description.trim() || null,
+      payment_method: paymentMethod || null,
+      installments: installmentsNumber,
+      is_recurring: isRecurring,
+      recurrence: isRecurring ? recurrence : null,
+      place: place.trim() || null,
+      address: address.trim() || null,
+      notes: notes.trim() || null,
+      tags: tags.trim() || null,
+    };
     try {
-      await createExpense({
-        type,
-        amount: amountNumber,
-        category,
-        date,
-        description: description.trim() || null,
-        payment_method: paymentMethod || null,
-        installments: installmentsNumber,
-        is_recurring: isRecurring,
-        recurrence: isRecurring ? recurrence : null,
-        place: place.trim() || null,
-        address: address.trim() || null,
-        notes: notes.trim() || null,
-        tags: tags.trim() || null,
-      });
+      if (isEdit) {
+        await updateExpense(initialData.id, payload);
+      } else {
+        await createExpense(payload);
+      }
       await onSaved();
       onClose();
     } catch (err) {
@@ -90,29 +105,44 @@ export function ExpenseForm({ onClose, onSaved }: { onClose: () => void; onSaved
     }
   };
 
+  const handleDelete = async () => {
+    if (!isEdit) return;
+    if (!window.confirm(`Excluir "${initialData.description || initialData.category}"?`)) return;
+    setSubmitting(true);
+    try {
+      await deleteExpense(initialData.id);
+      await onDeleted?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível excluir o lançamento.');
+      setSubmitting(false);
+    }
+  };
+
   const onAmount = (event: ChangeEvent<HTMLInputElement>) => setAmount(event.target.value);
 
   return (
     <Modal
-      title="Novo lançamento"
-      subtitle="Cadastro rápido — abra 'Mais opções' para detalhar."
+      title={isEdit ? 'Editar lançamento' : 'Novo lançamento'}
+      subtitle={isEdit ? undefined : "Cadastro rápido — abra 'Mais opções' para detalhar."}
       onClose={onClose}
       onSubmit={handleSubmit}
       submitDisabled={!valid}
       submitting={submitting}
+      onDelete={isEdit ? handleDelete : undefined}
     >
       <div className={styles.typeToggle}>
         <button
           type="button"
           className={`${styles.typeButton} ${type === 'expense' ? styles.typeExpense : ''}`}
-          onClick={() => changeType('expense')}
+          onClick={() => setType('expense')}
         >
           Despesa
         </button>
         <button
           type="button"
           className={`${styles.typeButton} ${type === 'income' ? styles.typeIncome : ''}`}
-          onClick={() => changeType('income')}
+          onClick={() => setType('income')}
         >
           Receita
         </button>
@@ -155,32 +185,41 @@ export function ExpenseForm({ onClose, onSaved }: { onClose: () => void; onSaved
         />
       </label>
 
-      <div className={styles.row}>
-        <label className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Categoria</span>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={styles.input}>
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Forma de pagamento</span>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className={styles.input}
-          >
-            {PAYMENT_METHODS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      {type === 'expense' && (
+        <div className={styles.row}>
+          <label className={`${styles.field} ${styles.grow}`}>
+            <span className={styles.label}>Categoria</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)} className={styles.input}>
+              {CATEGORIES.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={`${styles.field} ${styles.grow}`}>
+            <span className={styles.label}>Subcategoria</span>
+            <select value={subcategory} onChange={(e) => setSubcategory(e.target.value)} className={styles.input}>
+              {SUBCATEGORIES.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
+      <label className={styles.field}>
+        <span className={styles.label}>Forma de pagamento</span>
+        <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={styles.input}>
+          {PAYMENT_METHODS.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <button
         type="button"

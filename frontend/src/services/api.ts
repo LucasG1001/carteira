@@ -111,6 +111,7 @@ export type BackendExpenseEntry = {
   type: ExpenseEntryType;
   amount: number;
   category: string;
+  subcategory: string | null;
   date: string;
   description: string | null;
   payment_method: string | null;
@@ -135,12 +136,14 @@ export type BackendExpenseSummary = {
   avg_monthly_expense: number;
   monthly: { month: string; income: number; expense: number; balance: number }[];
   by_category: { category: string; total: number }[];
+  by_subcategory: { category: string; total: number }[];
 };
 
 export type ExpenseCreatePayload = {
   type: ExpenseEntryType;
   amount: number;
   category: string;
+  subcategory?: string | null;
   date: string;
   description?: string | null;
   payment_method?: string | null;
@@ -160,6 +163,19 @@ export async function getExpensesSummary(): Promise<BackendExpenseSummary> {
 export async function createExpense(payload: ExpenseCreatePayload): Promise<BackendExpenseEntry> {
   return request('/expenses/', {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateExpense(
+  id: number,
+  payload: Partial<ExpenseCreatePayload>,
+): Promise<BackendExpenseEntry> {
+  return request(`/expenses/${id}`, {
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },

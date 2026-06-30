@@ -48,6 +48,11 @@ export interface BarChartConfig {
 export interface PieChartConfig {
   title: string;
   data: PieDatum[];
+  onSliceClick?: (name: string) => void;
+  activeSlice?: string | null;
+  modes?: { key: string; label: string }[];
+  activeMode?: string;
+  onModeChange?: (key: string) => void;
 }
 
 interface PieTooltipSlice {
@@ -151,6 +156,20 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
         <div className={`${styles.chartCard} ${styles.pieCard} ${styles.animateCard}`} style={{ animationDelay: '400ms' }}>
           <div className={styles.chartHeader}>
             <h3 className={styles.chartTitle}>{pie.title}</h3>
+            {pie.modes && pie.onModeChange && (
+              <div className={styles.modeToggle}>
+                {pie.modes.map((mode) => (
+                  <button
+                    key={mode.key}
+                    type="button"
+                    className={`${styles.modeButton} ${pie.activeMode === mode.key ? styles.modeButtonActive : ''}`}
+                    onClick={() => pie.onModeChange?.(mode.key)}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className={styles.chartBody} style={{ display: 'flex', justifyContent: 'center' }}>
             <ResponsiveContainer width="100%" height={300}>
@@ -166,9 +185,18 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                   strokeWidth={2}
                   stroke="#0a0a0f"
                 >
-                  {pie.data.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
+                  {pie.data.map((entry, i) => {
+                    const dimmed = pie.activeSlice != null && pie.activeSlice !== entry.name;
+                    return (
+                      <Cell
+                        key={i}
+                        fill={entry.color}
+                        fillOpacity={dimmed ? 0.3 : 1}
+                        cursor={pie.onSliceClick ? 'pointer' : 'default'}
+                        onClick={pie.onSliceClick ? () => pie.onSliceClick?.(entry.name) : undefined}
+                      />
+                    );
+                  })}
                 </Pie>
                 <Tooltip content={<CustomPieTooltip />} />
                 <Legend content={renderCustomLegend} />

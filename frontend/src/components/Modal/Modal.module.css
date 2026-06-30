@@ -89,9 +89,31 @@
 
 .footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.7rem;
   padding-top: 0.25rem;
+}
+
+.footerRight {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.deleteButton {
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ffb4b4;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.deleteButton:hover {
+  background: rgba(239, 68, 68, 0.18);
+  transform: translateY(-1px);
 }
 
 .cancelButton,

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { ExpenseActions } from "../../components/ExpenseActions/ExpenseActions";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
@@ -5,27 +6,38 @@ import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers"
 import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
+import type { TableFilter } from "../../components/ExpensesTable/ExpensesTable";
 import { ExpensesProvider } from "../../context/ExpensesContext";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
 import { monthLabel } from "../../utils/date";
 import styles from "./ExpensesPage.module.css";
 
+type DonutMode = "category" | "subcategory";
+
 const CATEGORY_CORES: Record<string, string> = {
+  Essenciais: "#6366f1",
+  Lazer: "#ec4899",
+};
+
+const SUBCATEGORY_CORES: Record<string, string> = {
+  Moradia: "#6366f1",
   Alimentação: "#ef4444",
   Transporte: "#f59e0b",
-  Moradia: "#6366f1",
-  Contas: "#22d3ee",
   Saúde: "#10b981",
-  Lazer: "#ec4899",
   Educação: "#8b5cf6",
   Compras: "#f97316",
+  Serviços: "#22d3ee",
+  Finanças: "#14b8a6",
+  Pets: "#ec4899",
   Outros: "#94a3b8",
 };
 
 function ExpensesDashboard() {
   const { data, loading, error } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
+  const [donutMode, setDonutMode] = useState<DonutMode>("category");
+  const [filter, setFilter] = useState<TableFilter>(null);
 
   if (loading) {
     return <div className={styles.state}>Carregando dados de gastos...</div>;
@@ -79,23 +91,40 @@ function ExpensesDashboard() {
     })),
   };
 
-  const totalCategorias = data.by_category.reduce((sum, item) => sum + item.total, 0);
+  const pieSource = donutMode === "category" ? data.by_category : data.by_subcategory;
+  const colorMap = donutMode === "category" ? CATEGORY_CORES : SUBCATEGORY_CORES;
+  const totalPie = pieSource.reduce((sum, item) => sum + item.total, 0);
+
   const pie: PieChartConfig = {
-    title: "Gasto por Categoria",
-    data: data.by_category.map((item) => ({
+    title: donutMode === "category" ? "Gastos por Categoria" : "Gastos por Subcategoria",
+    data: pieSource.map((item) => ({
       name: item.category,
       value: item.total,
-      percent: totalCategorias > 0 ? (item.total / totalCategorias) * 100 : 0,
-      color: CATEGORY_CORES[item.category] || "#94a3b8",
+      percent: totalPie > 0 ? (item.total / totalPie) * 100 : 0,
+      color: colorMap[item.category] || "#94a3b8",
       formatted: fmt(item.total),
     })),
+    modes: [
+      { key: "category", label: "Categoria" },
+      { key: "subcategory", label: "Subcategoria" },
+    ],
+    activeMode: donutMode,
+    onModeChange: (key) => {
+      setDonutMode(key as DonutMode);
+      setFilter(null);
+    },
+    onSliceClick: (name) =>
+      setFilter((prev) =>
+        prev && prev.field === donutMode && prev.value === name ? null : { field: donutMode, value: name },
+      ),
+    activeSlice: filter && filter.field === donutMode ? filter.value : null,
   };
 
   return (
     <div className={styles.container}>
       <BigNumbers cards={cards} />
       <Charts bar={bar} pie={pie} />
-      <ExpensesTable />
+      <ExpensesTable filter={filter} onClearFilter={() => setFilter(null)} />
     </div>
   );
 }

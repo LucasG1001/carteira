@@ -11,11 +11,29 @@ class ExpenseCreateRequest(BaseModel):
     type: ExpenseType = "expense"
     amount: float = Field(gt=0)
     category: str = Field(min_length=1, max_length=100)
+    subcategory: Optional[str] = Field(default=None, max_length=50)
     date: date
     description: Optional[str] = Field(default=None, max_length=255)
     payment_method: Optional[str] = Field(default=None, max_length=30)
     installments: int = Field(default=1, ge=1, le=120)
     is_recurring: bool = False
+    recurrence: Optional[RecurrenceType] = None
+    place: Optional[str] = Field(default=None, max_length=150)
+    address: Optional[str] = Field(default=None, max_length=255)
+    notes: Optional[str] = None
+    tags: Optional[str] = Field(default=None, max_length=255)
+
+
+class ExpenseUpdateRequest(BaseModel):
+    type: Optional[ExpenseType] = None
+    amount: Optional[float] = Field(default=None, gt=0)
+    category: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    subcategory: Optional[str] = Field(default=None, max_length=50)
+    date: Optional[date] = None
+    description: Optional[str] = Field(default=None, max_length=255)
+    payment_method: Optional[str] = Field(default=None, max_length=30)
+    installments: Optional[int] = Field(default=None, ge=1, le=120)
+    is_recurring: Optional[bool] = None
     recurrence: Optional[RecurrenceType] = None
     place: Optional[str] = Field(default=None, max_length=150)
     address: Optional[str] = Field(default=None, max_length=255)
@@ -29,6 +47,7 @@ class ExpenseResponse(BaseModel):
     type: ExpenseType
     amount: float
     category: str
+    subcategory: Optional[str] = None
     date: date
     description: Optional[str] = None
     payment_method: Optional[str] = None
@@ -67,3 +86,4 @@ class ExpenseSummaryResponse(BaseModel):
     avg_monthly_expense: float
     monthly: List[MonthlyExpensePoint]
     by_category: List[CategoryTotal]
+    by_subcategory: List[CategoryTotal]

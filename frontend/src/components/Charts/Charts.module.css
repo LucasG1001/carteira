@@ -54,6 +54,29 @@
   color: var(--text-primary);
 }
 
+.modeToggle {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 3px;
+}
+
+.modeButton {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.modeButtonActive {
+  background: var(--color-accent);
+  color: #fff;
+}
+
 .chartBadge {
   display: flex;
   align-items: center;

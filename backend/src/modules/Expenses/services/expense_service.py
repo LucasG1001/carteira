@@ -11,6 +11,7 @@ from src.modules.Expenses.schemas.expense_schema import (
     ExpenseCreateRequest,
     ExpenseResponse,
     ExpenseSummaryResponse,
+    ExpenseUpdateRequest,
     MonthlyExpensePoint,
 )
 
@@ -28,6 +29,7 @@ class ExpenseService:
             type=payload.type,
             amount=round(payload.amount, 2),
             category=payload.category.strip(),
+            subcategory=payload.subcategory or ("Outros" if payload.type == "expense" else None),
             date=payload.date,
             description=payload.description.strip() if payload.description else None,
             payment_method=payload.payment_method,
@@ -40,6 +42,28 @@ class ExpenseService:
             tags=payload.tags.strip() if payload.tags else None,
         )
         expense = await self.repository.create(expense)
+        await self.session.commit()
+        await self.session.refresh(expense)
+        return ExpenseResponse.model_validate(expense)
+
+    async def update_expense(
+        self, user_id: str, expense_id: int, payload: ExpenseUpdateRequest
+    ) -> ExpenseResponse:
+        expense = await self.repository.get_by_id(expense_id, user_id)
+        if not expense:
+            raise BusinessException(404, f"Lançamento {expense_id} não encontrado")
+
+        data = payload.model_dump(exclude_unset=True)
+        for field in ("type", "date", "installments", "is_recurring", "recurrence"):
+            if field in data:
+                setattr(expense, field, data[field])
+        if "amount" in data:
+            expense.amount = round(data["amount"], 2)
+        for field in ("category", "subcategory", "description", "payment_method", "place", "address", "notes", "tags"):
+            if field in data:
+                value = data[field]
+                setattr(expense, field, value.strip() if isinstance(value, str) else value)
+
         await self.session.commit()
         await self.session.refresh(expense)
         return ExpenseResponse.model_validate(expense)
@@ -58,6 +82,7 @@ class ExpenseService:
 
         monthly: List[MonthlyExpensePoint] = []
         category_totals: Dict[str, float] = {}
+        subcategory_totals: Dict[str, float] = {}
 
         for month_key in months:
             year, month = (int(part) for part in month_key.split("-"))
@@ -72,6 +97,8 @@ class ExpenseService:
                 else:
                     expense += value
                     category_totals[entry.category] = category_totals.get(entry.category, 0.0) + value
+                    sub = entry.subcategory or "Outros"
+                    subcategory_totals[sub] = subcategory_totals.get(sub, 0.0) + value
             monthly.append(
                 MonthlyExpensePoint(
                     month=month_key,
@@ -90,6 +117,11 @@ class ExpenseService:
             key=lambda item: item.total,
             reverse=True,
         )
+        by_subcategory = sorted(
+            (CategoryTotal(category=name, total=round(total, 2)) for name, total in subcategory_totals.items()),
+            key=lambda item: item.total,
+            reverse=True,
+        )
 
         return ExpenseSummaryResponse(
             user_id=user_id,
@@ -101,6 +133,7 @@ class ExpenseService:
             avg_monthly_expense=avg_monthly_expense,
             monthly=monthly,
             by_category=by_category,
+            by_subcategory=by_subcategory,
         )
 
     @staticmethod

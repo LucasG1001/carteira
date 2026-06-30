@@ -7,6 +7,7 @@ from src.modules.Expenses.schemas.expense_schema import (
     ExpenseCreateRequest,
     ExpenseResponse,
     ExpenseSummaryResponse,
+    ExpenseUpdateRequest,
 )
 from src.modules.Expenses.services.expense_service import ExpenseService
 
@@ -30,6 +31,17 @@ async def create_expense(
 ):
     service = ExpenseService(db)
     return await service.create_expense(user_id, payload)
+
+
+@router.put("/{expense_id}", response_model=ExpenseResponse)
+async def update_expense(
+    expense_id: int,
+    payload: ExpenseUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    service = ExpenseService(db)
+    return await service.update_expense(user_id, expense_id, payload)
 
 
 @router.delete("/{expense_id}", status_code=204)

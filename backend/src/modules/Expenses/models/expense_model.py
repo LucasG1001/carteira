@@ -13,6 +13,7 @@ class Expense(Base):
     description = Column(String(255), nullable=True)
     amount = Column(Float, nullable=False)
     category = Column(String(100), nullable=False)
+    subcategory = Column(String(50), nullable=True)
     date = Column(Date, nullable=False, index=True)
     payment_method = Column(String(30), nullable=True)
     installments = Column(Integer, nullable=False, default=1)

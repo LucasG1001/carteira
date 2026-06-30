@@ -11,6 +11,8 @@ interface ModalProps {
   submitLabel?: string;
   submitDisabled?: boolean;
   submitting?: boolean;
+  onDelete?: () => void;
+  deleteLabel?: string;
   children: ReactNode;
 }
 
@@ -22,6 +24,8 @@ export function Modal({
   submitLabel = 'Salvar',
   submitDisabled = false,
   submitting = false,
+  onDelete,
+  deleteLabel = 'Excluir',
   children,
 }: ModalProps) {
   useEffect(() => {
@@ -57,12 +61,21 @@ export function Modal({
         <div className={styles.body}>{children}</div>
 
         <div className={styles.footer}>
-          <button type="button" className={styles.cancelButton} onClick={onClose}>
-            Cancelar
-          </button>
-          <button type="submit" className={styles.saveButton} disabled={submitDisabled || submitting}>
-            {submitting ? 'Salvando...' : submitLabel}
-          </button>
+          {onDelete ? (
+            <button type="button" className={styles.deleteButton} onClick={onDelete}>
+              {deleteLabel}
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className={styles.footerRight}>
+            <button type="button" className={styles.cancelButton} onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className={styles.saveButton} disabled={submitDisabled || submitting}>
+              {submitting ? 'Salvando...' : submitLabel}
+            </button>
+          </div>
         </div>
       </form>
     </div>

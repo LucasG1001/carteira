@@ -13,7 +13,8 @@ def make_entry(**overrides) -> SimpleNamespace:
         user_id="user-1",
         type="expense",
         amount=100.0,
-        category="Alimentação",
+        category="Essenciais",
+        subcategory="Outros",
         date=date.today(),
         description=None,
         payment_method=None,
@@ -74,9 +75,9 @@ class SummaryTests(unittest.IsolatedAsyncioTestCase):
     async def test_current_month_totals_and_balance(self) -> None:
         today = date.today()
         entries = [
-            make_entry(id=1, type="expense", amount=100.0, category="Alimentação", date=today),
-            make_entry(id=2, type="income", amount=300.0, category="Salário", date=today),
-            make_entry(id=3, type="expense", amount=120.0, category="Compras", date=today, installments=3),
+            make_entry(id=1, type="expense", amount=100.0, category="Essenciais", subcategory="Alimentação", date=today),
+            make_entry(id=2, type="income", amount=300.0, category="Receita", subcategory=None, date=today),
+            make_entry(id=3, type="expense", amount=120.0, category="Lazer", subcategory="Compras", date=today, installments=3),
         ]
         service = ExpenseService(session=None)
         service.repository = FakeExpenseRepository(entries)
@@ -90,8 +91,11 @@ class SummaryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(summary.entries), 3)
         self.assertEqual(len(summary.monthly), 12)
         categories = {item.category: item.total for item in summary.by_category}
-        self.assertEqual(categories["Alimentação"], 100.0)
-        self.assertEqual(categories["Compras"], 40.0)
+        self.assertEqual(categories["Essenciais"], 100.0)
+        self.assertEqual(categories["Lazer"], 40.0)
+        subcategories = {item.category: item.total for item in summary.by_subcategory}
+        self.assertEqual(subcategories["Alimentação"], 100.0)
+        self.assertEqual(subcategories["Compras"], 40.0)
 
 
 if __name__ == "__main__":
