@@ -44,7 +44,7 @@ interface ExpenseFormProps {
 
 export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, onDeleted }: ExpenseFormProps) {
   const [type, setType] = useState<ExpenseEntryType>(initialData?.type ?? 'expense');
-  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
+  const [amountCents, setAmountCents] = useState(initialData ? Math.round(initialData.amount * 100) : 0);
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [category, setCategory] = useState(
     initialData && initialData.type === 'expense' && initialData.category ? initialData.category : CATEGORIES[0],
@@ -67,9 +67,9 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const [error, setError] = useState<string | null>(null);
 
   const isEdit = mode === 'edit' && initialData != null;
-  const amountNumber = Number(amount);
+  const amountNumber = amountCents / 100;
   const installmentsNumber = Math.max(1, Number(installments) || 1);
-  const valid = amountNumber > 0 && date.length > 0;
+  const valid = amountNumber > 0 && date.length > 0 && description.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!valid) return;
@@ -119,7 +119,10 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     }
   };
 
-  const onAmount = (event: ChangeEvent<HTMLInputElement>) => setAmount(event.target.value);
+  const onAmount = (event: ChangeEvent<HTMLInputElement>) => {
+    const digits = event.target.value.replace(/\D/g, '');
+    setAmountCents(digits ? parseInt(digits, 10) : 0);
+  };
 
   return (
     <Modal
@@ -152,13 +155,12 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
         <label className={`${styles.field} ${styles.grow}`}>
           <span className={styles.label}>Valor</span>
           <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={amount}
+            type="text"
+            inputMode="numeric"
+            value={formatBRL(amountNumber)}
             onChange={onAmount}
             className={styles.input}
-            placeholder="0,00"
+            placeholder="R$ 0,00"
             required
           />
         </label>
@@ -175,13 +177,14 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       </div>
 
       <label className={styles.field}>
-        <span className={styles.label}>Descrição</span>
+        <span className={styles.label}>Descrição *</span>
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className={styles.input}
           placeholder="Ex: Mercado, Aluguel, Salário..."
           maxLength={255}
+          required
         />
       </label>
 

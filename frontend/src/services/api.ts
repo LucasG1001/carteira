@@ -64,7 +64,18 @@ async function request(url: string, options: RequestInit = {}) {
     try {
       const errorData = await response.json();
       console.error('API Error Response:', errorData);
-      throw new Error(`API error: ${response.status} - ${errorData.detail || errorData.message || 'Unknown error'}`);
+      const base = errorData.detail || errorData.message || 'Unknown error';
+      let fields = '';
+      if (Array.isArray(errorData.details)) {
+        fields = errorData.details
+          .map((d: { loc?: (string | number)[]; msg?: string }) => {
+            const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : undefined;
+            return field ? `${field}: ${d.msg ?? ''}`.trim() : d.msg;
+          })
+          .filter(Boolean)
+          .join('; ');
+      }
+      throw new Error(`API error: ${response.status} - ${base}${fields ? ` (${fields})` : ''}`);
     } catch (e) {
       if (e instanceof Error && e.message.startsWith('API error')) throw e;
       throw new Error(`API error: ${response.status}`);

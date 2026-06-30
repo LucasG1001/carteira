@@ -133,7 +133,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
           </div>
           <div className={styles.chartBody}>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={bar.data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <BarChart data={bar.data} margin={{ top: 10, right: 2, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradientBar" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={bar.color} stopOpacity={0.95} />
@@ -142,7 +142,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e1e30" vertical={false} />
                 <XAxis dataKey="label" tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={formatAxis} tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} width={70} />
+                <YAxis tickFormatter={formatAxis} tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} width={48} />
                 <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   content={<CustomBarTooltip barColor={bar.color} />}

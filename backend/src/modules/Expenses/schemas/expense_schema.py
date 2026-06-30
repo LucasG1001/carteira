@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,7 +12,7 @@ class ExpenseCreateRequest(BaseModel):
     amount: float = Field(gt=0)
     category: str = Field(min_length=1, max_length=100)
     subcategory: Optional[str] = Field(default=None, max_length=50)
-    date: date
+    date: date_type
     description: Optional[str] = Field(default=None, max_length=255)
     payment_method: Optional[str] = Field(default=None, max_length=30)
     installments: int = Field(default=1, ge=1, le=120)
@@ -29,7 +29,7 @@ class ExpenseUpdateRequest(BaseModel):
     amount: Optional[float] = Field(default=None, gt=0)
     category: Optional[str] = Field(default=None, min_length=1, max_length=100)
     subcategory: Optional[str] = Field(default=None, max_length=50)
-    date: Optional[date] = None
+    date: Optional[date_type] = None
     description: Optional[str] = Field(default=None, max_length=255)
     payment_method: Optional[str] = Field(default=None, max_length=30)
     installments: Optional[int] = Field(default=None, ge=1, le=120)
@@ -48,7 +48,7 @@ class ExpenseResponse(BaseModel):
     amount: float
     category: str
     subcategory: Optional[str] = None
-    date: date
+    date: date_type
     description: Optional[str] = None
     payment_method: Optional[str] = None
     installments: int

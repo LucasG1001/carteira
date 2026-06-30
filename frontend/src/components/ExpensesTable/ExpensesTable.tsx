@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, ArrowUpDown, Search, Filter, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUpCircle, ArrowDownCircle, Search, Filter, X } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BackendExpenseEntry } from '../../services/api';
@@ -91,10 +91,8 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
         <div className={styles.cardHeader}>
           <div className={styles.titleRow}>
             <h3 className={styles.title}>Detalhe das compras</h3>
-            <span className={styles.count}>{entries.length} lançamentos</span>
-            <span className={`${styles.saldoValue} ${saldo >= 0 ? styles.positive : styles.negative}`}>
-              Saldo: {fmt(saldo)}
-            </span>
+            <span className={styles.count}>{entries.length}</span>
+            <span className={styles.saldoNeutral}>{fmt(saldo)}</span>
             {filter && (
               <button type="button" className={styles.filterChip} onClick={onClearFilter}>
                 {filter.field === 'category' ? 'Categoria' : 'Subcategoria'}: {filter.value}
@@ -137,11 +135,17 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th>
+                  <span className={styles.thContent}>Descrição</span>
+                </th>
                 <th onClick={() => handleSort('date')}>
                   <span className={styles.thContent}>Data {renderSortIcon('date')}</span>
                 </th>
+                <th onClick={() => handleSort('amount')}>
+                  <span className={styles.thContent}>Valor {renderSortIcon('amount')}</span>
+                </th>
                 <th>
-                  <span className={styles.thContent}>Descrição</span>
+                  <span className={styles.thContent}>Tipo</span>
                 </th>
                 <th onClick={() => handleSort('category')}>
                   <span className={styles.thContent}>Categoria {renderSortIcon('category')}</span>
@@ -155,12 +159,6 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
                 <th>
                   <span className={styles.thContent}>Parcelas</span>
                 </th>
-                <th>
-                  <span className={styles.thContent}>Tipo</span>
-                </th>
-                <th onClick={() => handleSort('amount')}>
-                  <span className={styles.thContent}>Valor {renderSortIcon('amount')}</span>
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -171,9 +169,24 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
                   style={{ animationDelay: `${index * 30}ms` }}
                   onClick={() => setEditing(entry)}
                 >
-                  <td className={styles.numCell}>{formatDate(entry.date)}</td>
-                  <td>
+                  <td className={styles.descCell}>
                     <span className={styles.bold}>{entry.description || '—'}</span>
+                  </td>
+                  <td className={styles.numCell}>{formatDate(entry.date)}</td>
+                  <td className={styles.numCell}>
+                    <span className={entry.type === 'income' ? styles.positive : styles.negative}>
+                      {entry.type === 'income' ? '+' : '-'}
+                      {fmt(entry.amount)}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={styles.typeIcon} title={entry.type === 'income' ? 'Receita' : 'Despesa'}>
+                      {entry.type === 'income' ? (
+                        <ArrowUpCircle size={18} className={styles.positive} aria-label="Receita" />
+                      ) : (
+                        <ArrowDownCircle size={18} className={styles.negative} aria-label="Despesa" />
+                      )}
+                    </span>
                   </td>
                   <td>{entry.type === 'income' ? '—' : entry.category}</td>
                   <td>{entry.type === 'income' ? '—' : entry.subcategory || 'Outros'}</td>
@@ -184,17 +197,6 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
                       : entry.installments > 1
                         ? `${entry.installments}x`
                         : '—'}
-                  </td>
-                  <td>
-                    <span className={entry.type === 'income' ? styles.positive : styles.negative}>
-                      {entry.type === 'income' ? 'Receita' : 'Despesa'}
-                    </span>
-                  </td>
-                  <td className={styles.numCell}>
-                    <span className={entry.type === 'income' ? styles.positive : styles.negative}>
-                      {entry.type === 'income' ? '+' : '-'}
-                      {fmt(entry.amount)}
-                    </span>
                   </td>
                 </tr>
               ))}
