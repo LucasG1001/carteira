@@ -16,11 +16,9 @@ class Settings(BaseSettings):
 
     MARKET_DATA_TIMEZONE: str = "America/Sao_Paulo"
     STOCK_SYNC_START_HOUR: int = 10
-    STOCK_SYNC_END_HOUR: int = 17
-    STOCK_SYNC_MAX_WORKERS: int = 4
+    STOCK_SYNC_END_HOUR: int = 18
     STOCK_SYNC_SUBMISSION_DELAY_SECONDS: float = 1.0
     STOCK_SYNC_LOG_FILE: str = "app.log"
-    STOCK_SYNC_TICKERS_FILE: str = "tickers.txt"
     
     @property
     def _credentials(self) -> str:
@@ -39,10 +37,6 @@ class Settings(BaseSettings):
     @property
     def stock_sync_log_path(self) -> Path:
         return Path(self.STOCK_SYNC_LOG_FILE)
-
-    @property
-    def stock_sync_tickers_path(self) -> Path:
-        return Path(self.STOCK_SYNC_TICKERS_FILE)
 
     # Support reading from a .env file
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

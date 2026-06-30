@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY src ./src
-COPY tickers.txt ./
 COPY docker-entrypoint.sh ./
 
 RUN useradd --create-home --uid 1000 app \

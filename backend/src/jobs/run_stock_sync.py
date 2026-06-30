@@ -47,9 +47,7 @@ def main() -> None:
         timezone_name=settings.MARKET_DATA_TIMEZONE,
         start_hour=settings.STOCK_SYNC_START_HOUR,
         end_hour=settings.STOCK_SYNC_END_HOUR,
-        max_workers=settings.STOCK_SYNC_MAX_WORKERS,
         submission_delay_seconds=settings.STOCK_SYNC_SUBMISSION_DELAY_SECONDS,
-        tickers_path=settings.stock_sync_tickers_path,
     )
 
     if args.once:

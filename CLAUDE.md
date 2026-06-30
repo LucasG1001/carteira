@@ -27,7 +27,7 @@ npm run dev                                # http://localhost:5173 (proxy /api �
 ```bash
 cd backend
 python -m src.jobs.run_stock_sync --once --force   # sincroniza uma vez (ignora janela de mercado)
-python -m src.jobs.run_stock_sync                  # roda agendado (de hora em hora, em pregão)
+python -m src.jobs.run_stock_sync                  # roda agendado (a cada 30 min, em pregão)
 ```
 
 ### Build & Lint
@@ -136,8 +136,9 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 
 ## External Integration: Yahoo Finance
 
-- Cotações via `yfinance`; tickers em `backend/tickers.txt` (sufixo `.SA` para B3)
-- Worker roda de hora em hora dentro da janela de pregão (`STOCK_SYNC_START_HOUR`–`END_HOUR`, timezone `America/Sao_Paulo`)
+- Cotações via `yfinance`; os tickers são derivados das transações da carteira (sufixo `.SA` para B3) — só busca o que o usuário possui
+- Busca em **lote único** (`yf.download`) por execução; o preço atual vem do close intraday do candle do dia
+- Worker roda **a cada 30 min** dentro da janela de pregão (`STOCK_SYNC_START_HOUR`–`END_HOUR`, timezone `America/Sao_Paulo`)
 
 ## Environment Variables
 

@@ -1,15 +1,17 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
-import tempfile
 import unittest
 from datetime import date, datetime
-from pathlib import Path
 
-from src.modules.MarketData.schemas.market_data_schema import BatchPriceSnapshot, PriceRecord, TickerMarketData
+from src.modules.MarketData.schemas.market_data_schema import (
+    BatchPriceSnapshot,
+    PriceRecord,
+    TickerInfoRecord,
+    TickerMarketData,
+)
 from src.modules.MarketData.services.market_hours import is_market_sync_time, resolve_timezone
 from src.modules.MarketData.services.stock_sync_service import StockSyncService
-from src.modules.MarketData.services.ticker_loader import load_tickers
 
 
 class FakeClient:
@@ -34,8 +36,6 @@ class FakeClient:
         return snapshots
 
     def fetch_ticker_data(self, ticker: str, captured_at: datetime, price_snapshot: BatchPriceSnapshot | None = None) -> TickerMarketData:
-        if ticker == "FAIL3.SA":
-            raise ValueError("ticker inválido")
         if price_snapshot is None:
             raise ValueError("snapshot de preço ausente")
 
@@ -53,13 +53,33 @@ class FakeClient:
             ),
         )
 
+    def fetch_ticker_info(self, ticker: str) -> TickerInfoRecord:
+        return TickerInfoRecord(
+            ticker=ticker,
+            short_name=ticker,
+            long_name=ticker,
+            sector="Teste",
+            quote_type="EQUITY",
+        )
+
 
 class FakeRepository:
-    def __init__(self):
-        self.calls: list[PriceRecord] = []
+    def __init__(self, tickers: list[str]):
+        self.tickers = tickers
+        self.prices: list[PriceRecord] = []
+        self.infos: list[TickerInfoRecord] = []
 
-    def upsert_market_data(self, price: PriceRecord) -> None:
-        self.calls.append(price)
+    def get_distinct_transaction_tickers(self) -> list[str]:
+        return list(self.tickers)
+
+    def get_ticker_info_updated_map(self) -> dict[str, datetime]:
+        return {}
+
+    def upsert_market_data_bulk(self, prices: list[PriceRecord]) -> None:
+        self.prices.extend(prices)
+
+    def upsert_ticker_infos_bulk(self, infos: list[TickerInfoRecord], updated_at: datetime) -> None:
+        self.infos.extend(infos)
 
 
 class StockSyncTests(unittest.TestCase):
@@ -68,47 +88,53 @@ class StockSyncTests(unittest.TestCase):
         self.logger.handlers = []
         self.logger.addHandler(logging.NullHandler())
 
-    def test_load_tickers_normalizes_and_skips_blank_lines(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            tickers_file = Path(temp_dir) / "tickers.txt"
-            tickers_file.write_text(" petr4.sa \n\nvale3.sa\n", encoding="utf-8")
-
-            self.assertEqual(load_tickers(tickers_file), ["PETR4.SA", "VALE3.SA"])
+    def _build_service(self, repository: FakeRepository, client: FakeClient) -> StockSyncService:
+        return StockSyncService(
+            client=client,
+            repository=repository,
+            logger=self.logger,
+            timezone_name="America/Sao_Paulo",
+            start_hour=10,
+            end_hour=18,
+            submission_delay_seconds=0,
+        )
 
     def test_market_hours_accept_business_window(self) -> None:
         current_time = datetime(2026, 4, 16, 10, 0, tzinfo=resolve_timezone("America/Sao_Paulo"))
-        self.assertTrue(is_market_sync_time("America/Sao_Paulo", 10, 17, current_time))
+        self.assertTrue(is_market_sync_time("America/Sao_Paulo", 10, 18, current_time))
 
     def test_market_hours_reject_weekend(self) -> None:
         current_time = datetime(2026, 4, 18, 10, 0, tzinfo=resolve_timezone("America/Sao_Paulo"))
-        self.assertFalse(is_market_sync_time("America/Sao_Paulo", 10, 17, current_time))
+        self.assertFalse(is_market_sync_time("America/Sao_Paulo", 10, 18, current_time))
+
+    def test_market_hours_include_end_hour_oclock_but_not_half_past(self) -> None:
+        tz = resolve_timezone("America/Sao_Paulo")
+        self.assertTrue(is_market_sync_time("America/Sao_Paulo", 10, 18, datetime(2026, 4, 16, 18, 0, tzinfo=tz)))
+        self.assertFalse(is_market_sync_time("America/Sao_Paulo", 10, 18, datetime(2026, 4, 16, 18, 30, tzinfo=tz)))
 
     def test_service_continues_when_one_ticker_fails(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            tickers_file = Path(temp_dir) / "tickers.txt"
-            tickers_file.write_text("PETR4.SA\nFAIL3.SA\nVALE3.SA\n", encoding="utf-8")
+        repository = FakeRepository(tickers=["PETR4", "FAIL3", "VALE3"])
+        client = FakeClient()
+        service = self._build_service(repository, client)
 
-            repository = FakeRepository()
-            client = FakeClient()
-            service = StockSyncService(
-                client=client,
-                repository=repository,
-                logger=self.logger,
-                timezone_name="America/Sao_Paulo",
-                start_hour=10,
-                end_hour=17,
-                max_workers=2,
-                submission_delay_seconds=0,
-                tickers_path=tickers_file,
-            )
+        results = service.run_once(force=True)
 
-            results = service.run_once(force=True)
+        self.assertEqual(len(results), 3)
+        self.assertEqual(len(repository.prices), 2)
+        self.assertEqual(sum(1 for result in results if result.success), 2)
+        self.assertEqual(sum(1 for result in results if not result.success), 1)
+        self.assertEqual(client.batch_requests, [["FAIL3.SA", "PETR4.SA", "VALE3.SA"]])
 
-            self.assertEqual(len(results), 3)
-            self.assertEqual(len(repository.calls), 2)
-            self.assertEqual(sum(1 for result in results if result.success), 2)
-            self.assertEqual(sum(1 for result in results if not result.success), 1)
-            self.assertEqual(client.batch_requests, [["PETR4.SA", "FAIL3.SA", "VALE3.SA"]])
+    def test_service_returns_empty_when_no_tickers(self) -> None:
+        repository = FakeRepository(tickers=[])
+        client = FakeClient()
+        service = self._build_service(repository, client)
+
+        results = service.run_once(force=True)
+
+        self.assertEqual(results, [])
+        self.assertEqual(client.batch_requests, [])
+        self.assertEqual(repository.prices, [])
 
 
 if __name__ == "__main__":

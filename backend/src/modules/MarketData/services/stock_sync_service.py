@@ -1,19 +1,18 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from time import perf_counter
 
-from src.modules.MarketData.schemas.market_data_schema import TickerSyncResult
+from src.modules.MarketData.schemas.market_data_schema import PriceRecord, TickerInfoRecord, TickerSyncResult
 from src.modules.MarketData.services.market_hours import is_market_sync_time, resolve_timezone
-from src.modules.MarketData.services.ticker_loader import load_tickers
 from src.modules.Portfolio.services.portfolio_service import PortfolioService
 
 
 class StockSyncService:
     TICKER_INFO_TTL_DAYS = 7
+
     def __init__(
         self,
         *,
@@ -23,9 +22,7 @@ class StockSyncService:
         timezone_name: str,
         start_hour: int,
         end_hour: int,
-        max_workers: int,
         submission_delay_seconds: float,
-        tickers_path,
     ):
         self.client = client
         self.repository = repository
@@ -33,9 +30,7 @@ class StockSyncService:
         self.timezone_name = timezone_name
         self.start_hour = start_hour
         self.end_hour = end_hour
-        self.max_workers = max(1, max_workers)
         self.submission_delay_seconds = max(0.0, submission_delay_seconds)
-        self.tickers_path = tickers_path
 
     def run_once(self, force: bool = False) -> list[TickerSyncResult]:
         started_at = perf_counter()
@@ -56,26 +51,33 @@ class StockSyncService:
             return []
 
         tickers = self._resolve_tickers()
+        if not tickers:
+            self.logger.info("Sem tickers na carteira; nada a sincronizar")
+            return []
+
         self.logger.info("Início da execução | tickers=%s", len(tickers))
         batch_prices = self.client.fetch_batch_prices(tickers)
         self.logger.info("OHLCV carregado em lote | tickers_com_preco=%s", len(batch_prices))
 
+        captured_at = datetime.now(resolve_timezone(self.timezone_name))
         results: list[TickerSyncResult] = []
-        workers = min(self.max_workers, len(tickers))
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_to_ticker = {}
-            for index, ticker in enumerate(tickers):
-                future_to_ticker[executor.submit(self._process_ticker, ticker, batch_prices.get(ticker))] = ticker
-                if index < len(tickers) - 1 and self.submission_delay_seconds > 0:
-                    time.sleep(self.submission_delay_seconds)
+        prices: list[PriceRecord] = []
+        for ticker in tickers:
+            try:
+                market_data = self.client.fetch_ticker_data(ticker, captured_at, batch_prices.get(ticker))
+                prices.append(market_data.price)
+                results.append(
+                    TickerSyncResult(ticker=ticker, success=True, price_date=market_data.price.date)
+                )
+            except Exception as exc:
+                self.logger.exception("Erro ao processar ticker %s", ticker)
+                results.append(TickerSyncResult(ticker=ticker, success=False, error=str(exc)))
 
-            for future in as_completed(future_to_ticker):
-                ticker = future_to_ticker[future]
-                try:
-                    results.append(future.result())
-                except Exception as exc:  # pragma: no cover
-                    self.logger.exception("Erro inesperado no ticker %s", ticker)
-                    results.append(TickerSyncResult(ticker=ticker, success=False, error=str(exc)))
+        if prices:
+            try:
+                self.repository.upsert_market_data_bulk(prices)
+            except Exception:
+                self.logger.exception("Falha ao gravar preços em lote")
 
         self._sync_ticker_infos(tickers)
 
@@ -93,17 +95,13 @@ class StockSyncService:
     def _resolve_tickers(self) -> list[str]:
         try:
             portfolio_tickers = self.repository.get_distinct_transaction_tickers()
-            tickers = PortfolioService.market_tickers_for(portfolio_tickers)
         except Exception:
-            self.logger.exception("Falha ao carregar tickers da carteira; usando arquivo")
-            tickers = []
+            self.logger.exception("Falha ao carregar tickers da carteira")
+            return []
 
-        if tickers:
-            self.logger.info("Tickers derivados da carteira | total=%s", len(tickers))
-            return tickers
-
-        self.logger.info("Carteira vazia; usando tickers do arquivo")
-        return load_tickers(self.tickers_path)
+        tickers = PortfolioService.market_tickers_for(portfolio_tickers)
+        self.logger.info("Tickers da carteira | total=%s", len(tickers))
+        return tickers
 
     def _sync_ticker_infos(self, tickers: list[str]) -> None:
         now = datetime.now(resolve_timezone(self.timezone_name))
@@ -119,39 +117,26 @@ class StockSyncService:
             return
 
         self.logger.info("Atualizando nomes/setores | pendentes=%s", len(pending))
+        infos: list[TickerInfoRecord] = []
         for index, ticker in enumerate(pending):
             try:
                 info = self.client.fetch_ticker_info(ticker)
-                self.repository.upsert_ticker_info(info, now)
-                self.logger.info("Info atualizada %s | nome=%s", ticker, info.long_name or info.short_name)
+                infos.append(info)
+                self.logger.info("Info coletada %s | nome=%s", ticker, info.long_name or info.short_name)
             except Exception:
                 self.logger.exception("Falha ao buscar info do ticker %s", ticker)
 
             if index < len(pending) - 1 and self.submission_delay_seconds > 0:
                 time.sleep(self.submission_delay_seconds)
 
+        if infos:
+            try:
+                self.repository.upsert_ticker_infos_bulk(infos, now)
+            except Exception:
+                self.logger.exception("Falha ao gravar ticker_info em lote")
+
     @staticmethod
     def _needs_info_refresh(updated_at: datetime | None, now: datetime, ttl: timedelta) -> bool:
         if updated_at is None or updated_at.tzinfo is None:
             return True
         return (now - updated_at) > ttl
-
-    def _process_ticker(self, ticker: str, batch_price) -> TickerSyncResult:
-        captured_at = datetime.now(resolve_timezone(self.timezone_name))
-        self.logger.info("Processando ticker %s", ticker)
-        try:
-            market_data = self.client.fetch_ticker_data(ticker, captured_at, batch_price)
-            self.repository.upsert_market_data(market_data.price)
-            self.logger.info(
-                "Ticker concluído %s | data_preço=%s",
-                ticker,
-                market_data.price.date.isoformat(),
-            )
-            return TickerSyncResult(
-                ticker=ticker,
-                success=True,
-                price_date=market_data.price.date,
-            )
-        except Exception as exc:
-            self.logger.exception("Erro ao processar ticker %s", ticker)
-            return TickerSyncResult(ticker=ticker, success=False, error=str(exc))

@@ -28,4 +28,5 @@ def is_market_sync_time(
     if localized_now.weekday() > 4:
         return False
 
-    return start_hour <= localized_now.hour <= end_hour
+    minutes_of_day = localized_now.hour * 60 + localized_now.minute
+    return start_hour * 60 <= minutes_of_day <= end_hour * 60

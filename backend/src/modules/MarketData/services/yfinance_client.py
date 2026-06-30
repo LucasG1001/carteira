@@ -69,14 +69,9 @@ class YFinanceMarketDataClient:
         captured_at: datetime,
         price_snapshot: BatchPriceSnapshot | None = None,
     ) -> TickerMarketData:
-        stock = yf.Ticker(ticker)
         price_snapshot = price_snapshot or self.fetch_batch_prices([ticker]).get(ticker)
         if price_snapshot is None:
             raise ValueError(f"Nenhum OHLCV diário retornado para {ticker}")
-
-        close_price = self._resolve_current_price(stock)
-        if close_price is None:
-            close_price = price_snapshot.close
 
         price = PriceRecord(
             ticker=ticker,
@@ -84,7 +79,7 @@ class YFinanceMarketDataClient:
             open=price_snapshot.open,
             high=price_snapshot.high,
             low=price_snapshot.low,
-            close=close_price,
+            close=price_snapshot.close,
             volume=price_snapshot.volume,
             created_at=captured_at,
         )
@@ -127,30 +122,6 @@ class YFinanceMarketDataClient:
             return None
 
         return history
-
-    def _resolve_current_price(self, stock: Any) -> float | None:
-        fast_info = getattr(stock, "fast_info", None)
-        candidate_values: list[Any] = []
-
-        if fast_info is not None:
-            if hasattr(fast_info, "get"):
-                candidate_values.extend(
-                    [
-                        fast_info.get("lastPrice"),
-                        fast_info.get("regularMarketPrice"),
-                        fast_info.get("previousClose"),
-                    ]
-                )
-
-            for attr_name in ("lastPrice", "last_price", "regularMarketPrice"):
-                candidate_values.append(getattr(fast_info, attr_name, None))
-
-        for value in candidate_values:
-            resolved = self._as_float(value)
-            if resolved is not None:
-                return resolved
-
-        return None
 
     @staticmethod
     def _to_date(value: Any) -> date:

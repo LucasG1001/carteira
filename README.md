@@ -58,10 +58,10 @@ O dev server faz proxy de `/api` para `http://localhost:8000`.
 ```bash
 cd backend
 python -m src.jobs.run_stock_sync --once --force     # sincroniza uma vez agora
-python -m src.jobs.run_stock_sync                    # roda agendado (de hora em hora, em pregão)
+python -m src.jobs.run_stock_sync                    # roda agendado (a cada 30 min, em pregão)
 ```
 
-Os tickers ficam em `backend/tickers.txt` (sufixo `.SA` para a B3).
+Os tickers são derivados automaticamente das transações da carteira (sufixo `.SA` para a B3); só busca cotação dos ativos que você possui.
 
 ## Endpoints
 
@@ -90,8 +90,7 @@ carteira/
 │   │   ├── core/           # config, database, security, exceptions
 │   │   ├── modules/        # Upload, Portfolio, MarketData
 │   │   └── jobs/           # worker de cotações
-│   ├── alembic/            # migrações
-│   └── tickers.txt
+│   └── alembic/            # migrações
 ├── frontend/               # React + Vite
 │   └── src/{components,pages,context,services,styles}
 ├── docker-compose.yml
