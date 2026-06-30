@@ -132,19 +132,27 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Responsive */
+/* Responsive — carousel on mobile */
 @media (max-width: 768px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 0.75rem;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card {
+    flex: 0 0 82%;
+    scroll-snap-align: start;
   }
 
   .value {
     font-size: 1.2rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
   }
 }

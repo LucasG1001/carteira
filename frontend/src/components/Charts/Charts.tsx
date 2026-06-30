@@ -147,7 +147,7 @@ export function Charts() {
 
   return (
     <section className={styles.section}>
-      <div className={styles.row} style={{ gridTemplateColumns: '2fr 1fr' }}>
+      <div className={styles.row}>
         <div className={`${styles.chartCard} ${styles.animateCard}`} style={{ animationDelay: '300ms' }}>
           <div className={styles.chartHeader}>
             <h3 className={styles.chartTitle}>Proventos por Mês</h3>

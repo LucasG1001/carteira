@@ -36,7 +36,7 @@
 
 @media (max-width: 768px) {
   .toolbar {
-    flex-wrap: wrap;
+    align-items: stretch;
   }
 
   .eyeButton {
