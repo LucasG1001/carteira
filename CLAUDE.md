@@ -40,18 +40,19 @@ cd frontend && npm run lint      # ESLint
 ### Docker (full stack)
 
 ```bash
-cp .env.example .env
-docker-compose up --build        # http://localhost:8080 (WEB_PORT no .env)
+cp .env.example .env             # POSTGRES_* + CARTEIRA_DOMAIN
+docker network create proxy-net  # uma vez na VPS (rede do proxy reverso central)
+docker-compose up --build -d     # servido via https://${CARTEIRA_DOMAIN} pelo Caddy central
 ```
 
-No Docker, o container do backend roda `alembic upgrade head`, sobe o worker de cotações em background e serve a API com uvicorn.
+No Docker, o container do backend roda `alembic upgrade head`, sobe o worker de cotações em background e serve a API com uvicorn. O container `web` serve o build estático via **Caddy** e faz proxy de `/api` → `server:8000`. O TLS e o roteamento do domínio ficam no **proxy reverso central** (stack `caddy-docker-proxy` compartilhada), que publica só na interface da VPN; o `web` entra na rede externa `proxy-net` e declara as labels `caddy`.
 
 ## Architecture
 
 ### Data Flow
 
 ```
-Browser → Vite dev proxy (ou Nginx em prod)
+Browser → Vite dev proxy (ou Caddy em prod)
         → FastAPI backend (:8000, prefixo /api/v1)
         → PostgreSQL
         ↘ Yahoo Finance (yfinance, externo) — via worker de cotações
@@ -153,7 +154,7 @@ ALLOWED_ORIGINS, MARKET_DATA_TIMEZONE, STOCK_SYNC_*
 `.env` na raiz (Docker, copiar de `.env.example`):
 
 ```
-POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, WEB_PORT
+POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, CARTEIRA_DOMAIN
 ```
 
 ## Fluxo de trabalho

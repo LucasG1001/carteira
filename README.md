@@ -20,11 +20,12 @@ Backend modular: cada feature em `modules/<Feature>/` seguindo `router → servi
 ## Rodando com Docker (recomendado)
 
 ```bash
-cp .env.example .env        # ajuste POSTGRES_* e WEB_PORT
-docker-compose up --build
+cp .env.example .env             # ajuste POSTGRES_* e CARTEIRA_DOMAIN
+docker network create proxy-net  # uma vez na VPS (rede do proxy reverso central)
+docker-compose up --build -d
 ```
 
-Acesse `http://localhost:8080` (ou a `WEB_PORT` definida). O container do backend aplica as migrações (`alembic upgrade head`), sobe o worker de cotações e serve a API.
+Servido via `https://${CARTEIRA_DOMAIN}` pelo proxy reverso central (Caddy, só na VPN). O `web` serve o build estático com **Caddy** e faz proxy de `/api` → backend; o container do backend aplica as migrações (`alembic upgrade head`), sobe o worker de cotações e serve a API.
 
 ## Desenvolvimento local
 
@@ -79,7 +80,7 @@ Os tickers são derivados automaticamente das transações da carteira (sufixo `
 
 **`backend/.env`** (dev local): `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `SINGLE_USER_ID`, `ALLOWED_ORIGINS`, `MARKET_DATA_TIMEZONE`, `STOCK_SYNC_*`.
 
-**`.env`** (raiz, Docker): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `WEB_PORT`.
+**`.env`** (raiz, Docker): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `CARTEIRA_DOMAIN`.
 
 ## Estrutura
 

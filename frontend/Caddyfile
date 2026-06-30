@@ -1,0 +1,24 @@
+# Servidor estático do frontend (dentro do container web).
+# O proxy reverso central (caddy-docker-proxy, stack ./proxy compartilhada) termina
+# o TLS e roteia o domínio para a porta 80 deste container.
+:80 {
+	root * /srv
+	encode gzip
+
+	# API → backend FastAPI (mesma rede do compose).
+	# `handle` (não handle_path) preserva o caminho: /api/v1/... chega inteiro ao server.
+	handle /api/* {
+		request_body {
+			max_size 25MB
+		}
+		reverse_proxy server:8000
+	}
+
+	# SPA (React Router): assets com cache longo + fallback pro index.html.
+	handle {
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}

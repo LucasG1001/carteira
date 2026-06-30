@@ -1,3 +1,5 @@
+# Stack do Carteira. O "name" isola este projeto (volumes/redes/containers ficam
+# prefixados com "carteira", então o banco é exclusivo deste projeto).
 name: carteira
 
 services:
@@ -25,6 +27,7 @@ services:
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
+      ALLOWED_ORIGINS: '["https://${CARTEIRA_DOMAIN}"]'
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,12 +36,26 @@ services:
     build:
       context: ./frontend
       args:
+        # Rotas do frontend usam o prefixo /api/v1; o Caddy do container faz
+        # proxy de /api -> server:8000.
         VITE_API_URL: "/api/v1"
     restart: unless-stopped
-    ports:
-      - "${WEB_PORT:-8080}:80"
+    # Sem porta no host: o proxy reverso central (caddy-docker-proxy, stack ./proxy)
+    # descobre este container pela rede proxy-net via labels e termina o TLS.
+    labels:
+      caddy: ${CARTEIRA_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 80}}"
+    networks:
+      - default
+      - proxy-net
     depends_on:
       - server
 
 volumes:
   postgres_data:
+
+networks:
+  # Rede compartilhada com o proxy reverso central (Caddy). Crie uma vez na VPS:
+  #   docker network create proxy-net
+  proxy-net:
+    external: true
