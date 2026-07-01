@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PortfolioActions } from "../../components/PortfolioActions/PortfolioActions";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
@@ -159,16 +160,22 @@ export function InvestmentsPage() {
   return (
     <PortfolioProvider>
       <div className={styles.toolbar}>
-        <button
-          type="button"
-          className={styles.eyeButton}
-          onClick={toggle}
-          title={hidden ? "Mostrar valores" : "Ocultar valores"}
-        >
-          {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
-          <span className={styles.eyeLabel}>{hidden ? "Mostrar valores" : "Ocultar valores"}</span>
-        </button>
-        <PortfolioActions />
+        <Link to="/imposto-de-renda" className={styles.taxButton} title="Declaração de Imposto de Renda">
+          <FileText size={16} />
+          <span className={styles.eyeLabel}>Imposto de Renda</span>
+        </Link>
+        <div className={styles.toolbarRight}>
+          <button
+            type="button"
+            className={styles.eyeButton}
+            onClick={toggle}
+            title={hidden ? "Mostrar valores" : "Ocultar valores"}
+          >
+            {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
+            <span className={styles.eyeLabel}>{hidden ? "Mostrar valores" : "Ocultar valores"}</span>
+          </button>
+          <PortfolioActions />
+        </div>
       </div>
       <PortfolioDashboard />
     </PortfolioProvider>

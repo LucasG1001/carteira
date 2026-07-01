@@ -4,11 +4,23 @@
 }
 
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 105;
   max-width: 1440px;
   margin: 0 auto var(--spacing-base);
+  padding: var(--spacing-md) 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
   gap: var(--spacing-sm);
 }
 
@@ -34,13 +46,35 @@
   background: var(--color-surface-hover);
 }
 
+.taxButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: 0.6rem var(--spacing-base);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.taxButton:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-accent);
+  background: var(--color-surface-hover);
+}
+
 @media (max-width: 768px) {
   .toolbar {
     align-items: center;
     justify-content: flex-end;
   }
 
-  .eyeButton {
+  .eyeButton,
+  .taxButton {
     flex: 0 0 auto;
     min-width: 0;
     width: 40px;
