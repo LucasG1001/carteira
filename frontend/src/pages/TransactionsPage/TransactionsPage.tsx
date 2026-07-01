@@ -180,9 +180,10 @@ export function TransactionsPage() {
             <table className={`${tableStyles.table} ${tableStyles.compact}`}>
               <thead>
                 <tr>
+                  <th><span className={tableStyles.thContent}>Ativo</span></th>
+                  <th><span className={tableStyles.thContent}>Tipo de ativo</span></th>
+                  <th><span className={tableStyles.thContent}>Tipo de ordem</span></th>
                   <th><span className={tableStyles.thContent}>Data</span></th>
-                  <th><span className={tableStyles.thContent}>Ticker</span></th>
-                  <th><span className={tableStyles.thContent}>Operação</span></th>
                   <th><span className={tableStyles.thContent}>Qtd</span></th>
                   <th><span className={tableStyles.thContent}>Preço</span></th>
                   <th><span className={tableStyles.thContent}>Total</span></th>
@@ -198,9 +199,18 @@ export function TransactionsPage() {
                     style={{ animationDelay: `${index * 15}ms` }}
                     onClick={transaction.source === "manual" ? () => setEdit(toEditState(transaction)) : undefined}
                   >
-                    <td className={tableStyles.numCell}>{formatDate(transaction.date)}</td>
-                    <td><span className={tableStyles.bold}>{transaction.ticker}</span></td>
+                    <td>
+                      <div className={tableStyles.tickerCell}>
+                        <span className={tableStyles.tickerBadge}>{transaction.ticker}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`${tableStyles.tipoBadge} ${tableStyles[`tipo_${transaction.asset_type.replace(/ /g, "")}`]}`}>
+                        {transaction.asset_type}
+                      </span>
+                    </td>
                     <td>{transaction.operation_type}</td>
+                    <td className={tableStyles.numCell}>{formatDate(transaction.date)}</td>
                     <td className={tableStyles.numCell}>{formatQty(transaction.quantity)}</td>
                     <td className={tableStyles.numCell}>{transaction.unit_price != null ? fmt(transaction.unit_price) : "—"}</td>
                     <td className={tableStyles.numCell}>{transaction.operation_value != null ? fmt(transaction.operation_value) : "—"}</td>

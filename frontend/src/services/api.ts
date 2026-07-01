@@ -118,6 +118,7 @@ export async function getEvolution(): Promise<BackendEvolutionPoint[]> {
 export type BackendTransaction = {
   id: number;
   ticker: string;
+  asset_type: string;
   operation_type: string;
   entry_side: string | null;
   date: string;

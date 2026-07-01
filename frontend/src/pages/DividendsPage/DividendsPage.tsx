@@ -37,6 +37,15 @@ function formatDate(value: string) {
   return value.split("-").reverse().join("/");
 }
 
+function shortPaymentType(raw: string): string {
+  const normalized = raw.toLowerCase();
+  if (normalized.includes("juros") && normalized.includes("capital")) return "JCP";
+  if (normalized.includes("dividendo")) return "Dividendo";
+  if (normalized.includes("rendimento")) return "Rendimento";
+  if (normalized.includes("leil")) return "Leilão de fração";
+  return raw;
+}
+
 export function DividendsPage() {
   const { formatCurrency: fmt } = usePrivacy();
   const scrollRef = useDragScroll<HTMLDivElement>();
@@ -193,14 +202,16 @@ export function DividendsPage() {
                     style={{ animationDelay: `${index * 20}ms` }}
                   >
                     <td>
-                      <span className={tableStyles.bold}>{entry.ticker}</span>
+                      <div className={tableStyles.tickerCell}>
+                        <span className={tableStyles.tickerBadge}>{entry.ticker}</span>
+                      </div>
                     </td>
                     <td>
                       <span className={`${tableStyles.tipoBadge} ${tableStyles[`tipo_${entry.asset_type.replace(/ /g, "")}`]}`}>
                         {entry.asset_type}
                       </span>
                     </td>
-                    <td>{entry.type}</td>
+                    <td title={entry.type}>{shortPaymentType(entry.type)}</td>
                     <td className={tableStyles.numCell}>{formatDate(entry.date)}</td>
                     <td className={tableStyles.numCell}>
                       <span className={tableStyles.positive}>{fmt(entry.value)}</span>

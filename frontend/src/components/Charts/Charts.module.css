@@ -71,7 +71,9 @@
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-muted);
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
 }
 
 .modeButtonActive {
@@ -89,7 +91,9 @@
   color: var(--text-secondary);
   cursor: pointer;
   outline: none;
-  transition: border-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .pieSelect:hover,
@@ -124,7 +128,6 @@
 
 .chartBody {
   padding: 0.5rem 0.5rem 1rem;
-
 }
 
 .pieCard .chartBody {
@@ -218,5 +221,22 @@
 
   .pieChart {
     width: 150px;
+  }
+}
+
+/* Mobile: donut on top, scrollable legend/values below (keeps the card compact) */
+@media (max-width: 768px) {
+  .pieBody {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .pieChart {
+    width: 100%;
+  }
+
+  .pieLegend {
+    max-height: 100px;
   }
 }

@@ -460,6 +460,7 @@ class PortfolioService:
         return TransactionListItem(
             id=transaction.id,
             ticker=transaction.ticker,
+            asset_type=self.classify_ticker(transaction.ticker),
             operation_type=transaction.operation_type,
             entry_side=transaction.entry_side,
             date=transaction.date,

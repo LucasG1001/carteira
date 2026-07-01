@@ -94,6 +94,7 @@ class AssetDetailResponse(AssetSummary):
 class TransactionListItem(BaseModel):
     id: int
     ticker: str
+    asset_type: str
     operation_type: str
     entry_side: Optional[str] = None
     date: date
