@@ -145,17 +145,6 @@ export function DividendsPage() {
       <BigNumbers cards={cards} compact />
       <Charts bar={bar} pie={pie} />
 
-      <div className={styles.tableToolbar}>
-        <MonthYearPicker
-          year={pickerYear}
-          month={pickerMonth}
-          onChange={(year, month) => {
-            setPickerYear(year);
-            setPickerMonth(month);
-          }}
-        />
-      </div>
-
       <section className={tableStyles.section}>
         <div className={tableStyles.card}>
           <div className={tableStyles.cardHeader}>
@@ -164,6 +153,15 @@ export function DividendsPage() {
               <span className={tableStyles.count}>{tableEntries.length}</span>
               <span className={tableStyles.saldoNeutral}>{fmt(tableTotal)}</span>
             </div>
+            <MonthYearPicker
+              year={pickerYear}
+              month={pickerMonth}
+              align="right"
+              onChange={(year, month) => {
+                setPickerYear(year);
+                setPickerMonth(month);
+              }}
+            />
           </div>
 
           <div className={tableStyles.tableWrapper} ref={scrollRef}>

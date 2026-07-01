@@ -48,9 +48,6 @@ function App() {
               <Route path="*" element={<Navigate to="/investimentos" replace />} />
             </Routes>
           </main>
-          <footer className={styles.footer}>
-            <p>© 2026 Carteira Investimentos</p>
-          </footer>
           </div>
         </div>
         </QuickAddProvider>

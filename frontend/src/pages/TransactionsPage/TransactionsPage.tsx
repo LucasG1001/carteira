@@ -144,17 +144,6 @@ export function TransactionsPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.tableToolbar}>
-        <MonthYearPicker
-          year={pickerYear}
-          month={pickerMonth}
-          onChange={(year, month) => {
-            setPickerYear(year);
-            setPickerMonth(month);
-          }}
-        />
-      </div>
-
       <section className={tableStyles.section}>
         <div className={tableStyles.card}>
           <div className={tableStyles.cardHeader}>
@@ -162,17 +151,28 @@ export function TransactionsPage() {
               <h3 className={tableStyles.title}>Lançamentos</h3>
               <span className={tableStyles.count}>{rows.length}</span>
             </div>
-            <div className={styles.segmented}>
-              {FILTERS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  className={`${styles.segment} ${origem === item.value ? styles.segmentActive : ""}`}
-                  onClick={() => setOrigem(item.value)}
-                >
-                  {item.label}
-                </button>
-              ))}
+            <div className={tableStyles.controls}>
+              <div className={styles.segmented}>
+                {FILTERS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={`${styles.segment} ${origem === item.value ? styles.segmentActive : ""}`}
+                    onClick={() => setOrigem(item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <MonthYearPicker
+                year={pickerYear}
+                month={pickerMonth}
+                align="right"
+                onChange={(year, month) => {
+                  setPickerYear(year);
+                  setPickerMonth(month);
+                }}
+              />
             </div>
           </div>
 

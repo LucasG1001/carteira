@@ -22,17 +22,6 @@
   padding: var(--spacing-xl) var(--spacing-2xl) var(--spacing-2xl);
 }
 
-.footer {
-  padding: var(--spacing-xl) var(--spacing-2xl);
-  text-align: center;
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-.footer p {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-}
-
 @media (max-width: 768px) {
   .content,
   .contentCollapsed {

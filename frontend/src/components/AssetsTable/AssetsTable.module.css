@@ -157,10 +157,10 @@
   color: var(--text-primary);
 }
 
-/* Table */
+/* Table — horizontal scroll kept; page grows vertically (no inner vertical scroll) */
 .tableWrapper {
-  overflow: auto;
-  max-height: calc(100vh - 12rem);
+  overflow-x: auto;
+  overflow-y: visible;
   cursor: grab;
 }
 

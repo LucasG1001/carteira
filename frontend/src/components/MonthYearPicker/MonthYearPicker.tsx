@@ -10,9 +10,10 @@ interface MonthYearPickerProps {
   month: number | null;
   onChange: (year: number, month: number | null) => void;
   markedKeys?: Set<string>;
+  align?: "left" | "right";
 }
 
-export function MonthYearPicker({ year, month, onChange, markedKeys }: MonthYearPickerProps) {
+export function MonthYearPicker({ year, month, onChange, markedKeys, align = "left" }: MonthYearPickerProps) {
   const [open, setOpen] = useState(false);
   const [browseYear, setBrowseYear] = useState(year);
   const ref = useRef<HTMLDivElement>(null);
@@ -46,7 +47,7 @@ export function MonthYearPicker({ year, month, onChange, markedKeys }: MonthYear
       </button>
 
       {open && (
-        <div className={styles.popover}>
+        <div className={`${styles.popover} ${align === "right" ? styles.alignRight : styles.alignLeft}`}>
           <div className={styles.yearNav}>
             <button type="button" className={styles.yearArrow} onClick={() => setBrowseYear((y) => y - 1)}>
               <ChevronLeft size={16} />

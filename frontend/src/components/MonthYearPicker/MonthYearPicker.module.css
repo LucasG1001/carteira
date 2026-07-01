@@ -28,13 +28,20 @@
   position: absolute;
   z-index: 200;
   top: calc(100% + 6px);
-  left: 0;
   width: 16rem;
   padding: var(--spacing-md);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: var(--color-bg-secondary);
   box-shadow: var(--shadow-lg);
+}
+
+.alignLeft {
+  left: 0;
+}
+
+.alignRight {
+  right: 0;
 }
 
 .yearNav {
