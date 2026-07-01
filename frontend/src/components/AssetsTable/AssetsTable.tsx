@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { usePortfolio } from '../../context/portfolioStore';
 import { usePrivacy } from '../../context/privacyStore';
+import { useDragScroll } from '../../hooks/useDragScroll';
 import type { BackendAssetSummary } from '../../services/api';
 import styles from './AssetsTable.module.css';
 
@@ -20,6 +21,7 @@ const TIPOS: FilterTipo[] = ['Todos', 'Acao', 'FII', 'ETF', 'Cripto', 'Renda Fix
 export function AssetsTable() {
   const { data } = usePortfolio();
   const { formatCurrency: fmt } = usePrivacy();
+  const scrollRef = useDragScroll<HTMLDivElement>();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('ticker');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -110,7 +112,7 @@ export function AssetsTable() {
           </div>
         </div>
 
-        <div className={styles.tableWrapper}>
+        <div className={styles.tableWrapper} ref={scrollRef}>
           <table className={styles.table}>
             <thead>
               <tr>

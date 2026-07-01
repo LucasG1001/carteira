@@ -182,8 +182,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                     cy="50%"
                     innerRadius={55}
                     outerRadius={85}
-                    strokeWidth={2}
-                    stroke="#0a0a0f"
+                    strokeWidth={0}
                   >
                     {pie.data.map((entry, i) => {
                       const dimmed = pie.activeSlice != null && pie.activeSlice !== entry.name;

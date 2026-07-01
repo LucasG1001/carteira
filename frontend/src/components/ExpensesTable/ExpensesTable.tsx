@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TrendingUp, TrendingDown, ArrowUpDown, Search, X } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
+import { useDragScroll } from '../../hooks/useDragScroll';
 import type { BackendExpenseEntry } from '../../services/api';
 import { ExpenseForm } from '../ExpenseForm/ExpenseForm';
 import styles from '../AssetsTable/AssetsTable.module.css';
@@ -25,6 +26,7 @@ interface ExpensesTableProps {
 export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTableProps) {
   const { data, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
+  const scrollRef = useDragScroll<HTMLDivElement>();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -115,7 +117,7 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
           </div>
         </div>
 
-        <div className={styles.tableWrapper}>
+        <div className={styles.tableWrapper} ref={scrollRef}>
           <table className={`${styles.table} ${styles.compact}`}>
             <thead>
               <tr>
