@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
 import { createExpense, deleteExpense, updateExpense } from '../../services/api';
-import type { BackendExpenseEntry, ExpenseEntryType, RecurrenceType } from '../../services/api';
+import type { BackendExpenseEntry, RecurrenceType } from '../../services/api';
 import styles from './ExpenseForm.module.css';
 
 const CATEGORIES = ['Essenciais', 'Lazer'];
@@ -43,11 +43,10 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, onDeleted }: ExpenseFormProps) {
-  const [type, setType] = useState<ExpenseEntryType>(initialData?.type ?? 'expense');
   const [amountCents, setAmountCents] = useState(initialData ? Math.round(initialData.amount * 100) : 0);
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [category, setCategory] = useState(
-    initialData && initialData.type === 'expense' && initialData.category ? initialData.category : CATEGORIES[0],
+    initialData && CATEGORIES.includes(initialData.category) ? initialData.category : CATEGORIES[0],
   );
   const [subcategory, setSubcategory] = useState(initialData?.subcategory ?? 'Outros');
   const [date, setDate] = useState(initialData?.date ?? todayValue());
@@ -76,10 +75,10 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     setSubmitting(true);
     setError(null);
     const payload = {
-      type,
+      type: 'expense' as const,
       amount: amountNumber,
-      category: type === 'expense' ? category : 'Receita',
-      subcategory: type === 'expense' ? subcategory : null,
+      category,
+      subcategory,
       date,
       description: description.trim() || null,
       payment_method: paymentMethod || null,
@@ -134,23 +133,6 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       submitting={submitting}
       onDelete={isEdit ? handleDelete : undefined}
     >
-      <div className={styles.typeToggle}>
-        <button
-          type="button"
-          className={`${styles.typeButton} ${type === 'expense' ? styles.typeExpense : ''}`}
-          onClick={() => setType('expense')}
-        >
-          Despesa
-        </button>
-        <button
-          type="button"
-          className={`${styles.typeButton} ${type === 'income' ? styles.typeIncome : ''}`}
-          onClick={() => setType('income')}
-        >
-          Receita
-        </button>
-      </div>
-
       <div className={styles.row}>
         <label className={`${styles.field} ${styles.grow}`}>
           <span className={styles.label}>Valor</span>
@@ -188,30 +170,28 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
         />
       </label>
 
-      {type === 'expense' && (
-        <div className={styles.row}>
-          <label className={`${styles.field} ${styles.grow}`}>
-            <span className={styles.label}>Categoria</span>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className={styles.input}>
-              {CATEGORIES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={`${styles.field} ${styles.grow}`}>
-            <span className={styles.label}>Subcategoria</span>
-            <select value={subcategory} onChange={(e) => setSubcategory(e.target.value)} className={styles.input}>
-              {SUBCATEGORIES.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
+      <div className={styles.row}>
+        <label className={`${styles.field} ${styles.grow}`}>
+          <span className={styles.label}>Categoria</span>
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className={styles.input}>
+            {CATEGORIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={`${styles.field} ${styles.grow}`}>
+          <span className={styles.label}>Subcategoria</span>
+          <select value={subcategory} onChange={(e) => setSubcategory(e.target.value)} className={styles.input}>
+            {SUBCATEGORIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <label className={styles.field}>
         <span className={styles.label}>Forma de pagamento</span>

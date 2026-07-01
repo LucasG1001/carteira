@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, ArrowUpDown, ArrowUpCircle, ArrowDownCircle, Search, Filter, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpDown, Search, X } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BackendExpenseEntry } from '../../services/api';
@@ -8,15 +8,8 @@ import styles from '../AssetsTable/AssetsTable.module.css';
 
 type SortKey = 'date' | 'amount' | 'category';
 type SortDir = 'asc' | 'desc';
-type FilterType = 'Todos' | 'expense' | 'income';
 
 export type TableFilter = { field: 'category' | 'subcategory'; value: string } | null;
-
-const FILTERS: { value: FilterType; label: string }[] = [
-  { value: 'Todos', label: 'Todos' },
-  { value: 'expense', label: 'Despesas' },
-  { value: 'income', label: 'Receitas' },
-];
 
 function formatDate(value: string) {
   return value.split('-').reverse().join('/');
@@ -35,7 +28,6 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [filterType, setFilterType] = useState<FilterType>('Todos');
   const [editing, setEditing] = useState<BackendExpenseEntry | null>(null);
 
   if (!data) return null;
@@ -53,8 +45,8 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
 
   const entries = data.entries
     .filter((entry) => {
+      if (entry.type !== 'expense') return false;
       if (!entry.date.startsWith(scopePrefix)) return false;
-      if (filterType !== 'Todos' && entry.type !== filterType) return false;
       if (filter) {
         if (filter.field === 'category' && entry.category !== filter.value) return false;
         if (filter.field === 'subcategory' && (entry.subcategory || 'Outros') !== filter.value) return false;
@@ -79,7 +71,7 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
       return sortDir === 'asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
     });
 
-  const saldo = entries.reduce((acc, entry) => acc + (entry.type === 'income' ? entry.amount : -entry.amount), 0);
+  const total = entries.reduce((acc, entry) => acc + entry.amount, 0);
 
   const renderSortIcon = (col: SortKey) => {
     if (sortKey !== col) return <ArrowUpDown size={12} className={styles.sortIconInactive} />;
@@ -97,7 +89,7 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
           <div className={styles.titleRow}>
             <h3 className={styles.title}>Detalhe das compras</h3>
             <span className={styles.count}>{entries.length}</span>
-            <span className={styles.saldoNeutral}>{fmt(saldo)}</span>
+            <span className={styles.saldoNeutral}>{fmt(total)}</span>
             {filter && (
               <button type="button" className={styles.filterChip} onClick={onClearFilter}>
                 {filter.field === 'category'
@@ -120,26 +112,11 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
                 id="search-gastos"
               />
             </div>
-            <div className={styles.filterWrapper}>
-              <Filter size={14} className={styles.filterIcon} />
-              <select
-                value={filterType}
-                onChange={(event) => setFilterType(event.target.value as FilterType)}
-                className={styles.filterSelect}
-                id="filter-tipo-gasto"
-              >
-                {FILTERS.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
         </div>
 
         <div className={styles.tableWrapper}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.compact}`}>
             <thead>
               <tr>
                 <th>
@@ -150,9 +127,6 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
                 </th>
                 <th onClick={() => handleSort('amount')}>
                   <span className={styles.thContent}>Valor {renderSortIcon('amount')}</span>
-                </th>
-                <th>
-                  <span className={styles.thContent}>Tipo</span>
                 </th>
                 <th onClick={() => handleSort('category')}>
                   <span className={styles.thContent}>Categoria {renderSortIcon('category')}</span>
@@ -181,22 +155,10 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
                   </td>
                   <td className={styles.numCell}>{formatDate(entry.date)}</td>
                   <td className={styles.numCell}>
-                    <span className={entry.type === 'income' ? styles.positive : styles.negative}>
-                      {entry.type === 'income' ? '+' : '-'}
-                      {fmt(entry.amount)}
-                    </span>
+                    <span className={styles.negative}>-{fmt(entry.amount)}</span>
                   </td>
-                  <td>
-                    <span className={styles.typeIcon} title={entry.type === 'income' ? 'Receita' : 'Despesa'}>
-                      {entry.type === 'income' ? (
-                        <ArrowUpCircle size={18} className={styles.positive} aria-label="Receita" />
-                      ) : (
-                        <ArrowDownCircle size={18} className={styles.negative} aria-label="Despesa" />
-                      )}
-                    </span>
-                  </td>
-                  <td>{entry.type === 'income' ? '—' : entry.category}</td>
-                  <td>{entry.type === 'income' ? '—' : entry.subcategory || 'Outros'}</td>
+                  <td>{entry.category}</td>
+                  <td>{entry.subcategory || 'Outros'}</td>
                   <td>{entry.payment_method || '—'}</td>
                   <td className={styles.numCell}>
                     {entry.is_recurring

@@ -166,6 +166,10 @@
   min-width: 1100px;
 }
 
+.compact {
+  min-width: 0;
+}
+
 .table thead th {
   padding: 0.75rem 1rem;
   font-size: 0.7rem;
@@ -446,6 +450,11 @@
   .table thead th,
   .table tbody td {
     padding: 0.55rem 0.5rem;
+  }
+
+  .compact thead th,
+  .compact tbody td {
+    padding: 0.5rem 0.35rem;
   }
 
   .tickerCell {

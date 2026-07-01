@@ -167,7 +167,7 @@ function ExpensesContent() {
   ];
 
   const bar: BarChartConfig = {
-    title: "Gasto total por Mês",
+    title: "Total por Mês",
     badge: `Ano ${year}`,
     color: "#ef4444",
     data: view.barSeries.map((point) => ({
@@ -189,7 +189,7 @@ function ExpensesContent() {
   const totalPie = pieSource.reduce((sum, item) => sum + item.total, 0);
 
   const pie: PieChartConfig = {
-    title: donutMode === "category" ? "Gastos por Categoria" : "Gastos por Subcategoria",
+    title: donutMode === "category" ? "Por Categoria" : "Por Subcategoria",
     data: pieSource.map((item) => ({
       name: item.category,
       value: item.total,

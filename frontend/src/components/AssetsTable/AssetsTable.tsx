@@ -157,7 +157,6 @@ export function AssetsTable() {
                     <td>
                       <div className={styles.tickerCell}>
                         <span className={styles.tickerBadge}>{asset.ticker}</span>
-                        {asset.name && <span className={styles.tickerName}>{asset.name}</span>}
                       </div>
                     </td>
                     <td>
