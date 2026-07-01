@@ -414,7 +414,7 @@ class PortfolioService:
         normalized_ticker = self.normalize_ticker(payload.ticker)
         operation_type = payload.operation_type.strip().title()
         entry_side = "Credito" if operation_type == "Compra" else "Debito"
-        operation_value = round(payload.quantity * payload.unit_price, 2)
+        operation_value = round(payload.quantity * payload.unit_price + payload.other_costs, 2)
 
         manual_upload = Upload(
             user_id=user_id,

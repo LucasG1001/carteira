@@ -19,15 +19,23 @@ type ManualFormState = {
   operation_type: 'Compra' | 'Venda';
   date: string;
   quantity: string;
-  unit_price: string;
 };
 
 function todayAsInputValue() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatBRL(value: number) {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function centsFromInput(value: string) {
+  const digits = value.replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) : 0;
+}
+
 export function PortfolioActions() {
-  const { refresh } = usePortfolio();
+  const { data, refresh } = usePortfolio();
   const { registerAdd } = useQuickAdd();
   const [activeTab, setActiveTab] = useState<ActionTab>('upload');
   const [isOpen, setIsOpen] = useState(false);
@@ -41,8 +49,21 @@ export function PortfolioActions() {
     operation_type: 'Compra',
     date: todayAsInputValue(),
     quantity: '',
-    unit_price: '',
   });
+  const [unitPriceCents, setUnitPriceCents] = useState(0);
+  const [otherCostsCents, setOtherCostsCents] = useState(0);
+  const [tickerOpen, setTickerOpen] = useState(false);
+
+  const existingTickers = useMemo(() => (data?.assets ?? []).map((asset) => asset.ticker), [data]);
+  const tickerSuggestions = useMemo(() => {
+    const term = manualForm.ticker.trim().toUpperCase();
+    return existingTickers.filter((ticker) => ticker !== term && (!term || ticker.includes(term))).slice(0, 8);
+  }, [existingTickers, manualForm.ticker]);
+
+  const unitPrice = unitPriceCents / 100;
+  const otherCosts = otherCostsCents / 100;
+  const quantityNumber = Number(manualForm.quantity) || 0;
+  const totalCompra = quantityNumber * unitPrice + otherCosts;
 
   const selectedFileLabel = useMemo(() => {
     if (!selectedFile) return 'Nenhum arquivo selecionado';
@@ -123,7 +144,8 @@ export function PortfolioActions() {
         operation_type: manualForm.operation_type,
         date: manualForm.date,
         quantity: Number(manualForm.quantity),
-        unit_price: Number(manualForm.unit_price),
+        unit_price: unitPrice,
+        other_costs: otherCosts,
       });
 
       await refresh();
@@ -132,8 +154,9 @@ export function PortfolioActions() {
         operation_type: 'Compra',
         date: todayAsInputValue(),
         quantity: '',
-        unit_price: '',
       });
+      setUnitPriceCents(0);
+      setOtherCostsCents(0);
       setManualStatus({ tone: 'success', text: 'Lancamento manual criado com sucesso.' });
     } catch (error) {
       setManualStatus({
@@ -245,17 +268,38 @@ export function PortfolioActions() {
 
                   <form className={styles.form} onSubmit={handleManualSubmit}>
                     <div className={styles.formGrid}>
-                      <label className={styles.field}>
+                      <div className={`${styles.field} ${styles.tickerWrap}`}>
                         <span className={styles.label}>Ticker</span>
                         <input
                           value={manualForm.ticker}
                           onChange={handleManualChange('ticker')}
+                          onFocus={() => setTickerOpen(true)}
+                          onBlur={() => window.setTimeout(() => setTickerOpen(false), 120)}
                           className={styles.input}
-                          placeholder="Ex: MXRF11"
+                          placeholder="Buscar ou digitar (ex: MXRF11)"
                           maxLength={20}
                           required
                         />
-                      </label>
+                        {tickerOpen && tickerSuggestions.length > 0 && (
+                          <ul className={styles.tickerList}>
+                            {tickerSuggestions.map((ticker) => (
+                              <li key={ticker}>
+                                <button
+                                  type="button"
+                                  className={styles.tickerOption}
+                                  onMouseDown={(event) => {
+                                    event.preventDefault();
+                                    setManualForm((current) => ({ ...current, ticker }));
+                                    setTickerOpen(false);
+                                  }}
+                                >
+                                  {ticker}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
 
                       <label className={styles.field}>
                         <span className={styles.label}>Tipo</span>
@@ -294,22 +338,47 @@ export function PortfolioActions() {
                         />
                       </label>
 
-                      <label className={`${styles.field} ${styles.fullWidth}`}>
+                      <label className={styles.field}>
                         <span className={styles.label}>Preco unitario</span>
                         <input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          value={manualForm.unit_price}
-                          onChange={handleManualChange('unit_price')}
+                          type="text"
+                          inputMode="numeric"
+                          value={formatBRL(unitPrice)}
+                          onChange={(event) => setUnitPriceCents(centsFromInput(event.target.value))}
                           className={styles.input}
-                          placeholder="0,00"
-                          required
+                          placeholder="R$ 0,00"
+                        />
+                      </label>
+
+                      <label className={styles.field}>
+                        <span className={styles.label}>Outros custos (taxas)</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={formatBRL(otherCosts)}
+                          onChange={(event) => setOtherCostsCents(centsFromInput(event.target.value))}
+                          className={styles.input}
+                          placeholder="R$ 0,00"
+                        />
+                      </label>
+
+                      <label className={`${styles.field} ${styles.fullWidth}`}>
+                        <span className={styles.label}>Valor total da compra</span>
+                        <input
+                          type="text"
+                          value={formatBRL(totalCompra)}
+                          className={`${styles.input} ${styles.readonlyInput}`}
+                          readOnly
+                          tabIndex={-1}
                         />
                       </label>
                     </div>
 
-                    <button type="submit" className={styles.primaryButton} disabled={submittingManual}>
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={submittingManual || !manualForm.ticker.trim() || quantityNumber <= 0 || unitPrice <= 0}
+                    >
                       {submittingManual ? <LoaderCircle size={16} className={styles.spin} /> : <PlusCircle size={16} />}
                       <span>{submittingManual ? 'Salvando...' : 'Adicionar lancamento'}</span>
                     </button>

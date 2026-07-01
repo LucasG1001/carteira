@@ -217,6 +217,50 @@
   grid-column: 1 / -1;
 }
 
+.tickerWrap {
+  position: relative;
+}
+
+.tickerList {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 12rem;
+  overflow-y: auto;
+  list-style: none;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+}
+
+.tickerOption {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.tickerOption:hover {
+  background: var(--bg-input);
+}
+
+.readonlyInput {
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+  cursor: default;
+}
+
 .label {
   font-size: 0.76rem;
   font-weight: 600;

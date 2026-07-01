@@ -21,6 +21,7 @@ class ManualAssetCreateRequest(BaseModel):
     date: date
     quantity: float = Field(gt=0)
     unit_price: float = Field(gt=0)
+    other_costs: float = Field(default=0, ge=0)
 
 
 class ManualAssetResponse(BaseModel):

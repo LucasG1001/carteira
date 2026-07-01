@@ -44,6 +44,7 @@ export type ManualAssetPayload = {
   date: string;
   quantity: number;
   unit_price: number;
+  other_costs?: number;
 };
 
 export type ManualAssetResponse = {
