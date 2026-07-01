@@ -9,9 +9,10 @@ interface MonthYearPickerProps {
   year: number;
   month: number | null;
   onChange: (year: number, month: number | null) => void;
+  markedKeys?: Set<string>;
 }
 
-export function MonthYearPicker({ year, month, onChange }: MonthYearPickerProps) {
+export function MonthYearPicker({ year, month, onChange, markedKeys }: MonthYearPickerProps) {
   const [open, setOpen] = useState(false);
   const [browseYear, setBrowseYear] = useState(year);
   const ref = useRef<HTMLDivElement>(null);
@@ -68,6 +69,7 @@ export function MonthYearPicker({ year, month, onChange }: MonthYearPickerProps)
             {MESES_CURTOS.map((label, index) => {
               const value = index + 1;
               const isActive = month === value && year === browseYear;
+              const marked = markedKeys?.has(`${browseYear}-${String(value).padStart(2, "0")}`);
               return (
                 <button
                   key={label}
@@ -76,6 +78,7 @@ export function MonthYearPicker({ year, month, onChange }: MonthYearPickerProps)
                   onClick={() => select(value)}
                 >
                   {label}
+                  {marked && <span className={styles.marker} />}
                 </button>
               );
             })}

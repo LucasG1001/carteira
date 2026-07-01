@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
+import { EvolutionChart } from "../../components/EvolutionChart/EvolutionChart";
 import { AssetsTable } from "../../components/AssetsTable/AssetsTable";
 import { usePortfolio } from "../../context/portfolioStore";
 import { usePrivacy } from "../../context/privacyStore";
-import type { BackendAssetSummary } from "../../services/api";
+import { getEvolution } from "../../services/api";
+import type { BackendAssetSummary, BackendEvolutionPoint } from "../../services/api";
 import { monthLabel } from "../../utils/date";
 import styles from "./InvestmentsPage.module.css";
 
@@ -42,6 +44,19 @@ export function InvestmentsPage() {
   const { data, loading, error } = usePortfolio();
   const { formatCurrency: fmt } = usePrivacy();
   const [tipoFiltro, setTipoFiltro] = useState("");
+  const [evolution, setEvolution] = useState<BackendEvolutionPoint[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    getEvolution()
+      .then((result) => {
+        if (active) setEvolution(result);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (loading) {
     return <div className={styles.state}>Carregando dados da carteira...</div>;
@@ -144,6 +159,7 @@ export function InvestmentsPage() {
   return (
     <div className={styles.container}>
       <BigNumbers cards={cards} />
+      {evolution.length > 0 && <EvolutionChart data={evolution} />}
       <Charts bar={bar} pie={pie} />
       <AssetsTable />
     </div>

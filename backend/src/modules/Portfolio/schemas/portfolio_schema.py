@@ -68,6 +68,11 @@ class DividendEntry(BaseModel):
     value: float
 
 
+class EvolutionPoint(BaseModel):
+    month: str
+    invested: float
+
+
 class PortfolioSummary(BaseModel):
     user_id: str
     assets: List[AssetSummary]

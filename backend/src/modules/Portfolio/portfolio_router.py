@@ -5,6 +5,7 @@ from src.core.security import get_current_user_id
 from src.modules.Portfolio.schemas.portfolio_schema import (
     AssetDetailResponse,
     DividendEntry,
+    EvolutionPoint,
     ManualAssetCreateRequest,
     ManualAssetResponse,
     PortfolioSummary,
@@ -41,6 +42,14 @@ async def get_dividends(
 ):
     service = PortfolioService(db)
     return await service.get_dividends(user_id)
+
+@router.get("/evolution", response_model=List[EvolutionPoint])
+async def get_evolution(
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    service = PortfolioService(db)
+    return await service.get_evolution(user_id)
 
 @router.get("/transactions", response_model=List[TransactionListItem])
 async def list_transactions(

@@ -159,7 +159,8 @@
 
 /* Table */
 .tableWrapper {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: calc(100vh - 12rem);
   cursor: grab;
 }
 
@@ -174,7 +175,7 @@
 }
 
 .table thead th:first-child {
-  z-index: 3;
+  z-index: 5;
 }
 
 .row:hover td:first-child {
@@ -204,7 +205,10 @@
   white-space: nowrap;
   border-bottom: 1px solid var(--border-subtle);
   transition: color var(--transition-fast);
-  background: rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--color-bg-secondary);
 }
 
 .table thead th:hover {

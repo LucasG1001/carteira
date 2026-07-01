@@ -15,6 +15,7 @@ from src.modules.Portfolio.schemas.portfolio_schema import (
     AssetDetailResponse,
     AssetSummary,
     DividendEntry,
+    EvolutionPoint,
     ManualAssetCreateRequest,
     ManualAssetResponse,
     MonthlyDividend,
@@ -411,6 +412,40 @@ class PortfolioService:
         ]
         entries.sort(key=lambda entry: entry.date, reverse=True)
         return entries
+
+    @staticmethod
+    def _months_between(start: date, end: date) -> List[str]:
+        months: List[str] = []
+        year, month = start.year, start.month
+        while (year, month) <= (end.year, end.month):
+            months.append(f"{year:04d}-{month:02d}")
+            month += 1
+            if month == 13:
+                month = 1
+                year += 1
+        return months
+
+    async def get_evolution(self, user_id: str) -> List[EvolutionPoint]:
+        transactions = await self.repository.get_all_by_user(user_id)
+        if not transactions:
+            return []
+
+        contributions: Dict[str, float] = {}
+        for transaction in transactions:
+            value = self._transaction_value(transaction)
+            month_key = transaction.date.strftime("%Y-%m")
+            if self._is_credit_transaction(transaction):
+                contributions[month_key] = contributions.get(month_key, 0.0) + value
+            elif self._is_debit_transaction(transaction):
+                contributions[month_key] = contributions.get(month_key, 0.0) - value
+
+        first_date = min(transaction.date for transaction in transactions)
+        cumulative = 0.0
+        points: List[EvolutionPoint] = []
+        for month_key in self._months_between(first_date, date.today()):
+            cumulative += contributions.get(month_key, 0.0)
+            points.append(EvolutionPoint(month=month_key, invested=self._round(cumulative, 2)))
+        return points
 
     @staticmethod
     def _is_manual_filename(filename: str | None) -> bool:

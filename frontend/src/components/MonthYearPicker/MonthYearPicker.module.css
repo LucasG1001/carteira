@@ -93,6 +93,7 @@
 }
 
 .month {
+  position: relative;
   padding: var(--spacing-sm) 0;
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
@@ -100,6 +101,16 @@
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.marker {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
 }
 
 .month:hover {

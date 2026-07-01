@@ -105,6 +105,15 @@ export async function getDividends(): Promise<BackendDividend[]> {
   return request('/portfolio/dividends');
 }
 
+export type BackendEvolutionPoint = {
+  month: string;
+  invested: number;
+};
+
+export async function getEvolution(): Promise<BackendEvolutionPoint[]> {
+  return request('/portfolio/evolution');
+}
+
 export type BackendTransaction = {
   id: number;
   ticker: string;

@@ -48,6 +48,10 @@ function ExpensesContent() {
     () => (data && categoriaFiltro ? donutData(data, { year, month }, categoriaFiltro) : []),
     [data, year, month, categoriaFiltro],
   );
+  const markedKeys = useMemo(
+    () => new Set((data?.entries ?? []).map((entry) => entry.date.slice(0, 7))),
+    [data],
+  );
 
   const header = (
     <div className={styles.toolbar}>
@@ -55,6 +59,7 @@ function ExpensesContent() {
         <MonthYearPicker
           year={year}
           month={month}
+          markedKeys={markedKeys}
           onChange={(nextYear, nextMonth) => {
             setYear(nextYear);
             setMonth(nextMonth);
