@@ -2,7 +2,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   BarChart,
@@ -77,25 +76,6 @@ function CustomPieTooltip({ active, payload }: { active?: boolean; payload?: Pie
   );
 }
 
-interface LegendEntry {
-  color?: string;
-  value?: string;
-}
-
-function renderCustomLegend({ payload }: { payload?: readonly LegendEntry[] }) {
-  if (!payload) return null;
-  return (
-    <div className={styles.legendContainer}>
-      {payload.map((entry, index) => (
-        <div key={index} className={styles.legendItem}>
-          <span className={styles.legendDot} style={{ backgroundColor: entry.color }} />
-          <span className={styles.legendLabel}>{entry.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function CustomBarTooltip({
   active,
   payload,
@@ -135,7 +115,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
             )}
           </div>
           <div className={styles.chartBody}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={230}>
               <BarChart data={bar.data} margin={{ top: 10, right: 2, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradientBar" x1="0" y1="0" x2="0" y2="1">
@@ -190,37 +170,60 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
               </div>
             )}
           </div>
-          <div className={styles.chartBody} style={{ display: 'flex', justifyContent: 'center' }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pie.data}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="45%"
-                  innerRadius={65}
-                  outerRadius={100}
-                  strokeWidth={2}
-                  stroke="#0a0a0f"
-                >
-                  {pie.data.map((entry, i) => {
-                    const dimmed = pie.activeSlice != null && pie.activeSlice !== entry.name;
-                    return (
-                      <Cell
-                        key={i}
-                        fill={entry.color}
-                        fillOpacity={dimmed ? 0.3 : 1}
-                        cursor={pie.onSliceClick ? 'pointer' : 'default'}
-                        onClick={pie.onSliceClick ? () => pie.onSliceClick?.(entry.name) : undefined}
-                      />
-                    );
-                  })}
-                </Pie>
-                <Tooltip content={<CustomPieTooltip />} />
-                <Legend content={renderCustomLegend} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className={`${styles.chartBody} ${styles.pieBody}`}>
+            <div className={styles.pieChart}>
+              <ResponsiveContainer width="100%" height={230}>
+                <PieChart>
+                  <Pie
+                    data={pie.data}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    strokeWidth={2}
+                    stroke="#0a0a0f"
+                  >
+                    {pie.data.map((entry, i) => {
+                      const dimmed = pie.activeSlice != null && pie.activeSlice !== entry.name;
+                      return (
+                        <Cell
+                          key={i}
+                          fill={entry.color}
+                          fillOpacity={dimmed ? 0.3 : 1}
+                          cursor={pie.onSliceClick ? 'pointer' : 'default'}
+                          onClick={pie.onSliceClick ? () => pie.onSliceClick?.(entry.name) : undefined}
+                        />
+                      );
+                    })}
+                  </Pie>
+                  <Tooltip content={<CustomPieTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className={styles.pieLegend}>
+              {pie.data.map((entry) => {
+                const dimmed = pie.activeSlice != null && pie.activeSlice !== entry.name;
+                return (
+                  <div
+                    key={entry.name}
+                    className={`${styles.pieLegendRow} ${pie.onSliceClick ? styles.pieLegendClickable : ''}`}
+                    style={{ opacity: dimmed ? 0.4 : 1 }}
+                    onClick={pie.onSliceClick ? () => pie.onSliceClick?.(entry.name) : undefined}
+                  >
+                    <span className={styles.pieLegendLeft}>
+                      <span className={styles.legendDot} style={{ backgroundColor: entry.color }} />
+                      <span className={styles.pieLegendLabel}>{entry.name}</span>
+                    </span>
+                    <span className={styles.pieLegendValues}>
+                      <span className={styles.pieLegendValue}>{entry.formatted}</span>
+                      <span className={styles.pieLegendPct}>{entry.percent.toFixed(1)}%</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
