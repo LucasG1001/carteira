@@ -20,6 +20,8 @@ from src.modules.Portfolio.schemas.portfolio_schema import (
     MonthlyDividend,
     PortfolioSummary,
     TransactionDetail,
+    TransactionListItem,
+    TransactionUpdateRequest,
 )
 from src.modules.Upload.models.upload_model import Upload
 from src.modules.Upload.repositories.upload_repository import UploadRepository
@@ -409,6 +411,73 @@ class PortfolioService:
         ]
         entries.sort(key=lambda entry: entry.date, reverse=True)
         return entries
+
+    @staticmethod
+    def _is_manual_filename(filename: str | None) -> bool:
+        return bool(filename) and filename.startswith("manual-")
+
+    def _to_transaction_item(self, transaction: Transaction, source: str) -> TransactionListItem:
+        other_costs = 0.0
+        if source == "manual":
+            base = (transaction.quantity or 0.0) * (transaction.unit_price or 0.0)
+            other_costs = round(max(0.0, (transaction.operation_value or 0.0) - base), 2)
+        return TransactionListItem(
+            id=transaction.id,
+            ticker=transaction.ticker,
+            operation_type=transaction.operation_type,
+            entry_side=transaction.entry_side,
+            date=transaction.date,
+            quantity=transaction.quantity,
+            unit_price=transaction.unit_price,
+            operation_value=transaction.operation_value,
+            other_costs=other_costs,
+            source=source,
+        )
+
+    async def get_transactions(self, user_id: str) -> List[TransactionListItem]:
+        transactions = await self.repository.get_all_by_user(user_id)
+        uploads = await self.upload_repository.list_by_user(user_id)
+        manual_upload_ids = {upload.id for upload in uploads if self._is_manual_filename(upload.filename)}
+        ordered = sorted(transactions, key=lambda item: (item.date, item.id), reverse=True)
+        return [
+            self._to_transaction_item(transaction, "manual" if transaction.upload_id in manual_upload_ids else "b3")
+            for transaction in ordered
+        ]
+
+    async def update_transaction(
+        self, user_id: str, transaction_id: int, payload: TransactionUpdateRequest
+    ) -> TransactionListItem:
+        transaction = await self.repository.get_by_id(transaction_id, user_id)
+        if not transaction:
+            raise BusinessException(404, "Lancamento nao encontrado.")
+        upload = await self.upload_repository.get_by_id(transaction.upload_id, user_id)
+        if not upload or not self._is_manual_filename(upload.filename):
+            raise BusinessException(400, "Apenas lancamentos manuais podem ser editados.")
+
+        operation_type = payload.operation_type.strip().title()
+        transaction.operation_type = operation_type
+        transaction.entry_side = "Credito" if operation_type == "Compra" else "Debito"
+        transaction.date = payload.date
+        transaction.quantity = payload.quantity
+        transaction.unit_price = payload.unit_price
+        transaction.operation_value = round(payload.quantity * payload.unit_price + payload.other_costs, 2)
+
+        await self.session.commit()
+        await self.session.refresh(transaction)
+        return self._to_transaction_item(transaction, "manual")
+
+    async def delete_transaction(self, user_id: str, transaction_id: int) -> None:
+        transaction = await self.repository.get_by_id(transaction_id, user_id)
+        if not transaction:
+            raise BusinessException(404, "Lancamento nao encontrado.")
+        upload = await self.upload_repository.get_by_id(transaction.upload_id, user_id)
+        if not upload or not self._is_manual_filename(upload.filename):
+            raise BusinessException(400, "Apenas lancamentos manuais podem ser excluidos.")
+
+        await self.session.delete(transaction)
+        await self.session.flush()
+        await self.upload_repository.delete_empty(user_id)
+        await self.session.commit()
 
     async def create_manual_asset(self, user_id: str, payload: ManualAssetCreateRequest) -> ManualAssetResponse:
         normalized_ticker = self.normalize_ticker(payload.ticker)

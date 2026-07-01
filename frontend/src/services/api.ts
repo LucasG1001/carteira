@@ -105,6 +105,43 @@ export async function getDividends(): Promise<BackendDividend[]> {
   return request('/portfolio/dividends');
 }
 
+export type BackendTransaction = {
+  id: number;
+  ticker: string;
+  operation_type: string;
+  entry_side: string | null;
+  date: string;
+  quantity: number;
+  unit_price: number | null;
+  operation_value: number | null;
+  other_costs: number;
+  source: 'b3' | 'manual';
+};
+
+export type TransactionUpdatePayload = {
+  operation_type: 'Compra' | 'Venda';
+  date: string;
+  quantity: number;
+  unit_price: number;
+  other_costs: number;
+};
+
+export async function getTransactions(): Promise<BackendTransaction[]> {
+  return request('/portfolio/transactions');
+}
+
+export async function updateTransaction(id: number, payload: TransactionUpdatePayload): Promise<BackendTransaction> {
+  return request(`/portfolio/transactions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteTransaction(id: number): Promise<void> {
+  await request(`/portfolio/transactions/${id}`, { method: 'DELETE' });
+}
+
 export async function uploadPortfolioFile(file: File): Promise<BackendUploadResponse> {
   const formData = new FormData();
   formData.append('file', file);

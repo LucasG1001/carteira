@@ -8,6 +8,7 @@ import { InvestmentsPage } from "./pages/InvestmentsPage/InvestmentsPage";
 import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import { TaxReportPage } from "./pages/TaxReportPage/TaxReportPage";
 import { DividendsPage } from "./pages/DividendsPage/DividendsPage";
+import { TransactionsPage } from "./pages/TransactionsPage/TransactionsPage";
 import styles from "./App.module.css";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
@@ -40,6 +41,7 @@ function App() {
               <Route path="/investimentos" element={<InvestmentsLayout />}>
                 <Route index element={<InvestmentsPage />} />
                 <Route path="proventos" element={<DividendsPage />} />
+                <Route path="lancamentos" element={<TransactionsPage />} />
                 <Route path="imposto-de-renda" element={<TaxReportPage />} />
               </Route>
               <Route path="/gastos" element={<ExpensesPage />} />

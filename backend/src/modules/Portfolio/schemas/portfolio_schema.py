@@ -83,3 +83,24 @@ class PortfolioSummary(BaseModel):
 
 class AssetDetailResponse(AssetSummary):
     history: List[TransactionDetail]
+
+
+class TransactionListItem(BaseModel):
+    id: int
+    ticker: str
+    operation_type: str
+    entry_side: Optional[str] = None
+    date: date
+    quantity: float
+    unit_price: Optional[float] = None
+    operation_value: Optional[float] = None
+    other_costs: float = 0.0
+    source: str
+
+
+class TransactionUpdateRequest(BaseModel):
+    operation_type: Literal["Compra", "Venda"]
+    date: date
+    quantity: float = Field(gt=0)
+    unit_price: float = Field(gt=0)
+    other_costs: float = Field(default=0, ge=0)

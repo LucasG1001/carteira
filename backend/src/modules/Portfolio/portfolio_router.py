@@ -8,6 +8,8 @@ from src.modules.Portfolio.schemas.portfolio_schema import (
     ManualAssetCreateRequest,
     ManualAssetResponse,
     PortfolioSummary,
+    TransactionListItem,
+    TransactionUpdateRequest,
 )
 from typing import List
 from src.modules.Portfolio.services.portfolio_service import PortfolioService
@@ -39,6 +41,33 @@ async def get_dividends(
 ):
     service = PortfolioService(db)
     return await service.get_dividends(user_id)
+
+@router.get("/transactions", response_model=List[TransactionListItem])
+async def list_transactions(
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    service = PortfolioService(db)
+    return await service.get_transactions(user_id)
+
+@router.put("/transactions/{transaction_id}", response_model=TransactionListItem)
+async def update_transaction(
+    transaction_id: int,
+    payload: TransactionUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    service = PortfolioService(db)
+    return await service.update_transaction(user_id, transaction_id, payload)
+
+@router.delete("/transactions/{transaction_id}", status_code=204)
+async def delete_transaction(
+    transaction_id: int,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    service = PortfolioService(db)
+    await service.delete_transaction(user_id, transaction_id)
 
 @router.get("/{ticker}", response_model=AssetDetailResponse)
 async def get_asset_details(

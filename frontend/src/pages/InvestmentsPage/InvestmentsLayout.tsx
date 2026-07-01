@@ -8,6 +8,7 @@ import styles from "./InvestmentsLayout.module.css";
 const TABS = [
   { to: "/investimentos", label: "Carteira", end: true },
   { to: "/investimentos/proventos", label: "Proventos", end: false },
+  { to: "/investimentos/lancamentos", label: "Lançamentos", end: false },
   { to: "/investimentos/imposto-de-renda", label: "Imposto de Renda", end: false },
 ];
 
