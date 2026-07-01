@@ -63,6 +63,7 @@ class MonthlyDividend(BaseModel):
 
 class DividendEntry(BaseModel):
     ticker: str
+    asset_type: str
     date: date
     type: str
     value: float

@@ -92,6 +92,7 @@ async function request(url: string, options: RequestInit = {}) {
 
 export type BackendDividend = {
   ticker: string;
+  asset_type: string;
   date: string;
   type: string;
   value: number;

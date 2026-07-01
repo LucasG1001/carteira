@@ -169,13 +169,16 @@ export function DividendsPage() {
               <thead>
                 <tr>
                   <th>
-                    <span className={tableStyles.thContent}>Data</span>
-                  </th>
-                  <th>
                     <span className={tableStyles.thContent}>Ativo</span>
                   </th>
                   <th>
-                    <span className={tableStyles.thContent}>Tipo</span>
+                    <span className={tableStyles.thContent}>Tipo de ativo</span>
+                  </th>
+                  <th>
+                    <span className={tableStyles.thContent}>Tipo de pagamento</span>
+                  </th>
+                  <th>
+                    <span className={tableStyles.thContent}>Data</span>
                   </th>
                   <th>
                     <span className={tableStyles.thContent}>Valor</span>
@@ -189,11 +192,16 @@ export function DividendsPage() {
                     className={tableStyles.row}
                     style={{ animationDelay: `${index * 20}ms` }}
                   >
-                    <td className={tableStyles.numCell}>{formatDate(entry.date)}</td>
                     <td>
                       <span className={tableStyles.bold}>{entry.ticker}</span>
                     </td>
+                    <td>
+                      <span className={`${tableStyles.tipoBadge} ${tableStyles[`tipo_${entry.asset_type.replace(/ /g, "")}`]}`}>
+                        {entry.asset_type}
+                      </span>
+                    </td>
                     <td>{entry.type}</td>
+                    <td className={tableStyles.numCell}>{formatDate(entry.date)}</td>
                     <td className={tableStyles.numCell}>
                       <span className={tableStyles.positive}>{fmt(entry.value)}</span>
                     </td>

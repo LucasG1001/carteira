@@ -403,6 +403,7 @@ class PortfolioService:
         entries = [
             DividendEntry(
                 ticker=self.normalize_ticker(transaction.ticker),
+                asset_type=self.classify_ticker(transaction.ticker),
                 date=transaction.date,
                 type=transaction.operation_type,
                 value=self._round(self._transaction_value(transaction), 2),
