@@ -12,10 +12,8 @@ import { ExpensesProvider } from "../../context/ExpensesContext";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
 import { MESES, monthLabel } from "../../utils/date";
-import { availableYears, buildExpenseView } from "../../utils/expenseView";
+import { availableYears, buildExpenseView, donutData } from "../../utils/expenseView";
 import styles from "./ExpensesPage.module.css";
-
-type DonutMode = "category" | "subcategory";
 
 const CATEGORY_CORES: Record<string, string> = {
   Essenciais: "#6366f1",
@@ -40,12 +38,17 @@ function ExpensesContent() {
   const { hidden, toggle, formatCurrency: fmt } = usePrivacy();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState<number | null>(null);
-  const [donutMode, setDonutMode] = useState<DonutMode>("category");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [filter, setFilter] = useState<TableFilter>(null);
 
   const years = useMemo(() => (data ? availableYears(data.entries) : []), [data]);
   const yearOptions = years.length ? years : [year];
   const view = useMemo(() => (data ? buildExpenseView(data, { year, month }) : null), [data, year, month]);
+  const donutBase = useMemo(() => (data ? donutData(data, { year, month }, null) : []), [data, year, month]);
+  const donutSub = useMemo(
+    () => (data && categoriaFiltro ? donutData(data, { year, month }, categoriaFiltro) : []),
+    [data, year, month, categoriaFiltro],
+  );
 
   const resetScope = () => {
     setMonth(null);
@@ -184,33 +187,37 @@ function ExpensesContent() {
     activeBar: month ? `${year}-${String(month).padStart(2, "0")}` : null,
   };
 
-  const pieSource = donutMode === "category" ? view.donutByCategory : view.donutBySubcategory;
-  const colorMap = donutMode === "category" ? CATEGORY_CORES : SUBCATEGORY_CORES;
-  const totalPie = pieSource.reduce((sum, item) => sum + item.total, 0);
+  const donutSlices = categoriaFiltro ? donutSub : donutBase;
+  const categoriaOptions = donutBase.map((item) => item.category);
+  const sliceField = categoriaFiltro ? "subcategory" : "category";
+  const colorMap = categoriaFiltro ? SUBCATEGORY_CORES : CATEGORY_CORES;
+  const totalPie = donutSlices.reduce((sum, item) => sum + item.total, 0);
 
   const pie: PieChartConfig = {
-    title: donutMode === "category" ? "Por Categoria" : "Por Subcategoria",
-    data: pieSource.map((item) => ({
+    title: categoriaFiltro ? `Subcategorias — ${categoriaFiltro}` : "Por Categoria",
+    data: donutSlices.map((item) => ({
       name: item.category,
       value: item.total,
       percent: totalPie > 0 ? (item.total / totalPie) * 100 : 0,
       color: colorMap[item.category] || "#94a3b8",
       formatted: fmt(item.total),
     })),
-    modes: [
-      { key: "category", label: "Categoria" },
-      { key: "subcategory", label: "Subcategoria" },
-    ],
-    activeMode: donutMode,
-    onModeChange: (key) => {
-      setDonutMode(key as DonutMode);
-      setFilter(null);
+    select: {
+      value: categoriaFiltro,
+      options: [
+        { value: "", label: "Por categoria" },
+        ...categoriaOptions.map((category) => ({ value: category, label: category })),
+      ],
+      onChange: (value) => {
+        setCategoriaFiltro(value);
+        setFilter(null);
+      },
     },
     onSliceClick: (name) =>
       setFilter((prev) =>
-        prev && prev.field === donutMode && prev.value === name ? null : { field: donutMode, value: name },
+        prev && prev.field === sliceField && prev.value === name ? null : { field: sliceField, value: name },
       ),
-    activeSlice: filter && filter.field === donutMode ? filter.value : null,
+    activeSlice: filter && filter.field === sliceField ? filter.value : null,
   };
 
   return (

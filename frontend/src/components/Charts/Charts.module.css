@@ -79,6 +79,30 @@
   color: #fff;
 }
 
+.pieSelect {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.pieSelect:hover,
+.pieSelect:focus {
+  border-color: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.pieSelect option {
+  background: var(--color-bg-secondary);
+  color: var(--text-primary);
+}
+
 .chartBadge {
   display: flex;
   align-items: center;

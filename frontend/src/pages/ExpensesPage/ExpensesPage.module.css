@@ -54,6 +54,11 @@
   border-color: var(--color-accent);
 }
 
+.filterSelect option {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
 .eyeButton {
   display: inline-flex;
   align-items: center;

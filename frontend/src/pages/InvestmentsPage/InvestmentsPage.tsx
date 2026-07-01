@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { PortfolioActions } from "../../components/PortfolioActions/PortfolioActions";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
@@ -20,6 +21,11 @@ const TIPO_CORES: Record<string, string> = {
   "Renda Fixa": "#10b981",
 };
 
+const TICKER_PALETTE = [
+  "#6366f1", "#22d3ee", "#f59e0b", "#f97316", "#10b981", "#ec4899",
+  "#8b5cf6", "#ef4444", "#14b8a6", "#a3e635", "#f472b6", "#38bdf8",
+];
+
 function alocacaoPorTipo(assets: BackendAssetSummary[], total: number) {
   const mapa: Record<string, number> = {};
   assets.forEach((ativo) => {
@@ -38,6 +44,7 @@ function alocacaoPorTipo(assets: BackendAssetSummary[], total: number) {
 function PortfolioDashboard() {
   const { data, loading, error } = usePortfolio();
   const { formatCurrency: fmt } = usePrivacy();
+  const [tipoFiltro, setTipoFiltro] = useState("");
 
   if (loading) {
     return <div className={styles.state}>Carregando dados da carteira...</div>;
@@ -101,15 +108,40 @@ function PortfolioDashboard() {
     })),
   };
 
+  const porTipo = alocacaoPorTipo(data.assets, data.general_current_value);
+
+  const ativosDoTipo = tipoFiltro
+    ? data.assets.filter((asset) => asset.asset_type === tipoFiltro)
+    : [];
+  const totalTipo = ativosDoTipo.reduce((sum, asset) => sum + asset.current_value, 0);
+
+  const pieData = tipoFiltro
+    ? ativosDoTipo
+        .slice()
+        .sort((a, b) => b.current_value - a.current_value)
+        .map((asset, index) => ({
+          name: asset.ticker,
+          value: asset.current_value,
+          percent: totalTipo > 0 ? (asset.current_value / totalTipo) * 100 : 0,
+          color: TICKER_PALETTE[index % TICKER_PALETTE.length],
+          formatted: fmt(asset.current_value),
+        }))
+    : porTipo.map((slice) => ({
+        name: slice.tipo,
+        value: slice.valor,
+        percent: slice.percentual,
+        color: slice.cor,
+        formatted: fmt(slice.valor),
+      }));
+
   const pie: PieChartConfig = {
-    title: "Alocação por Tipo",
-    data: alocacaoPorTipo(data.assets, data.general_current_value).map((slice) => ({
-      name: slice.tipo,
-      value: slice.valor,
-      percent: slice.percentual,
-      color: slice.cor,
-      formatted: fmt(slice.valor),
-    })),
+    title: tipoFiltro ? `Ativos — ${tipoFiltro}` : "Alocação por Tipo",
+    data: pieData,
+    select: {
+      value: tipoFiltro,
+      options: [{ value: "", label: "Por tipo" }, ...porTipo.map((slice) => ({ value: slice.tipo, label: slice.tipo }))],
+      onChange: setTipoFiltro,
+    },
   };
 
   return (

@@ -55,6 +55,11 @@ export interface PieChartConfig {
   modes?: { key: string; label: string }[];
   activeMode?: string;
   onModeChange?: (key: string) => void;
+  select?: {
+    value: string;
+    options: { value: string; label: string }[];
+    onChange: (value: string) => void;
+  };
 }
 
 interface PieTooltipSlice {
@@ -168,6 +173,19 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                   </button>
                 ))}
               </div>
+            )}
+            {pie.select && (
+              <select
+                className={styles.pieSelect}
+                value={pie.select.value}
+                onChange={(event) => pie.select?.onChange(event.target.value)}
+              >
+                {pie.select.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
           <div className={`${styles.chartBody} ${styles.pieBody}`}>

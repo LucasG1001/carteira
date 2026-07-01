@@ -27,8 +27,6 @@ export interface FixedVariable {
 
 export interface ExpenseView {
   barSeries: MonthPoint[];
-  donutByCategory: CategoryTotal[];
-  donutBySubcategory: CategoryTotal[];
   monthScope: MonthScope;
   yearExpense: number;
   yearTopSubcategory: { name: string; total: number } | null;
@@ -131,8 +129,6 @@ export function buildExpenseView(data: BackendExpenseSummary, filter: ExpenseFil
   const yearAvgMonthly = activeMonths ? round2(yearExpense / activeMonths) : 0;
 
   const scopeMonths = month ? [month] : ALL_MONTHS;
-  const donutByCategory = aggregate(expenses, year, scopeMonths, (entry) => entry.category);
-  const donutBySubcategory = aggregate(expenses, year, scopeMonths, (entry) => entry.subcategory || 'Outros');
 
   const scopeMonth = month ?? latestMonthOf(year, barSeries);
   const monthExpense = round2(sumMonth(expenses, year, scopeMonth));
@@ -165,8 +161,6 @@ export function buildExpenseView(data: BackendExpenseSummary, filter: ExpenseFil
 
   return {
     barSeries,
-    donutByCategory,
-    donutBySubcategory,
     monthScope: {
       monthKey: `${year}-${String(scopeMonth).padStart(2, '0')}`,
       month: scopeMonth,
@@ -179,4 +173,19 @@ export function buildExpenseView(data: BackendExpenseSummary, filter: ExpenseFil
     yearAvgMonthly,
     fixedVariable: { fixed, variable, total, fixedPct },
   };
+}
+
+export function donutData(
+  data: BackendExpenseSummary,
+  filter: ExpenseFilter,
+  category: string | null,
+): CategoryTotal[] {
+  const { year, month } = filter;
+  const months = month ? [month] : ALL_MONTHS;
+  const expenses = data.entries.filter(
+    (entry) => entry.type === 'expense' && (category === null || entry.category === category),
+  );
+  return aggregate(expenses, year, months, (entry) =>
+    category === null ? entry.category : entry.subcategory || 'Outros',
+  );
 }
