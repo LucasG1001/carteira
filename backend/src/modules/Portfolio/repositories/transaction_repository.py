@@ -1,4 +1,6 @@
-﻿from sqlalchemy import func, tuple_
+﻿from datetime import date
+
+from sqlalchemy import delete, func, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -19,6 +21,25 @@ class TransactionRepository:
         stmt = select(Transaction).where(Transaction.user_id == user_id, Transaction.ticker == ticker).order_by(Transaction.date.asc(), Transaction.id.asc())
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_by_id(self, transaction_id: int, user_id: str) -> Transaction | None:
+        stmt = select(Transaction).where(Transaction.id == transaction_id, Transaction.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
+    async def delete_in_range_for_tickers(
+        self, user_id: str, tickers: list[str], start_date: date, end_date: date
+    ) -> None:
+        if not tickers:
+            return
+        stmt = delete(Transaction).where(
+            Transaction.user_id == user_id,
+            Transaction.ticker.in_(tickers),
+            Transaction.date >= start_date,
+            Transaction.date <= end_date,
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
 
     async def get_latest_prices_by_tickers(self, tickers: list[str]) -> dict[str, StockPrice]:
         if not tickers:

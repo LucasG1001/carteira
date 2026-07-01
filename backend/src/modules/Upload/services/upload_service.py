@@ -4,6 +4,7 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exceptions import BusinessException
+from src.modules.Portfolio.repositories.transaction_repository import TransactionRepository
 from src.modules.Upload.models.upload_model import Upload
 from src.modules.Upload.repositories.upload_repository import UploadRepository
 from src.modules.Upload.services.b3_parser_service import B3ParserService
@@ -33,8 +34,22 @@ class UploadService:
         if not transactions:
             raise BusinessException(400, "Nenhuma transacao valida encontrada no arquivo.")
 
+        # Merge: replace existing transactions of the same tickers within the file's
+        # date range (B3 overrides manual for those tickers; re-import is idempotent).
+        dates = [transaction.date for transaction in transactions]
+        tickers = list({transaction.ticker for transaction in transactions})
+        transaction_repository = TransactionRepository(self.session)
+        await transaction_repository.delete_in_range_for_tickers(
+            user_id, tickers, min(dates), max(dates)
+        )
+
         self.session.add_all(transactions)
         await self.session.commit()
+
+        # Remove upload rows left without any transaction after the replace.
+        await self.repository.delete_empty(user_id)
+        await self.session.commit()
+
         await self.session.refresh(new_upload)
 
         return new_upload

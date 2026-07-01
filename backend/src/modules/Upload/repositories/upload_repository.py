@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import delete
+from sqlalchemy import delete, exists
 from src.modules.Upload.models.upload_model import Upload
+from src.modules.Portfolio.models.transaction_model import Transaction
 
 class UploadRepository:
     def __init__(self, session: AsyncSession):
@@ -31,4 +32,10 @@ class UploadRepository:
     async def delete(self, upload: Upload) -> None:
         await self.session.delete(upload)
         # Cascade delete is handled by the database schema (ON DELETE CASCADE)
+        await self.session.flush()
+
+    async def delete_empty(self, user_id: str) -> None:
+        has_transactions = exists().where(Transaction.upload_id == Upload.id)
+        stmt = delete(Upload).where(Upload.user_id == user_id, ~has_transactions)
+        await self.session.execute(stmt)
         await self.session.flush()
