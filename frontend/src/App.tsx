@@ -6,6 +6,7 @@ import { QuickAddProvider } from "./context/QuickAddContext";
 import { InvestmentsPage } from "./pages/InvestmentsPage/InvestmentsPage";
 import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import { TaxReportPage } from "./pages/TaxReportPage/TaxReportPage";
+import { DividendsPage } from "./pages/DividendsPage/DividendsPage";
 import styles from "./App.module.css";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
@@ -36,6 +37,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/investimentos" replace />} />
               <Route path="/investimentos" element={<InvestmentsPage />} />
+              <Route path="/investimentos/proventos" element={<DividendsPage />} />
               <Route path="/imposto-de-renda" element={<TaxReportPage />} />
               <Route path="/gastos" element={<ExpensesPage />} />
               <Route path="*" element={<Navigate to="/investimentos" replace />} />

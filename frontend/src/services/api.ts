@@ -89,8 +89,19 @@ async function request(url: string, options: RequestInit = {}) {
   return response.json();
 }
 
+export type BackendDividend = {
+  ticker: string;
+  date: string;
+  type: string;
+  value: number;
+};
+
 export async function getPortfolioSummary(): Promise<BackendPortfolioSummary> {
   return request('/portfolio/');
+}
+
+export async function getDividends(): Promise<BackendDividend[]> {
+  return request('/portfolio/dividends');
 }
 
 export async function uploadPortfolioFile(file: File): Promise<BackendUploadResponse> {

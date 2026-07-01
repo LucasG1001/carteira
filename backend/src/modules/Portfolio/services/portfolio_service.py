@@ -14,6 +14,7 @@ from src.modules.Portfolio.repositories.transaction_repository import Transactio
 from src.modules.Portfolio.schemas.portfolio_schema import (
     AssetDetailResponse,
     AssetSummary,
+    DividendEntry,
     ManualAssetCreateRequest,
     ManualAssetResponse,
     MonthlyDividend,
@@ -393,6 +394,21 @@ class PortfolioService:
             general_profitability_percent=self._round((general_profitability_value / general_total_invested * 100) if general_total_invested > 0 else 0.0, 2),
             monthly_dividends=self._build_monthly_dividends(all_transactions),
         )
+
+    async def get_dividends(self, user_id: str) -> List[DividendEntry]:
+        transactions = await self.repository.get_all_by_user(user_id)
+        entries = [
+            DividendEntry(
+                ticker=self.normalize_ticker(transaction.ticker),
+                date=transaction.date,
+                type=transaction.operation_type,
+                value=self._round(self._transaction_value(transaction), 2),
+            )
+            for transaction in transactions
+            if self._is_income_transaction(transaction)
+        ]
+        entries.sort(key=lambda entry: entry.date, reverse=True)
+        return entries
 
     async def create_manual_asset(self, user_id: str, payload: ManualAssetCreateRequest) -> ManualAssetResponse:
         normalized_ticker = self.normalize_ticker(payload.ticker)

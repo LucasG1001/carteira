@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PortfolioActions } from "../../components/PortfolioActions/PortfolioActions";
+import { SectionTabs } from "../../components/SectionTabs/SectionTabs";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
@@ -159,6 +160,12 @@ export function InvestmentsPage() {
 
   return (
     <PortfolioProvider>
+      <SectionTabs
+        tabs={[
+          { to: "/investimentos", label: "Carteira", end: true },
+          { to: "/investimentos/proventos", label: "Proventos" },
+        ]}
+      />
       <div className={styles.toolbar}>
         <Link to="/imposto-de-renda" className={styles.taxButton} title="Declaração de Imposto de Renda">
           <FileText size={16} />

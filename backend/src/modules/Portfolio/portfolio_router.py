@@ -4,10 +4,12 @@ from src.core.database import get_db
 from src.core.security import get_current_user_id
 from src.modules.Portfolio.schemas.portfolio_schema import (
     AssetDetailResponse,
+    DividendEntry,
     ManualAssetCreateRequest,
     ManualAssetResponse,
     PortfolioSummary,
 )
+from typing import List
 from src.modules.Portfolio.services.portfolio_service import PortfolioService
 
 router = APIRouter()
@@ -29,6 +31,14 @@ async def create_manual_asset(
 ):
     service = PortfolioService(db)
     return await service.create_manual_asset(user_id, payload)
+
+@router.get("/dividends", response_model=List[DividendEntry])
+async def get_dividends(
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    service = PortfolioService(db)
+    return await service.get_dividends(user_id)
 
 @router.get("/{ticker}", response_model=AssetDetailResponse)
 async def get_asset_details(

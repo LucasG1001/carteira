@@ -60,6 +60,13 @@ class MonthlyDividend(BaseModel):
     value: float
 
 
+class DividendEntry(BaseModel):
+    ticker: str
+    date: date
+    type: str
+    value: float
+
+
 class PortfolioSummary(BaseModel):
     user_id: str
     assets: List[AssetSummary]
