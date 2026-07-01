@@ -183,6 +183,9 @@ class ExpenseService:
         amount = entry.amount or 0.0
 
         if entry.is_recurring:
+            today = date.today()
+            if (year, month) > (today.year, today.month):
+                return 0.0
             recurrence = entry.recurrence or "monthly"
             if recurrence == "yearly":
                 return amount if month == start.month else 0.0

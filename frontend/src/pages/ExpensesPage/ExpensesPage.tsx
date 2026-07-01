@@ -222,7 +222,12 @@ function ExpensesContent() {
           prepend={<BudgetCard spentByCategory={view.monthScope.byCategory} budgets={data.budgets} onSaved={refresh} />}
         />
         <Charts bar={bar} pie={pie} />
-        <ExpensesTable filter={filter} onClearFilter={() => setFilter(null)} year={year} month={month} />
+        <ExpensesTable
+          filter={filter}
+          onClearFilter={() => setFilter(null)}
+          year={year}
+          month={view.monthScope.month}
+        />
       </div>
     </>
   );

@@ -5,6 +5,8 @@ import { usePrivacy } from '../../context/privacyStore';
 import { useDragScroll } from '../../hooks/useDragScroll';
 import type { BackendExpenseEntry } from '../../services/api';
 import { ExpenseForm } from '../ExpenseForm/ExpenseForm';
+import { monthLabel } from '../../utils/date';
+import { monthContribution } from '../../utils/expenseView';
 import styles from '../AssetsTable/AssetsTable.module.css';
 
 type SortKey = 'date' | 'amount' | 'category';
@@ -20,7 +22,7 @@ interface ExpensesTableProps {
   filter: TableFilter;
   onClearFilter: () => void;
   year: number;
-  month: number | null;
+  month: number;
 }
 
 export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTableProps) {
@@ -43,12 +45,13 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
     }
   };
 
-  const scopePrefix = month ? `${year}-${String(month).padStart(2, '0')}` : String(year);
+  const monthKey = `${year}-${String(month).padStart(2, '0')}`;
 
-  const entries = data.entries
-    .filter((entry) => {
-      if (entry.type !== 'expense') return false;
-      if (!entry.date.startsWith(scopePrefix)) return false;
+  const rows = data.entries
+    .filter((entry) => entry.type === 'expense')
+    .map((entry) => ({ entry, amount: monthContribution(entry, year, month) }))
+    .filter(({ entry, amount }) => {
+      if (amount <= 0) return false;
       if (filter) {
         if (filter.field === 'category' && entry.category !== filter.value) return false;
         if (filter.field === 'subcategory' && (entry.subcategory || 'Outros') !== filter.value) return false;
@@ -65,15 +68,19 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
     })
     .sort((a, b) => {
       if (sortKey === 'category') {
-        return sortDir === 'asc' ? a.category.localeCompare(b.category) : b.category.localeCompare(a.category);
+        return sortDir === 'asc'
+          ? a.entry.category.localeCompare(b.entry.category)
+          : b.entry.category.localeCompare(a.entry.category);
       }
       if (sortKey === 'amount') {
         return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
       }
-      return sortDir === 'asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+      return sortDir === 'asc'
+        ? a.entry.date.localeCompare(b.entry.date)
+        : b.entry.date.localeCompare(a.entry.date);
     });
 
-  const total = entries.reduce((acc, entry) => acc + entry.amount, 0);
+  const total = rows.reduce((acc, row) => acc + row.amount, 0);
 
   const renderSortIcon = (col: SortKey) => {
     if (sortKey !== col) return <ArrowUpDown size={12} className={styles.sortIconInactive} />;
@@ -89,8 +96,8 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <div className={styles.titleRow}>
-            <h3 className={styles.title}>Detalhe das compras</h3>
-            <span className={styles.count}>{entries.length}</span>
+            <h3 className={styles.title}>Detalhe das compras · {monthLabel(monthKey)}</h3>
+            <span className={styles.count}>{rows.length}</span>
             <span className={styles.saldoNeutral}>{fmt(total)}</span>
             {filter && (
               <button type="button" className={styles.filterChip} onClick={onClearFilter}>
@@ -145,7 +152,7 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry, index) => (
+              {rows.map(({ entry, amount }, index) => (
                 <tr
                   key={entry.id}
                   className={`${styles.row} ${styles.clickableRow}`}
@@ -157,7 +164,7 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
                   </td>
                   <td className={styles.numCell}>{formatDate(entry.date)}</td>
                   <td className={styles.numCell}>
-                    <span className={styles.negative}>-{fmt(entry.amount)}</span>
+                    <span className={styles.negative}>-{fmt(amount)}</span>
                   </td>
                   <td>{entry.category}</td>
                   <td>{entry.subcategory || 'Outros'}</td>
@@ -175,7 +182,7 @@ export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTa
           </table>
         </div>
 
-        {entries.length === 0 && (
+        {rows.length === 0 && (
           <div className={styles.empty}>
             <p>Nenhum lançamento encontrado</p>
           </div>

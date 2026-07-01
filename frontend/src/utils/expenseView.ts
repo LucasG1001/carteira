@@ -54,6 +54,10 @@ export function monthContribution(entry: BackendExpenseEntry, year: number, mont
   const amount = entry.amount || 0;
 
   if (entry.is_recurring) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    if (year > currentYear || (year === currentYear && month > currentMonth)) return 0;
     const recurrence = entry.recurrence || 'monthly';
     if (recurrence === 'yearly') return month === startMonth ? amount : 0;
     if (recurrence === 'weekly') return amount * 4;
