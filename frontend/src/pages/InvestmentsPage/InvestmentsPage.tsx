@@ -3,7 +3,6 @@ import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
-import { EvolutionChart } from "../../components/EvolutionChart/EvolutionChart";
 import { AssetsTable } from "../../components/AssetsTable/AssetsTable";
 import { usePortfolio } from "../../context/portfolioStore";
 import { usePrivacy } from "../../context/privacyStore";
@@ -110,13 +109,14 @@ export function InvestmentsPage() {
   ];
 
   const bar: BarChartConfig = {
-    title: "Proventos por Mês",
-    badge: "Últimos 12 meses",
-    color: "#10b981",
-    data: data.monthly_dividends.map((m) => ({
-      label: monthLabel(m.month),
-      value: m.value,
-      formatted: fmt(m.value),
+    title: "Evolução do Patrimônio",
+    badge: "Aporte acumulado",
+    color: "#8b5cf6",
+    data: evolution.map((point) => ({
+      label: monthLabel(point.month),
+      value: point.invested,
+      formatted: fmt(point.invested),
+      key: point.month,
     })),
   };
 
@@ -159,7 +159,6 @@ export function InvestmentsPage() {
   return (
     <div className={styles.container}>
       <BigNumbers cards={cards} />
-      {evolution.length > 0 && <EvolutionChart data={evolution} />}
       <Charts bar={bar} pie={pie} />
       <AssetsTable />
     </div>

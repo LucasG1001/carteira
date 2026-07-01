@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pencil } from "lucide-react";
 import { Modal } from "../../components/Modal/Modal";
+import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
 import { useDragScroll } from "../../hooks/useDragScroll";
 import { usePrivacy } from "../../context/privacyStore";
 import { deleteTransaction, getTransactions, updateTransaction } from "../../services/api";
@@ -62,6 +63,8 @@ export function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [origem, setOrigem] = useState<Origem>("todos");
+  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState<number | null>(null);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -89,10 +92,11 @@ export function TransactionsPage() {
   }, []);
 
   const rows = useMemo(() => {
-    const entries = data ?? [];
-    if (origem === "todos") return entries;
-    return entries.filter((entry) => entry.source === origem);
-  }, [data, origem]);
+    const scopePrefix = pickerMonth ? `${pickerYear}-${String(pickerMonth).padStart(2, "0")}` : String(pickerYear);
+    return (data ?? []).filter(
+      (entry) => entry.date.startsWith(scopePrefix) && (origem === "todos" || entry.source === origem),
+    );
+  }, [data, origem, pickerYear, pickerMonth]);
 
   if (loading) {
     return <div className={styles.state}>Carregando lançamentos...</div>;
@@ -140,6 +144,17 @@ export function TransactionsPage() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.tableToolbar}>
+        <MonthYearPicker
+          year={pickerYear}
+          month={pickerMonth}
+          onChange={(year, month) => {
+            setPickerYear(year);
+            setPickerMonth(month);
+          }}
+        />
+      </div>
+
       <section className={tableStyles.section}>
         <div className={tableStyles.card}>
           <div className={tableStyles.cardHeader}>

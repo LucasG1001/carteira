@@ -145,6 +145,17 @@ export function DividendsPage() {
       <BigNumbers cards={cards} compact />
       <Charts bar={bar} pie={pie} />
 
+      <div className={styles.tableToolbar}>
+        <MonthYearPicker
+          year={pickerYear}
+          month={pickerMonth}
+          onChange={(year, month) => {
+            setPickerYear(year);
+            setPickerMonth(month);
+          }}
+        />
+      </div>
+
       <section className={tableStyles.section}>
         <div className={tableStyles.card}>
           <div className={tableStyles.cardHeader}>
@@ -152,16 +163,6 @@ export function DividendsPage() {
               <h3 className={tableStyles.title}>Detalhamento de proventos</h3>
               <span className={tableStyles.count}>{tableEntries.length}</span>
               <span className={tableStyles.saldoNeutral}>{fmt(tableTotal)}</span>
-            </div>
-            <div className={tableStyles.controls}>
-              <MonthYearPicker
-                year={pickerYear}
-                month={pickerMonth}
-                onChange={(year, month) => {
-                  setPickerYear(year);
-                  setPickerMonth(month);
-                }}
-              />
             </div>
           </div>
 

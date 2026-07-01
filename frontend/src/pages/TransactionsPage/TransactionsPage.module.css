@@ -3,6 +3,13 @@
   margin: 0 auto;
 }
 
+.tableToolbar {
+  max-width: 1440px;
+  margin: 0 auto var(--spacing-base);
+  display: flex;
+  justify-content: flex-end;
+}
+
 .state {
   min-height: 40vh;
   display: flex;
