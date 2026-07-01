@@ -11,8 +11,9 @@ import { BudgetCard } from "../../components/BudgetCard/BudgetCard";
 import { ExpensesProvider } from "../../context/ExpensesContext";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
-import { MESES, monthLabel } from "../../utils/date";
-import { availableYears, buildExpenseView, donutData } from "../../utils/expenseView";
+import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
+import { monthLabel } from "../../utils/date";
+import { buildExpenseView, donutData } from "../../utils/expenseView";
 import styles from "./ExpensesPage.module.css";
 
 const CATEGORY_CORES: Record<string, string> = {
@@ -41,8 +42,6 @@ function ExpensesContent() {
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [filter, setFilter] = useState<TableFilter>(null);
 
-  const years = useMemo(() => (data ? availableYears(data.entries) : []), [data]);
-  const yearOptions = years.length ? years : [year];
   const view = useMemo(() => (data ? buildExpenseView(data, { year, month }) : null), [data, year, month]);
   const donutBase = useMemo(() => (data ? donutData(data, { year, month }, null) : []), [data, year, month]);
   const donutSub = useMemo(
@@ -50,44 +49,18 @@ function ExpensesContent() {
     [data, year, month, categoriaFiltro],
   );
 
-  const resetScope = () => {
-    setMonth(null);
-    setFilter(null);
-  };
-
   const header = (
     <div className={styles.toolbar}>
       <div className={styles.filters}>
-        <select
-          className={styles.filterSelect}
-          value={year}
-          onChange={(event) => {
-            setYear(Number(event.target.value));
-            resetScope();
-          }}
-        >
-          {yearOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <select
-          className={styles.filterSelect}
-          value={month ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            setMonth(value ? Number(value) : null);
+        <MonthYearPicker
+          year={year}
+          month={month}
+          onChange={(nextYear, nextMonth) => {
+            setYear(nextYear);
+            setMonth(nextMonth);
             setFilter(null);
           }}
-        >
-          <option value="">Todos os meses</option>
-          {MESES.map((label, index) => (
-            <option key={label} value={index + 1}>
-              {label}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <div className={styles.actions}>
         <button

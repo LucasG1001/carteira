@@ -15,10 +15,10 @@ export interface BigNumberCardProps {
   delay: number;
 }
 
-function BigNumberCard({ label, value, side, details, accentClass, delay }: BigNumberCardProps) {
+function BigNumberCard({ label, value, side, details, accentClass, delay, compact }: BigNumberCardProps & { compact?: boolean }) {
   return (
     <div
-      className={`${styles.card} ${styles[accentClass]}`}
+      className={`${styles.card} ${styles[accentClass]} ${compact ? styles.compact : ''}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className={styles.label}>{label}</span>
@@ -30,25 +30,27 @@ function BigNumberCard({ label, value, side, details, accentClass, delay }: BigN
           </span>
         )}
       </div>
-      <div className={`${styles.details} ${details.length > 1 ? styles.detailsTwo : ''}`}>
-        {details.map((detail) => (
-          <div key={detail.label} className={styles.detail}>
-            <span className={styles.detailLabel}>{detail.label}</span>
-            <span className={styles.detailValue}>{detail.value}</span>
-          </div>
-        ))}
-      </div>
+      {details.length > 0 && (
+        <div className={`${styles.details} ${details.length > 1 ? styles.detailsTwo : ''}`}>
+          {details.map((detail) => (
+            <div key={detail.label} className={styles.detail}>
+              <span className={styles.detailLabel}>{detail.label}</span>
+              <span className={styles.detailValue}>{detail.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-export function BigNumbers({ cards, prepend }: { cards: BigNumberCardProps[]; prepend?: ReactNode }) {
+export function BigNumbers({ cards, prepend, compact }: { cards: BigNumberCardProps[]; prepend?: ReactNode; compact?: boolean }) {
   return (
     <section className={styles.section}>
       <div className={styles.grid}>
         {prepend}
         {cards.map((card) => (
-          <BigNumberCard key={card.label} {...card} />
+          <BigNumberCard key={card.label} {...card} compact={compact} />
         ))}
       </div>
     </section>

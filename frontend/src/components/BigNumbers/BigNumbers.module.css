@@ -52,6 +52,18 @@
   opacity: 0.8;
 }
 
+.compact {
+  padding: 0.7rem 1rem;
+}
+
+.compact::before {
+  display: none;
+}
+
+.compact .value {
+  font-size: 1.15rem;
+}
+
 .card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { PrivacyProvider } from "./context/PrivacyContext";
 import { QuickAddProvider } from "./context/QuickAddContext";
+import { InvestmentsLayout } from "./pages/InvestmentsPage/InvestmentsLayout";
 import { InvestmentsPage } from "./pages/InvestmentsPage/InvestmentsPage";
 import { ExpensesPage } from "./pages/ExpensesPage/ExpensesPage";
 import { TaxReportPage } from "./pages/TaxReportPage/TaxReportPage";
@@ -36,9 +37,11 @@ function App() {
           <main className={styles.main}>
             <Routes>
               <Route path="/" element={<Navigate to="/investimentos" replace />} />
-              <Route path="/investimentos" element={<InvestmentsPage />} />
-              <Route path="/investimentos/proventos" element={<DividendsPage />} />
-              <Route path="/imposto-de-renda" element={<TaxReportPage />} />
+              <Route path="/investimentos" element={<InvestmentsLayout />}>
+                <Route index element={<InvestmentsPage />} />
+                <Route path="proventos" element={<DividendsPage />} />
+                <Route path="imposto-de-renda" element={<TaxReportPage />} />
+              </Route>
               <Route path="/gastos" element={<ExpensesPage />} />
               <Route path="*" element={<Navigate to="/investimentos" replace />} />
             </Routes>

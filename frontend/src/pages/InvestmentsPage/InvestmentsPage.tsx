@@ -1,14 +1,9 @@
 import { useState } from "react";
-import { Eye, EyeOff, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
-import { PortfolioActions } from "../../components/PortfolioActions/PortfolioActions";
-import { SectionTabs } from "../../components/SectionTabs/SectionTabs";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
 import { AssetsTable } from "../../components/AssetsTable/AssetsTable";
-import { PortfolioProvider } from "../../context/PortfolioContext";
 import { usePortfolio } from "../../context/portfolioStore";
 import { usePrivacy } from "../../context/privacyStore";
 import type { BackendAssetSummary } from "../../services/api";
@@ -43,7 +38,7 @@ function alocacaoPorTipo(assets: BackendAssetSummary[], total: number) {
     .sort((a, b) => b.valor - a.valor);
 }
 
-function PortfolioDashboard() {
+export function InvestmentsPage() {
   const { data, loading, error } = usePortfolio();
   const { formatCurrency: fmt } = usePrivacy();
   const [tipoFiltro, setTipoFiltro] = useState("");
@@ -152,39 +147,5 @@ function PortfolioDashboard() {
       <Charts bar={bar} pie={pie} />
       <AssetsTable />
     </div>
-  );
-}
-
-export function InvestmentsPage() {
-  const { hidden, toggle } = usePrivacy();
-
-  return (
-    <PortfolioProvider>
-      <SectionTabs
-        tabs={[
-          { to: "/investimentos", label: "Carteira", end: true },
-          { to: "/investimentos/proventos", label: "Proventos" },
-        ]}
-      />
-      <div className={styles.toolbar}>
-        <Link to="/imposto-de-renda" className={styles.taxButton} title="Declaração de Imposto de Renda">
-          <FileText size={16} />
-          <span className={styles.eyeLabel}>Imposto de Renda</span>
-        </Link>
-        <div className={styles.toolbarRight}>
-          <button
-            type="button"
-            className={styles.eyeButton}
-            onClick={toggle}
-            title={hidden ? "Mostrar valores" : "Ocultar valores"}
-          >
-            {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
-            <span className={styles.eyeLabel}>{hidden ? "Mostrar valores" : "Ocultar valores"}</span>
-          </button>
-          <PortfolioActions />
-        </div>
-      </div>
-      <PortfolioDashboard />
-    </PortfolioProvider>
   );
 }

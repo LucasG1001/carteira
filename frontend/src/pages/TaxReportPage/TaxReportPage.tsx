@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Download, Copy, Check, CheckSquare, Square } from "lucide-react";
-import { PortfolioProvider } from "../../context/PortfolioContext";
+import { Download, Copy, Check, CheckSquare, Square } from "lucide-react";
 import { usePortfolio } from "../../context/portfolioStore";
 import { buildTaxReport, downloadCsv, formatBRL, formatQty, toCsv } from "../../utils/taxReport";
 import styles from "./TaxReportPage.module.css";
@@ -65,10 +63,6 @@ function TaxReportContent() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Link to="/investimentos" className={styles.back}>
-          <ArrowLeft size={16} />
-          <span>Voltar</span>
-        </Link>
         <h1 className={styles.title}>Declaração de Imposto de Renda</h1>
         <button type="button" className={styles.exportButton} onClick={handleExport} disabled={!hasAssets}>
           <Download size={16} />
@@ -198,9 +192,5 @@ function TaxReportContent() {
 }
 
 export function TaxReportPage() {
-  return (
-    <PortfolioProvider>
-      <TaxReportContent />
-    </PortfolioProvider>
-  );
+  return <TaxReportContent />;
 }

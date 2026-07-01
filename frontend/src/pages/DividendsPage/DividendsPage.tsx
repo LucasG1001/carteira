@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { SectionTabs } from "../../components/SectionTabs/SectionTabs";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
+import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
 import { useDragScroll } from "../../hooks/useDragScroll";
 import { usePrivacy } from "../../context/privacyStore";
 import { getDividends } from "../../services/api";
@@ -38,12 +37,14 @@ function formatDate(value: string) {
   return value.split("-").reverse().join("/");
 }
 
-function DividendsContent() {
-  const { hidden, toggle, formatCurrency: fmt } = usePrivacy();
+export function DividendsPage() {
+  const { formatCurrency: fmt } = usePrivacy();
   const scrollRef = useDragScroll<HTMLDivElement>();
   const [data, setData] = useState<BackendDividend[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear());
+  const [pickerMonth, setPickerMonth] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -90,74 +91,25 @@ function DividendsContent() {
       total12m,
       totalAll,
       media: activeMonths ? total12m / activeMonths : 0,
-      activeMonths,
-      topAsset: assets[0] ?? null,
     };
   }, [data]);
 
-  const header = (
-    <div className={styles.toolbar}>
-      <button
-        type="button"
-        className={styles.eyeButton}
-        onClick={toggle}
-        title={hidden ? "Mostrar valores" : "Ocultar valores"}
-      >
-        {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
-        <span className={styles.eyeLabel}>{hidden ? "Mostrar valores" : "Ocultar valores"}</span>
-      </button>
-    </div>
-  );
-
   if (loading) {
-    return (
-      <>
-        {header}
-        <div className={styles.state}>Carregando proventos...</div>
-      </>
-    );
+    return <div className={styles.state}>Carregando proventos...</div>;
   }
 
   if (error) {
-    return (
-      <>
-        {header}
-        <div className={`${styles.state} ${styles.error}`}>Erro ao carregar dados: {error.message}</div>
-      </>
-    );
+    return <div className={`${styles.state} ${styles.error}`}>Erro ao carregar dados: {error.message}</div>;
   }
 
   if (!data || data.length === 0) {
-    return (
-      <>
-        {header}
-        <div className={styles.state}>Nenhum provento recebido ainda.</div>
-      </>
-    );
+    return <div className={styles.state}>Nenhum provento recebido ainda.</div>;
   }
 
   const cards: BigNumberCardProps[] = [
-    {
-      label: "Recebido (12 meses)",
-      value: fmt(view.total12m),
-      details: [{ label: "Todo o período", value: fmt(view.totalAll) }],
-      accentClass: "green",
-      delay: 80,
-    },
-    {
-      label: "Média mensal (12m)",
-      value: fmt(view.media),
-      details: [{ label: "Meses com proventos", value: String(view.activeMonths) }],
-      accentClass: "indigo",
-      delay: 160,
-    },
-    {
-      label: "Maior pagador (12m)",
-      value: view.topAsset ? view.topAsset.ticker : "—",
-      details: [{ label: "Recebido", value: view.topAsset ? fmt(view.topAsset.value) : "—" }],
-      accentClass: "amber",
-      delay: 240,
-    },
+    { label: "Média mensal (12m)", value: fmt(view.media), details: [], accentClass: "indigo", delay: 80 },
+    { label: "Recebido (12 meses)", value: fmt(view.total12m), details: [], accentClass: "green", delay: 160 },
+    { label: "Total recebido", value: fmt(view.totalAll), details: [], accentClass: "amber", delay: 240 },
   ];
 
   const bar: BarChartConfig = {
@@ -184,78 +136,81 @@ function DividendsContent() {
     })),
   };
 
+  const scopePrefix = pickerMonth ? `${pickerYear}-${String(pickerMonth).padStart(2, "0")}` : String(pickerYear);
+  const tableEntries = data.filter((entry) => entry.date.startsWith(scopePrefix));
+  const tableTotal = tableEntries.reduce((sum, entry) => sum + entry.value, 0);
+
   return (
-    <>
-      {header}
-      <div className={styles.container}>
-        <BigNumbers cards={cards} />
-        <Charts bar={bar} pie={pie} />
+    <div className={styles.container}>
+      <BigNumbers cards={cards} compact />
+      <Charts bar={bar} pie={pie} />
 
-        <section className={tableStyles.section}>
-          <div className={tableStyles.card}>
-            <div className={tableStyles.cardHeader}>
-              <div className={tableStyles.titleRow}>
-                <h3 className={tableStyles.title}>Agenda de proventos</h3>
-                <span className={tableStyles.count}>{data.length}</span>
-                <span className={tableStyles.saldoNeutral}>{fmt(view.totalAll)}</span>
-              </div>
+      <section className={tableStyles.section}>
+        <div className={tableStyles.card}>
+          <div className={tableStyles.cardHeader}>
+            <div className={tableStyles.titleRow}>
+              <h3 className={tableStyles.title}>Detalhamento de proventos</h3>
+              <span className={tableStyles.count}>{tableEntries.length}</span>
+              <span className={tableStyles.saldoNeutral}>{fmt(tableTotal)}</span>
             </div>
-
-            <div className={tableStyles.tableWrapper} ref={scrollRef}>
-              <table className={`${tableStyles.table} ${tableStyles.compact}`}>
-                <thead>
-                  <tr>
-                    <th>
-                      <span className={tableStyles.thContent}>Data</span>
-                    </th>
-                    <th>
-                      <span className={tableStyles.thContent}>Ativo</span>
-                    </th>
-                    <th>
-                      <span className={tableStyles.thContent}>Tipo</span>
-                    </th>
-                    <th>
-                      <span className={tableStyles.thContent}>Valor</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((entry, index) => (
-                    <tr
-                      key={`${entry.ticker}-${entry.date}-${index}`}
-                      className={tableStyles.row}
-                      style={{ animationDelay: `${index * 20}ms` }}
-                    >
-                      <td className={tableStyles.numCell}>{formatDate(entry.date)}</td>
-                      <td>
-                        <span className={tableStyles.bold}>{entry.ticker}</span>
-                      </td>
-                      <td>{entry.type}</td>
-                      <td className={tableStyles.numCell}>
-                        <span className={tableStyles.positive}>{fmt(entry.value)}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className={tableStyles.controls}>
+              <MonthYearPicker
+                year={pickerYear}
+                month={pickerMonth}
+                onChange={(year, month) => {
+                  setPickerYear(year);
+                  setPickerMonth(month);
+                }}
+              />
             </div>
           </div>
-        </section>
-      </div>
-    </>
-  );
-}
 
-export function DividendsPage() {
-  return (
-    <>
-      <SectionTabs
-        tabs={[
-          { to: "/investimentos", label: "Carteira", end: true },
-          { to: "/investimentos/proventos", label: "Proventos" },
-        ]}
-      />
-      <DividendsContent />
-    </>
+          <div className={tableStyles.tableWrapper} ref={scrollRef}>
+            <table className={`${tableStyles.table} ${tableStyles.compact}`}>
+              <thead>
+                <tr>
+                  <th>
+                    <span className={tableStyles.thContent}>Data</span>
+                  </th>
+                  <th>
+                    <span className={tableStyles.thContent}>Ativo</span>
+                  </th>
+                  <th>
+                    <span className={tableStyles.thContent}>Tipo</span>
+                  </th>
+                  <th>
+                    <span className={tableStyles.thContent}>Valor</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableEntries.map((entry, index) => (
+                  <tr
+                    key={`${entry.ticker}-${entry.date}-${index}`}
+                    className={tableStyles.row}
+                    style={{ animationDelay: `${index * 20}ms` }}
+                  >
+                    <td className={tableStyles.numCell}>{formatDate(entry.date)}</td>
+                    <td>
+                      <span className={tableStyles.bold}>{entry.ticker}</span>
+                    </td>
+                    <td>{entry.type}</td>
+                    <td className={tableStyles.numCell}>
+                      <span className={tableStyles.positive}>{fmt(entry.value)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {tableEntries.length === 0 && (
+            <div className={tableStyles.empty}>
+              <p>Nenhum provento no período</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
