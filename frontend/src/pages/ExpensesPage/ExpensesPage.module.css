@@ -4,12 +4,54 @@
 }
 
 .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 105;
   max-width: 1440px;
   margin: 0 auto var(--spacing-base);
+  padding: var(--spacing-md) 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--spacing-sm);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.filterSelect {
+  padding: 0.6rem var(--spacing-base);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  outline: none;
+  min-width: 8rem;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.filterSelect:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-hover);
+}
+
+.filterSelect:focus {
+  border-color: var(--color-accent);
 }
 
 .eyeButton {
@@ -48,9 +90,14 @@
 }
 
 @media (max-width: 768px) {
-  .toolbar {
-    align-items: center;
-    justify-content: flex-end;
+  .filters {
+    flex: 1 1 auto;
+  }
+
+  .filterSelect {
+    min-width: 0;
+    flex: 1 1 0;
+    padding: 0.6rem var(--spacing-sm);
   }
 
   .eyeButton {

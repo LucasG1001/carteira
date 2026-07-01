@@ -3,33 +3,35 @@ import { Pencil } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
 import { usePrivacy } from '../../context/privacyStore';
 import { setBudget } from '../../services/api';
-import type { BackendExpenseSummary } from '../../services/api';
+import type { BudgetItem } from '../../services/api';
+import type { CategoryTotal } from '../../utils/expenseView';
 import bn from '../BigNumbers/BigNumbers.module.css';
 import styles from './BudgetCard.module.css';
 
 const CATEGORIES = ['Essenciais', 'Lazer'];
 
 interface BudgetCardProps {
-  summary: BackendExpenseSummary;
+  spentByCategory: CategoryTotal[];
+  budgets: BudgetItem[];
   onSaved: () => Promise<void> | void;
 }
 
-export function BudgetCard({ summary, onSaved }: BudgetCardProps) {
+export function BudgetCard({ spentByCategory, budgets, onSaved }: BudgetCardProps) {
   const { formatCurrency: fmt } = usePrivacy();
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const spentOf = (category: string) =>
-    summary.month_by_category.find((item) => item.category === category)?.total ?? 0;
+    spentByCategory.find((item) => item.category === category)?.total ?? 0;
   const budgetOf = (category: string) =>
-    summary.budgets.find((item) => item.category === category)?.amount ?? 0;
+    budgets.find((item) => item.category === category)?.amount ?? 0;
 
   const [metaEssenciais, setMetaEssenciais] = useState(() => {
-    const value = summary.budgets.find((b) => b.category === 'Essenciais')?.amount ?? 0;
+    const value = budgets.find((b) => b.category === 'Essenciais')?.amount ?? 0;
     return value ? String(value) : '';
   });
   const [metaLazer, setMetaLazer] = useState(() => {
-    const value = summary.budgets.find((b) => b.category === 'Lazer')?.amount ?? 0;
+    const value = budgets.find((b) => b.category === 'Lazer')?.amount ?? 0;
     return value ? String(value) : '';
   });
 

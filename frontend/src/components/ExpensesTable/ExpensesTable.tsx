@@ -4,14 +4,13 @@ import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BackendExpenseEntry } from '../../services/api';
 import { ExpenseForm } from '../ExpenseForm/ExpenseForm';
-import { monthLabel } from '../../utils/date';
 import styles from '../AssetsTable/AssetsTable.module.css';
 
 type SortKey = 'date' | 'amount' | 'category';
 type SortDir = 'asc' | 'desc';
 type FilterType = 'Todos' | 'expense' | 'income';
 
-export type TableFilter = { field: 'category' | 'subcategory' | 'month'; value: string } | null;
+export type TableFilter = { field: 'category' | 'subcategory'; value: string } | null;
 
 const FILTERS: { value: FilterType; label: string }[] = [
   { value: 'Todos', label: 'Todos' },
@@ -26,9 +25,11 @@ function formatDate(value: string) {
 interface ExpensesTableProps {
   filter: TableFilter;
   onClearFilter: () => void;
+  year: number;
+  month: number | null;
 }
 
-export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
+export function ExpensesTable({ filter, onClearFilter, year, month }: ExpensesTableProps) {
   const { data, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
   const [search, setSearch] = useState('');
@@ -48,13 +49,15 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
     }
   };
 
+  const scopePrefix = month ? `${year}-${String(month).padStart(2, '0')}` : String(year);
+
   const entries = data.entries
     .filter((entry) => {
+      if (!entry.date.startsWith(scopePrefix)) return false;
       if (filterType !== 'Todos' && entry.type !== filterType) return false;
       if (filter) {
         if (filter.field === 'category' && entry.category !== filter.value) return false;
         if (filter.field === 'subcategory' && (entry.subcategory || 'Outros') !== filter.value) return false;
-        if (filter.field === 'month' && !entry.date.startsWith(filter.value)) return false;
       }
       if (search) {
         const term = search.toLowerCase();
@@ -99,9 +102,7 @@ export function ExpensesTable({ filter, onClearFilter }: ExpensesTableProps) {
               <button type="button" className={styles.filterChip} onClick={onClearFilter}>
                 {filter.field === 'category'
                   ? `Categoria: ${filter.value}`
-                  : filter.field === 'subcategory'
-                    ? `Subcategoria: ${filter.value}`
-                    : `Mês: ${monthLabel(filter.value)}`}
+                  : `Subcategoria: ${filter.value}`}
                 <X size={12} />
               </button>
             )}

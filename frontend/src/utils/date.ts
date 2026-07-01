@@ -13,6 +13,21 @@ const MESES_ABREV = [
   'dez',
 ];
 
+export const MESES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+
 export function monthLabel(ym: string): string {
   const [year, month] = ym.split('-').map(Number);
   return `${MESES_ABREV[month - 1]}/${String(year).slice(2)}`;
