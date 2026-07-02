@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 
 from fastapi import UploadFile
@@ -30,9 +31,9 @@ class UploadService:
         )
         new_upload = await self.repository.create(new_upload)
 
-        transactions = B3ParserService.parse_excel(file_content, new_upload.id, user_id)
+        transactions = await asyncio.to_thread(B3ParserService.parse_excel, file_content, new_upload.id, user_id)
         if not transactions:
-            raise BusinessException(400, "Nenhuma transacao valida encontrada no arquivo.")
+            raise BusinessException(400, "Nenhuma transação válida encontrada no arquivo.")
 
         # Merge: replace existing transactions of the same tickers within the file's
         # date range (B3 overrides manual for those tickers; re-import is idempotent).
@@ -60,7 +61,7 @@ class UploadService:
     async def delete_upload(self, upload_id: int, user_id: str) -> None:
         upload = await self.repository.get_by_id(upload_id, user_id)
         if not upload:
-            raise BusinessException(404, "Upload nao encontrado.")
+            raise BusinessException(404, "Upload não encontrado.")
 
         await self.repository.delete(upload)
         await self.session.commit()

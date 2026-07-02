@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Download, Copy, Check, CheckSquare, Square } from "lucide-react";
 import { usePortfolio } from "../../context/portfolioStore";
-import { buildTaxReport, downloadCsv, formatBRL, formatQty, toCsv } from "../../utils/taxReport";
+import { buildTaxReport, downloadCsv, toCsv } from "../../utils/taxReport";
+import { formatBRL, formatQty } from "../../utils/formatting";
 import styles from "./TaxReportPage.module.css";
 
 const DECLARED_YEAR = new Date().getFullYear();

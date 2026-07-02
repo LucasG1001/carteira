@@ -6,6 +6,8 @@ import { useDragScroll } from "../../hooks/useDragScroll";
 import { usePrivacy } from "../../context/privacyStore";
 import { deleteTransaction, getTransactions, updateTransaction } from "../../services/api";
 import type { BackendTransaction } from "../../services/api";
+import { formatBRL, formatQty, centsFromInput } from "../../utils/formatting";
+import { formatDate } from "../../utils/date";
 import tableStyles from "../../components/AssetsTable/AssetsTable.module.css";
 import styles from "./TransactionsPage.module.css";
 
@@ -16,23 +18,6 @@ const FILTERS: { value: Origem; label: string }[] = [
   { value: "b3", label: "B3" },
   { value: "manual", label: "Manual" },
 ];
-
-function formatDate(value: string) {
-  return value.split("-").reverse().join("/");
-}
-
-function formatBRL(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function formatQty(value: number) {
-  return value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 8 });
-}
-
-function centsFromInput(value: string) {
-  const digits = value.replace(/\D/g, "");
-  return digits ? parseInt(digits, 10) : 0;
-}
 
 interface EditState {
   id: number;
@@ -67,6 +52,7 @@ export function TransactionsPage() {
   const [pickerMonth, setPickerMonth] = useState<number | null>(null);
   const [edit, setEdit] = useState<EditState | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const load = () => {
     return getTransactions()
@@ -114,6 +100,7 @@ export function TransactionsPage() {
   const handleSave = async () => {
     if (!edit) return;
     setSubmitting(true);
+    setFormError(null);
     try {
       await updateTransaction(edit.id, {
         operation_type: edit.operation_type,
@@ -122,8 +109,10 @@ export function TransactionsPage() {
         unit_price: unitPrice,
         other_costs: otherCosts,
       });
-      await load();
       setEdit(null);
+      await load();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Não foi possível salvar o lançamento.");
     } finally {
       setSubmitting(false);
     }
@@ -131,12 +120,15 @@ export function TransactionsPage() {
 
   const handleDelete = async () => {
     if (!edit) return;
-    if (!window.confirm(`Excluir o lançamento de ${edit.ticker}?`)) return;
+    if (!window.confirm(`Excluir o lançamento de ${edit.ticker} (${formatDate(edit.date)})?`)) return;
     setSubmitting(true);
+    setFormError(null);
     try {
       await deleteTransaction(edit.id);
-      await load();
       setEdit(null);
+      await load();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Não foi possível excluir o lançamento.");
     } finally {
       setSubmitting(false);
     }
@@ -253,7 +245,10 @@ export function TransactionsPage() {
         <Modal
           title="Editar lançamento"
           subtitle={`${edit.ticker} · lançamento manual`}
-          onClose={() => setEdit(null)}
+          onClose={() => {
+            setEdit(null);
+            setFormError(null);
+          }}
           onSubmit={handleSave}
           submitting={submitting}
           submitDisabled={quantityNumber <= 0 || unitPrice <= 0}
@@ -316,6 +311,7 @@ export function TransactionsPage() {
               <input type="text" value={formatBRL(editTotal)} className={`${styles.input} ${styles.readonlyInput}`} readOnly tabIndex={-1} />
             </label>
           </div>
+          {formError && <div className={styles.formError}>{formError}</div>}
         </Modal>
       )}
     </div>

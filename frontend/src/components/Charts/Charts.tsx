@@ -106,6 +106,9 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
   const formatAxis = (value: number) =>
     hidden ? '•••' : value.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
+  const barHasData = bar.data.some((point) => point.value > 0);
+  const pieHasData = pie.data.some((slice) => slice.value > 0);
+
   return (
     <section className={styles.section}>
       <div className={styles.row}>
@@ -120,6 +123,8 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
             )}
           </div>
           <div className={styles.chartBody}>
+            {!barHasData && <div className={styles.chartEmpty}>Sem dados para exibir</div>}
+            {barHasData && (
             <ResponsiveContainer width="100%" height={230}>
               <BarChart data={bar.data} margin={{ top: 10, right: 2, left: 0, bottom: 0 }}>
                 <defs>
@@ -154,6 +159,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -189,6 +195,9 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
             )}
           </div>
           <div className={`${styles.chartBody} ${styles.pieBody}`}>
+            {!pieHasData && <div className={styles.chartEmpty}>Sem dados para exibir</div>}
+            {pieHasData && (
+            <>
             <div className={styles.pieChart}>
               <ResponsiveContainer width="100%" height={230}>
                 <PieChart>
@@ -241,6 +250,8 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                 );
               })}
             </div>
+            </>
+            )}
           </div>
         </div>
       </div>

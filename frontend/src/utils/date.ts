@@ -32,3 +32,11 @@ export function monthLabel(ym: string): string {
   const [year, month] = ym.split('-').map(Number);
   return `${MESES_ABREV[month - 1]}/${String(year).slice(2)}`;
 }
+
+export function formatDate(value: string): string {
+  return value.split('-').reverse().join('/');
+}
+
+export function todayAsInputValue(): string {
+  return new Date().toISOString().slice(0, 10);
+}

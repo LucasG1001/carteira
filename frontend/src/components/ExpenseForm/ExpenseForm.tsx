@@ -4,6 +4,8 @@ import { ChevronDown } from 'lucide-react';
 import { Modal } from '../Modal/Modal';
 import { createExpense, deleteExpense, updateExpense } from '../../services/api';
 import type { BackendExpenseEntry, RecurrenceType } from '../../services/api';
+import { formatBRL } from '../../utils/formatting';
+import { formatDate, todayAsInputValue } from '../../utils/date';
 import styles from './ExpenseForm.module.css';
 
 const CATEGORIES = ['Essenciais', 'Lazer'];
@@ -26,14 +28,6 @@ const RECURRENCES: { value: RecurrenceType; label: string }[] = [
   { value: 'yearly', label: 'Anual' },
 ];
 
-function todayValue() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatBRL(value: number) {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
 interface ExpenseFormProps {
   onClose: () => void;
   onSaved: () => Promise<void> | void;
@@ -49,7 +43,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     initialData && CATEGORIES.includes(initialData.category) ? initialData.category : CATEGORIES[0],
   );
   const [subcategory, setSubcategory] = useState(initialData?.subcategory ?? 'Outros');
-  const [date, setDate] = useState(initialData?.date ?? todayValue());
+  const [date, setDate] = useState(initialData?.date ?? todayAsInputValue());
   const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method ?? 'Pix');
   const [installments, setInstallments] = useState(initialData ? String(initialData.installments) : '1');
   const [isRecurring, setIsRecurring] = useState(initialData?.is_recurring ?? false);
@@ -106,7 +100,8 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
 
   const handleDelete = async () => {
     if (!isEdit) return;
-    if (!window.confirm(`Excluir "${initialData.description || initialData.category}"?`)) return;
+    const deleteLabel = initialData.description || initialData.category;
+    if (!window.confirm(`Excluir "${deleteLabel}" de ${formatBRL(initialData.amount)} em ${formatDate(initialData.date)}?`)) return;
     setSubmitting(true);
     try {
       await deleteExpense(initialData.id);

@@ -10,7 +10,6 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = async () => {
-    setLoading(true);
     setError(null);
     try {
       const summary = await getPortfolioSummary();

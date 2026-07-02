@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
@@ -9,20 +9,8 @@ import { usePrivacy } from "../../context/privacyStore";
 import { getEvolution } from "../../services/api";
 import type { BackendAssetSummary, BackendEvolutionPoint } from "../../services/api";
 import { monthLabel } from "../../utils/date";
+import { ASSET_TYPE_COLORS, CHART_FALLBACK_COLOR, CHART_PALETTE } from "../../utils/chartColors";
 import styles from "./InvestmentsPage.module.css";
-
-const TIPO_CORES: Record<string, string> = {
-  Acao: "#6366f1",
-  FII: "#22d3ee",
-  ETF: "#f59e0b",
-  Cripto: "#f97316",
-  "Renda Fixa": "#10b981",
-};
-
-const TICKER_PALETTE = [
-  "#6366f1", "#22d3ee", "#f59e0b", "#f97316", "#10b981", "#ec4899",
-  "#8b5cf6", "#ef4444", "#14b8a6", "#a3e635", "#f472b6", "#38bdf8",
-];
 
 function alocacaoPorTipo(assets: BackendAssetSummary[], total: number) {
   const mapa: Record<string, number> = {};
@@ -34,7 +22,7 @@ function alocacaoPorTipo(assets: BackendAssetSummary[], total: number) {
       tipo,
       valor,
       percentual: total > 0 ? (valor / total) * 100 : 0,
-      cor: TIPO_CORES[tipo] || "#94a3b8",
+      cor: ASSET_TYPE_COLORS[tipo] || CHART_FALLBACK_COLOR,
     }))
     .sort((a, b) => b.valor - a.valor);
 }
@@ -56,6 +44,36 @@ export function InvestmentsPage() {
       active = false;
     };
   }, []);
+
+  const porTipo = useMemo(
+    () => (data ? alocacaoPorTipo(data.assets, data.general_current_value) : []),
+    [data],
+  );
+
+  const pieData = useMemo(() => {
+    if (!data) return [];
+    if (!tipoFiltro) {
+      return porTipo.map((slice) => ({
+        name: slice.tipo,
+        value: slice.valor,
+        percent: slice.percentual,
+        color: slice.cor,
+        formatted: fmt(slice.valor),
+      }));
+    }
+    const ativosDoTipo = data.assets.filter((asset) => asset.asset_type === tipoFiltro);
+    const totalTipo = ativosDoTipo.reduce((sum, asset) => sum + asset.current_value, 0);
+    return ativosDoTipo
+      .slice()
+      .sort((a, b) => b.current_value - a.current_value)
+      .map((asset, index) => ({
+        name: asset.ticker,
+        value: asset.current_value,
+        percent: totalTipo > 0 ? (asset.current_value / totalTipo) * 100 : 0,
+        color: CHART_PALETTE[index % CHART_PALETTE.length],
+        formatted: fmt(asset.current_value),
+      }));
+  }, [data, tipoFiltro, porTipo, fmt]);
 
   if (loading) {
     return <div className={styles.state}>Carregando dados da carteira...</div>;
@@ -119,32 +137,6 @@ export function InvestmentsPage() {
       key: point.month,
     })),
   };
-
-  const porTipo = alocacaoPorTipo(data.assets, data.general_current_value);
-
-  const ativosDoTipo = tipoFiltro
-    ? data.assets.filter((asset) => asset.asset_type === tipoFiltro)
-    : [];
-  const totalTipo = ativosDoTipo.reduce((sum, asset) => sum + asset.current_value, 0);
-
-  const pieData = tipoFiltro
-    ? ativosDoTipo
-        .slice()
-        .sort((a, b) => b.current_value - a.current_value)
-        .map((asset, index) => ({
-          name: asset.ticker,
-          value: asset.current_value,
-          percent: totalTipo > 0 ? (asset.current_value / totalTipo) * 100 : 0,
-          color: TICKER_PALETTE[index % TICKER_PALETTE.length],
-          formatted: fmt(asset.current_value),
-        }))
-    : porTipo.map((slice) => ({
-        name: slice.tipo,
-        value: slice.valor,
-        percent: slice.percentual,
-        color: slice.cor,
-        formatted: fmt(slice.valor),
-      }));
 
   const pie: PieChartConfig = {
     title: tipoFiltro ? `Ativos — ${tipoFiltro}` : "Alocação por Tipo",

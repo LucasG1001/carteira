@@ -22,6 +22,13 @@ class TransactionRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_by_tickers(self, user_id: str, tickers: list[str]) -> list[Transaction]:
+        if not tickers:
+            return []
+        stmt = select(Transaction).where(Transaction.user_id == user_id, Transaction.ticker.in_(tickers)).order_by(Transaction.date.asc(), Transaction.id.asc())
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def get_by_id(self, transaction_id: int, user_id: str) -> Transaction | None:
         stmt = select(Transaction).where(Transaction.id == transaction_id, Transaction.user_id == user_id)
         result = await self.session.execute(stmt)

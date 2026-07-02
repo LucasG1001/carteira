@@ -8,14 +8,10 @@ import { useDragScroll } from "../../hooks/useDragScroll";
 import { usePrivacy } from "../../context/privacyStore";
 import { getDividends } from "../../services/api";
 import type { BackendDividend } from "../../services/api";
-import { monthLabel } from "../../utils/date";
+import { formatDate, monthLabel } from "../../utils/date";
+import { CHART_PALETTE } from "../../utils/chartColors";
 import tableStyles from "../../components/AssetsTable/AssetsTable.module.css";
 import styles from "./DividendsPage.module.css";
-
-const PALETTE = [
-  "#22d3ee", "#6366f1", "#f59e0b", "#10b981", "#ec4899", "#f97316",
-  "#8b5cf6", "#ef4444", "#14b8a6", "#a3e635", "#f472b6", "#38bdf8",
-];
 
 function lastMonths(count: number): string[] {
   const now = new Date();
@@ -31,10 +27,6 @@ function lastMonths(count: number): string[] {
     }
   }
   return months.reverse();
-}
-
-function formatDate(value: string) {
-  return value.split("-").reverse().join("/");
 }
 
 function shortPaymentType(raw: string): string {
@@ -140,7 +132,7 @@ export function DividendsPage() {
       name: item.ticker,
       value: item.value,
       percent: totalPie > 0 ? (item.value / totalPie) * 100 : 0,
-      color: PALETTE[index % PALETTE.length],
+      color: CHART_PALETTE[index % CHART_PALETTE.length],
       formatted: fmt(item.value),
     })),
   };
@@ -148,6 +140,13 @@ export function DividendsPage() {
   const scopePrefix = pickerMonth ? `${pickerYear}-${String(pickerMonth).padStart(2, "0")}` : String(pickerYear);
   const tableEntries = data.filter((entry) => entry.date.startsWith(scopePrefix));
   const tableTotal = tableEntries.reduce((sum, entry) => sum + entry.value, 0);
+  const keyCounts = new Map<string, number>();
+  const keyedEntries = tableEntries.map((entry) => {
+    const base = `${entry.ticker}-${entry.date}-${entry.type}`;
+    const occurrence = keyCounts.get(base) ?? 0;
+    keyCounts.set(base, occurrence + 1);
+    return { entry, key: occurrence ? `${base}-${occurrence}` : base };
+  });
 
   return (
     <div className={styles.container}>
@@ -195,9 +194,9 @@ export function DividendsPage() {
                 </tr>
               </thead>
               <tbody>
-                {tableEntries.map((entry, index) => (
+                {keyedEntries.map(({ entry, key }, index) => (
                   <tr
-                    key={`${entry.ticker}-${entry.date}-${index}`}
+                    key={key}
                     className={tableStyles.row}
                     style={{ animationDelay: `${index * 20}ms` }}
                   >

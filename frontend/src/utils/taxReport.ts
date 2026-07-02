@@ -1,12 +1,5 @@
 import type { BackendAssetSummary } from '../services/api';
-
-export function formatBRL(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-export function formatQty(value: number): string {
-  return value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 8 });
-}
+import { formatBRL, formatQty } from './formatting';
 
 export interface TaxItem {
   ticker: string;

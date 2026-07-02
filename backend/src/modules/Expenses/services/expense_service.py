@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.date_utils import last_months
 from src.core.exceptions import BusinessException
 from src.modules.Expenses.models.expense_model import Expense
 from src.modules.Expenses.repositories.expense_repository import ExpenseRepository
@@ -78,7 +79,7 @@ class ExpenseService:
 
     async def get_summary(self, user_id: str) -> ExpenseSummaryResponse:
         entries = await self.repository.get_all_by_user(user_id)
-        months = self._last_months(SUMMARY_MONTHS)
+        months = last_months(SUMMARY_MONTHS)
         current_month = months[-1]
 
         monthly: List[MonthlyExpensePoint] = []
@@ -159,20 +160,6 @@ class ExpenseService:
         await self.session.commit()
         await self.session.refresh(budget)
         return BudgetItem.model_validate(budget)
-
-    @staticmethod
-    def _last_months(count: int) -> List[str]:
-        today = date.today()
-        year, month = today.year, today.month
-        months: List[str] = []
-        for _ in range(count):
-            months.append(f"{year:04d}-{month:02d}")
-            month -= 1
-            if month == 0:
-                month = 12
-                year -= 1
-        months.reverse()
-        return months
 
     @staticmethod
     def _month_contribution(entry, year: int, month: int) -> float:

@@ -18,6 +18,19 @@ type FilterTipo = 'Todos' | string;
 
 const TIPOS: FilterTipo[] = ['Todos', 'Acao', 'FII', 'ETF', 'Cripto', 'Renda Fixa', 'Outros'];
 
+const COLUMNS: { key: SortKey; label: string }[] = [
+  { key: 'ticker', label: 'Ticker' },
+  { key: 'asset_type', label: 'Tipo' },
+  { key: 'total_quantity', label: 'Qtd' },
+  { key: 'average_price', label: 'PM' },
+  { key: 'current_price', label: 'Cotação' },
+  { key: 'total_invested', label: 'Total Investido' },
+  { key: 'current_value', label: 'Valor Atual' },
+  { key: 'variation_percent', label: 'Variação' },
+  { key: 'profitability_percent', label: 'Rentabilidade' },
+  { key: 'total_dividends', label: 'Proventos' },
+];
+
 export function AssetsTable() {
   const { data } = usePortfolio();
   const { formatCurrency: fmt } = usePrivacy();
@@ -116,36 +129,17 @@ export function AssetsTable() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th onClick={() => handleSort('ticker')}>
-                  <span className={styles.thContent}>Ticker {renderSortIcon('ticker')}</span>
-                </th>
-                <th onClick={() => handleSort('asset_type')}>
-                  <span className={styles.thContent}>Tipo {renderSortIcon('asset_type')}</span>
-                </th>
-                <th onClick={() => handleSort('total_quantity')}>
-                  <span className={styles.thContent}>Qtd {renderSortIcon('total_quantity')}</span>
-                </th>
-                <th onClick={() => handleSort('average_price')}>
-                  <span className={styles.thContent}>PM {renderSortIcon('average_price')}</span>
-                </th>
-                <th onClick={() => handleSort('current_price')}>
-                  <span className={styles.thContent}>Cotação {renderSortIcon('current_price')}</span>
-                </th>
-                <th onClick={() => handleSort('total_invested')}>
-                  <span className={styles.thContent}>Total Investido {renderSortIcon('total_invested')}</span>
-                </th>
-                <th onClick={() => handleSort('current_value')}>
-                  <span className={styles.thContent}>Valor Atual {renderSortIcon('current_value')}</span>
-                </th>
-                <th onClick={() => handleSort('variation_percent')}>
-                  <span className={styles.thContent}>Variação {renderSortIcon('variation_percent')}</span>
-                </th>
-                <th onClick={() => handleSort('profitability_percent')}>
-                  <span className={styles.thContent}>Rentabilidade {renderSortIcon('profitability_percent')}</span>
-                </th>
-                <th onClick={() => handleSort('total_dividends')}>
-                  <span className={styles.thContent}>Proventos {renderSortIcon('total_dividends')}</span>
-                </th>
+                {COLUMNS.map((column) => (
+                  <th
+                    key={column.key}
+                    scope="col"
+                    aria-sort={sortKey === column.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  >
+                    <button type="button" className={styles.thButton} onClick={() => handleSort(column.key)}>
+                      <span className={styles.thContent}>{column.label} {renderSortIcon(column.key)}</span>
+                    </button>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>

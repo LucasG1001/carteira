@@ -14,25 +14,12 @@ import { usePrivacy } from "../../context/privacyStore";
 import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
 import { monthLabel } from "../../utils/date";
 import { buildExpenseView, donutData } from "../../utils/expenseView";
+import {
+  CHART_FALLBACK_COLOR,
+  EXPENSE_CATEGORY_COLORS,
+  EXPENSE_SUBCATEGORY_COLORS,
+} from "../../utils/chartColors";
 import styles from "./ExpensesPage.module.css";
-
-const CATEGORY_CORES: Record<string, string> = {
-  Essenciais: "#6366f1",
-  Lazer: "#ec4899",
-};
-
-const SUBCATEGORY_CORES: Record<string, string> = {
-  Moradia: "#6366f1",
-  Alimentação: "#ef4444",
-  Transporte: "#f59e0b",
-  Saúde: "#10b981",
-  Educação: "#8b5cf6",
-  Compras: "#f97316",
-  Serviços: "#22d3ee",
-  Finanças: "#14b8a6",
-  Pets: "#ec4899",
-  Outros: "#94a3b8",
-};
 
 function ExpensesContent() {
   const { data, loading, error, refresh } = useExpenses();
@@ -168,7 +155,7 @@ function ExpensesContent() {
   const donutSlices = categoriaFiltro ? donutSub : donutBase;
   const categoriaOptions = donutBase.map((item) => item.category);
   const sliceField = categoriaFiltro ? "subcategory" : "category";
-  const colorMap = categoriaFiltro ? SUBCATEGORY_CORES : CATEGORY_CORES;
+  const colorMap = categoriaFiltro ? EXPENSE_SUBCATEGORY_COLORS : EXPENSE_CATEGORY_COLORS;
   const totalPie = donutSlices.reduce((sum, item) => sum + item.total, 0);
 
   const pie: PieChartConfig = {
@@ -177,7 +164,7 @@ function ExpensesContent() {
       name: item.category,
       value: item.total,
       percent: totalPie > 0 ? (item.total / totalPie) * 100 : 0,
-      color: colorMap[item.category] || "#94a3b8",
+      color: colorMap[item.category] || CHART_FALLBACK_COLOR,
       formatted: fmt(item.total),
     })),
     select: {

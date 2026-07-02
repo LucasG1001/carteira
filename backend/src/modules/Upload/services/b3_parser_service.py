@@ -1,12 +1,14 @@
 import io
-import re
-import unicodedata
+import logging
 from datetime import datetime
 
 import openpyxl
 
 from src.core.exceptions import BusinessException
+from src.core.text_utils import normalize_text, subscription_receipt_to_base
 from src.modules.Portfolio.models.transaction_model import Transaction
+
+logger = logging.getLogger(__name__)
 
 
 class B3ParserService:
@@ -21,20 +23,10 @@ class B3ParserService:
         "operation_value": {"valor da operacao"},
     }
 
-    @staticmethod
-    def _normalize_text(value: object) -> str:
-        if value is None:
-            return ""
-
-        normalized = unicodedata.normalize("NFKD", str(value).strip())
-        normalized = normalized.encode("ascii", "ignore").decode("ascii")
-        normalized = re.sub(r"\s+", " ", normalized)
-        return normalized.lower()
-
     @classmethod
     def _find_sheet(cls, workbook: openpyxl.Workbook):
         for sheet_name in workbook.sheetnames:
-            if cls._normalize_text(sheet_name) == "movimentacao":
+            if normalize_text(sheet_name) == "movimentacao":
                 return workbook[sheet_name]
 
         return workbook.worksheets[0]
@@ -44,7 +36,7 @@ class B3ParserService:
         headers: dict[str, int] = {}
 
         for idx, cell in enumerate(sheet[1]):
-            normalized_header = cls._normalize_text(cell.value)
+            normalized_header = normalize_text(cell.value)
             if not normalized_header:
                 continue
 
@@ -56,19 +48,19 @@ class B3ParserService:
         missing_columns = [name for name in cls.HEADER_ALIASES if name not in headers]
         if missing_columns:
             missing_labels = ", ".join(sorted(missing_columns))
-            raise BusinessException(400, f"Colunas obrigatorias nao encontradas: {missing_labels}")
+            raise BusinessException(400, f"Colunas obrigatórias não encontradas: {missing_labels}")
 
         return headers
 
     @classmethod
     def _normalize_ticker(cls, ticker: str, movement: str, product: str) -> str:
         normalized_ticker = ticker.upper().strip()
-        normalized_movement = cls._normalize_text(movement)
-        normalized_product = cls._normalize_text(product)
+        normalized_movement = normalize_text(movement)
+        normalized_product = normalize_text(product)
 
         is_subscription = "subscr" in normalized_movement or "recibo de subscricao" in normalized_product
-        if is_subscription and re.match(r"^[A-Z]{4}\d{2}$", normalized_ticker) and normalized_ticker.endswith("13"):
-            return f"{normalized_ticker[:-2]}11"
+        if is_subscription:
+            return subscription_receipt_to_base(normalized_ticker)
 
         return normalized_ticker
 
@@ -136,8 +128,9 @@ class B3ParserService:
 
             return transactions
         except openpyxl.utils.exceptions.InvalidFileException:
-            raise BusinessException(400, "Arquivo invalido ou corrompido. Envie um arquivo Excel (.xlsx).")
+            raise BusinessException(400, "Arquivo inválido ou corrompido. Envie um arquivo Excel (.xlsx).")
         except BusinessException:
             raise
-        except Exception as exc:
-            raise BusinessException(500, f"Erro inesperado ao processar arquivo B3: {str(exc)}")
+        except Exception:
+            logger.exception("Erro inesperado ao processar arquivo B3")
+            raise BusinessException(500, "Erro inesperado ao processar o arquivo da B3. Verifique o formato e tente novamente.")

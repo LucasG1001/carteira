@@ -4,6 +4,8 @@ import { AlertTriangle, CheckCircle2, LoaderCircle, PlusCircle, Upload, X } from
 import { usePortfolio } from '../../context/portfolioStore';
 import { useQuickAdd } from '../../context/quickAddStore';
 import { createManualAsset, uploadPortfolioFile } from '../../services/api';
+import { formatBRL, centsFromInput } from '../../utils/formatting';
+import { todayAsInputValue } from '../../utils/date';
 import styles from './PortfolioActions.module.css';
 
 type StatusTone = 'success' | 'error';
@@ -20,19 +22,6 @@ type ManualFormState = {
   date: string;
   quantity: string;
 };
-
-function todayAsInputValue() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatBRL(value: number) {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function centsFromInput(value: string) {
-  const digits = value.replace(/\D/g, '');
-  return digits ? parseInt(digits, 10) : 0;
-}
 
 export function PortfolioActions() {
   const { data, refresh } = usePortfolio();
@@ -110,13 +99,13 @@ export function PortfolioActions() {
 
     try {
       await uploadPortfolioFile(selectedFile);
-      await refresh();
       setSelectedFile(null);
       setUploadStatus({ tone: 'success', text: 'Arquivo importado com sucesso.' });
+      refresh().catch(() => undefined);
     } catch (error) {
       setUploadStatus({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Nao foi possivel importar o arquivo.',
+        text: error instanceof Error ? error.message : 'Não foi possível importar o arquivo.',
       });
     } finally {
       setUploading(false);
@@ -148,7 +137,6 @@ export function PortfolioActions() {
         other_costs: otherCosts,
       });
 
-      await refresh();
       setManualForm({
         ticker: '',
         operation_type: 'Compra',
@@ -157,11 +145,12 @@ export function PortfolioActions() {
       });
       setUnitPriceCents(0);
       setOtherCostsCents(0);
-      setManualStatus({ tone: 'success', text: 'Lancamento manual criado com sucesso.' });
+      setManualStatus({ tone: 'success', text: 'Lançamento manual criado com sucesso.' });
+      refresh().catch(() => undefined);
     } catch (error) {
       setManualStatus({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Nao foi possivel criar o lancamento manual.',
+        text: error instanceof Error ? error.message : 'Não foi possível criar o lançamento manual.',
       });
     } finally {
       setSubmittingManual(false);
@@ -182,7 +171,7 @@ export function PortfolioActions() {
               <div>
                 <h3 className={styles.modalTitle}>Adicionar investimentos</h3>
                 <p className={styles.modalSubtitle}>
-                  Escolha entre importar sua planilha ou registrar um lancamento manual.
+                  Escolha entre importar sua planilha ou registrar um lançamento manual.
                 </p>
               </div>
 
@@ -262,7 +251,7 @@ export function PortfolioActions() {
                     </div>
                     <div>
                       <h3 className={styles.title}>Adicionar ativo manualmente</h3>
-                      <p className={styles.subtitle}>Crie uma transacao manual de compra ou venda.</p>
+                      <p className={styles.subtitle}>Crie uma transação manual de compra ou venda.</p>
                     </div>
                   </div>
 
@@ -339,7 +328,7 @@ export function PortfolioActions() {
                       </label>
 
                       <label className={styles.field}>
-                        <span className={styles.label}>Preco unitario</span>
+                        <span className={styles.label}>Preço unitário</span>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -380,7 +369,7 @@ export function PortfolioActions() {
                       disabled={submittingManual || !manualForm.ticker.trim() || quantityNumber <= 0 || unitPrice <= 0}
                     >
                       {submittingManual ? <LoaderCircle size={16} className={styles.spin} /> : <PlusCircle size={16} />}
-                      <span>{submittingManual ? 'Salvando...' : 'Adicionar lancamento'}</span>
+                      <span>{submittingManual ? 'Salvando...' : 'Adicionar lançamento'}</span>
                     </button>
                   </form>
 

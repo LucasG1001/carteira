@@ -1,13 +1,13 @@
 import hashlib
-import re
-import unicodedata
 import uuid
 from datetime import date
 from typing import Dict, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.date_utils import last_months, months_between
 from src.core.exceptions import BusinessException
+from src.core.text_utils import normalize_text, subscription_receipt_to_base
 from src.modules.MarketData.models.market_data_model import StockPrice, TickerInfo
 from src.modules.Portfolio.models.transaction_model import Transaction
 from src.modules.Portfolio.repositories.transaction_repository import TransactionRepository
@@ -34,22 +34,9 @@ class PortfolioService:
         self.repository = TransactionRepository(session)
         self.upload_repository = UploadRepository(session)
 
-    @staticmethod
-    def _normalize_text(value: str | None) -> str:
-        if value is None:
-            return ""
-
-        normalized = unicodedata.normalize("NFKD", value.strip())
-        normalized = normalized.encode("ascii", "ignore").decode("ascii")
-        return normalized.lower()
-
     @classmethod
     def normalize_ticker(cls, ticker: str) -> str:
-        normalized = ticker.upper().strip()
-        if re.match(r"^[A-Z]{4}\d{2}$", normalized) and normalized.endswith("13"):
-            return f"{normalized[:-2]}11"
-
-        return normalized
+        return subscription_receipt_to_base(ticker.upper().strip())
 
     @classmethod
     def _position_ticker(cls, ticker: str) -> str:
@@ -104,11 +91,11 @@ class PortfolioService:
 
     @classmethod
     def _normalized_operation(cls, transaction: Transaction) -> str:
-        return cls._normalize_text(transaction.operation_type)
+        return normalize_text(transaction.operation_type)
 
     @classmethod
     def _normalized_entry_side(cls, transaction: Transaction) -> str:
-        return cls._normalize_text(transaction.entry_side)
+        return normalize_text(transaction.entry_side)
 
     @classmethod
     def _is_income_transaction(cls, transaction: Transaction) -> bool:
@@ -243,20 +230,6 @@ class PortfolioService:
     def _generate_manual_upload_hash() -> str:
         return hashlib.sha256(uuid.uuid4().hex.encode("utf-8")).hexdigest()
 
-    @classmethod
-    def _last_months(cls, count: int) -> List[str]:
-        today = date.today()
-        year, month = today.year, today.month
-        months: List[str] = []
-        for _ in range(count):
-            months.append(f"{year:04d}-{month:02d}")
-            month -= 1
-            if month == 0:
-                month = 12
-                year -= 1
-        months.reverse()
-        return months
-
     def _build_monthly_dividends(self, transactions: List[Transaction], count: int = 12) -> List[MonthlyDividend]:
         totals: Dict[str, float] = {}
         for transaction in transactions:
@@ -267,7 +240,7 @@ class PortfolioService:
 
         return [
             MonthlyDividend(month=month, value=self._round(totals.get(month, 0.0), 2))
-            for month in self._last_months(count)
+            for month in last_months(count)
         ]
 
     def _build_asset_summary(self, ticker: str, transactions: List[Transaction], latest_price: StockPrice | None, ticker_info: TickerInfo | None = None) -> AssetSummary:
@@ -414,18 +387,6 @@ class PortfolioService:
         entries.sort(key=lambda entry: entry.date, reverse=True)
         return entries
 
-    @staticmethod
-    def _months_between(start: date, end: date) -> List[str]:
-        months: List[str] = []
-        year, month = start.year, start.month
-        while (year, month) <= (end.year, end.month):
-            months.append(f"{year:04d}-{month:02d}")
-            month += 1
-            if month == 13:
-                month = 1
-                year += 1
-        return months
-
     async def get_evolution(self, user_id: str) -> List[EvolutionPoint]:
         transactions = await self.repository.get_all_by_user(user_id)
         if not transactions:
@@ -443,7 +404,7 @@ class PortfolioService:
         first_date = min(transaction.date for transaction in transactions)
         cumulative = 0.0
         points: List[EvolutionPoint] = []
-        for month_key in self._months_between(first_date, date.today()):
+        for month_key in months_between(first_date, date.today()):
             cumulative += contributions.get(month_key, 0.0)
             points.append(EvolutionPoint(month=month_key, invested=self._round(cumulative, 2)))
         return points
@@ -486,10 +447,10 @@ class PortfolioService:
     ) -> TransactionListItem:
         transaction = await self.repository.get_by_id(transaction_id, user_id)
         if not transaction:
-            raise BusinessException(404, "Lancamento nao encontrado.")
+            raise BusinessException(404, "Lançamento não encontrado.")
         upload = await self.upload_repository.get_by_id(transaction.upload_id, user_id)
         if not upload or not self._is_manual_filename(upload.filename):
-            raise BusinessException(400, "Apenas lancamentos manuais podem ser editados.")
+            raise BusinessException(400, "Apenas lançamentos manuais podem ser editados.")
 
         operation_type = payload.operation_type.strip().title()
         transaction.operation_type = operation_type
@@ -506,10 +467,10 @@ class PortfolioService:
     async def delete_transaction(self, user_id: str, transaction_id: int) -> None:
         transaction = await self.repository.get_by_id(transaction_id, user_id)
         if not transaction:
-            raise BusinessException(404, "Lancamento nao encontrado.")
+            raise BusinessException(404, "Lançamento não encontrado.")
         upload = await self.upload_repository.get_by_id(transaction.upload_id, user_id)
         if not upload or not self._is_manual_filename(upload.filename):
-            raise BusinessException(400, "Apenas lancamentos manuais podem ser excluidos.")
+            raise BusinessException(400, "Apenas lançamentos manuais podem ser excluídos.")
 
         await self.session.delete(transaction)
         await self.session.flush()
@@ -558,13 +519,17 @@ class PortfolioService:
 
     async def get_asset_details(self, user_id: str, ticker: str) -> AssetDetailResponse:
         canonical_ticker = self._position_ticker(ticker)
+        candidate_tickers = {canonical_ticker}
+        if canonical_ticker.endswith("11"):
+            base = canonical_ticker[:-2]
+            candidate_tickers.update({f"{base}12", f"{base}13"})
         transactions = [
             transaction
-            for transaction in await self.repository.get_all_by_user(user_id)
+            for transaction in await self.repository.get_by_tickers(user_id, sorted(candidate_tickers))
             if self._position_ticker(transaction.ticker) == canonical_ticker
         ]
         if not transactions:
-            raise BusinessException(404, f"Ativo {canonical_ticker} nao encontrado ou sem transacoes")
+            raise BusinessException(404, f"Ativo {canonical_ticker} não encontrado ou sem transações")
 
         market_ticker = self._market_data_ticker(canonical_ticker)
         latest_prices = await self.repository.get_latest_prices_by_tickers([market_ticker])
