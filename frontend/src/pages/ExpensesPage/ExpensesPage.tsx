@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { ExpenseActions } from "../../components/ExpenseActions/ExpenseActions";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
@@ -8,10 +6,9 @@ import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Cha
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
 import type { TableFilter } from "../../components/ExpensesTable/ExpensesTable";
 import { BudgetCard } from "../../components/BudgetCard/BudgetCard";
-import { ExpensesProvider } from "../../context/ExpensesContext";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
-import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
+import { useExpensesFilter } from "./expensesFilterStore";
 import { monthLabel } from "../../utils/date";
 import { buildExpenseView, donutData } from "../../utils/expenseView";
 import {
@@ -21,13 +18,19 @@ import {
 } from "../../utils/chartColors";
 import styles from "./ExpensesPage.module.css";
 
-function ExpensesContent() {
+export function ExpensesPage() {
   const { data, loading, error, refresh } = useExpenses();
-  const { hidden, toggle, formatCurrency: fmt } = usePrivacy();
-  const [year, setYear] = useState(() => new Date().getFullYear());
-  const [month, setMonth] = useState<number | null>(null);
+  const { formatCurrency: fmt } = usePrivacy();
+  const { year, month, setMonth } = useExpensesFilter();
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [filter, setFilter] = useState<TableFilter>(null);
+  const [scope, setScope] = useState(`${year}-${month}`);
+
+  const currentScope = `${year}-${month}`;
+  if (currentScope !== scope) {
+    setScope(currentScope);
+    setFilter(null);
+  }
 
   const view = useMemo(() => (data ? buildExpenseView(data, { year, month }) : null), [data, year, month]);
   const donutBase = useMemo(() => (data ? donutData(data, { year, month }, null) : []), [data, year, month]);
@@ -35,60 +38,17 @@ function ExpensesContent() {
     () => (data && categoriaFiltro ? donutData(data, { year, month }, categoriaFiltro) : []),
     [data, year, month, categoriaFiltro],
   );
-  const markedKeys = useMemo(
-    () => new Set((data?.entries ?? []).map((entry) => entry.date.slice(0, 7))),
-    [data],
-  );
-
-  const header = (
-    <div className={styles.toolbar}>
-      <div className={styles.filters}>
-        <MonthYearPicker
-          year={year}
-          month={month}
-          markedKeys={markedKeys}
-          onChange={(nextYear, nextMonth) => {
-            setYear(nextYear);
-            setMonth(nextMonth);
-            setFilter(null);
-          }}
-        />
-      </div>
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.eyeButton}
-          onClick={toggle}
-          title={hidden ? "Mostrar valores" : "Ocultar valores"}
-        >
-          {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
-          <span className={styles.eyeLabel}>{hidden ? "Mostrar valores" : "Ocultar valores"}</span>
-        </button>
-        <ExpenseActions />
-      </div>
-    </div>
-  );
 
   if (loading) {
-    return (
-      <>
-        {header}
-        <div className={styles.state}>Carregando dados de gastos...</div>
-      </>
-    );
+    return <div className={styles.state}>Carregando dados de gastos...</div>;
   }
 
   if (error) {
-    return (
-      <>
-        {header}
-        <div className={`${styles.state} ${styles.error}`}>Erro ao carregar dados: {error.message}</div>
-      </>
-    );
+    return <div className={`${styles.state} ${styles.error}`}>Erro ao carregar dados: {error.message}</div>;
   }
 
   if (!data || !view) {
-    return header;
+    return null;
   }
 
   const variation = view.monthScope.variationPct;
@@ -186,29 +146,18 @@ function ExpensesContent() {
   };
 
   return (
-    <>
-      {header}
-      <div className={styles.container}>
-        <BigNumbers
-          cards={cards}
-          prepend={<BudgetCard spentByCategory={view.monthScope.byCategory} budgets={data.budgets} onSaved={refresh} />}
-        />
-        <Charts bar={bar} pie={pie} />
-        <ExpensesTable
-          filter={filter}
-          onClearFilter={() => setFilter(null)}
-          year={year}
-          month={view.monthScope.month}
-        />
-      </div>
-    </>
-  );
-}
-
-export function ExpensesPage() {
-  return (
-    <ExpensesProvider>
-      <ExpensesContent />
-    </ExpensesProvider>
+    <div className={styles.container}>
+      <BigNumbers
+        cards={cards}
+        prepend={<BudgetCard spentByCategory={view.monthScope.byCategory} budgets={data.budgets} onSaved={refresh} />}
+      />
+      <Charts bar={bar} pie={pie} />
+      <ExpensesTable
+        filter={filter}
+        onClearFilter={() => setFilter(null)}
+        year={year}
+        month={view.monthScope.month}
+      />
+    </div>
   );
 }

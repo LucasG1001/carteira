@@ -41,47 +41,13 @@
   transition: all var(--transition-normal);
 }
 
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  opacity: 0.8;
-}
-
 .compact {
   padding: 0.7rem 1rem;
-}
-
-.compact::before {
-  display: none;
 }
 
 .compact .value {
   font-size: 1.15rem;
 }
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-  border-color: transparent;
-}
-
-/* Accent-specific top border & glow */
-.indigo::before { background: var(--gradient-primary); }
-.indigo:hover { box-shadow: var(--shadow-glow-indigo), var(--shadow-lg); border-color: rgba(99, 102, 241, 0.25); }
-
-.green::before { background: linear-gradient(90deg, #10b981, #22d3ee); }
-.green:hover { box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), var(--shadow-lg); border-color: rgba(16, 185, 129, 0.25); }
-
-.red::before { background: linear-gradient(90deg, #ef4444, #f97316); }
-.red:hover { box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), var(--shadow-lg); border-color: rgba(239, 68, 68, 0.25); }
-
-.amber::before { background: linear-gradient(90deg, #f59e0b, #f97316); }
-.amber:hover { box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), var(--shadow-lg); border-color: rgba(245, 158, 11, 0.25); }
 
 /* Top section */
 .label {

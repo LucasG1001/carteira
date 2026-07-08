@@ -63,30 +63,6 @@
   background: rgba(16, 185, 129, 0.12);
 }
 
-.editButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.editButton:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-accent);
-  background: var(--color-surface-hover);
-}
-
-.readonlyTag {
-  color: var(--color-text-tertiary);
-}
-
 /* Edit form (inside Modal) */
 .formGrid {
   display: grid;

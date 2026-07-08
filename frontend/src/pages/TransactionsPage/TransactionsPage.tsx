@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
 import { Modal } from "../../components/Modal/Modal";
 import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
 import { useDragScroll } from "../../hooks/useDragScroll";
@@ -180,7 +179,6 @@ export function TransactionsPage() {
                   <th><span className={tableStyles.thContent}>Preço</span></th>
                   <th><span className={tableStyles.thContent}>Total</span></th>
                   <th><span className={tableStyles.thContent}>Origem</span></th>
-                  <th><span className={tableStyles.thContent}>Ações</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -210,22 +208,6 @@ export function TransactionsPage() {
                       <span className={`${styles.badge} ${transaction.source === "manual" ? styles.badgeManual : styles.badgeB3}`}>
                         {transaction.source === "manual" ? "Manual" : "B3"}
                       </span>
-                    </td>
-                    <td>
-                      {transaction.source === "manual" ? (
-                        <button
-                          type="button"
-                          className={styles.editButton}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setEdit(toEditState(transaction));
-                          }}
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      ) : (
-                        <span className={styles.readonlyTag}>—</span>
-                      )}
                     </td>
                   </tr>
                 ))}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Filter } from "lucide-react";
 import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
 import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
 import { Charts } from "../../components/Charts/Charts";
@@ -46,6 +47,7 @@ export function DividendsPage() {
   const [error, setError] = useState<Error | null>(null);
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear());
   const [pickerMonth, setPickerMonth] = useState<number | null>(null);
+  const [assetTypeFilter, setAssetTypeFilter] = useState("Todos");
 
   useEffect(() => {
     let active = true;
@@ -138,7 +140,11 @@ export function DividendsPage() {
   };
 
   const scopePrefix = pickerMonth ? `${pickerYear}-${String(pickerMonth).padStart(2, "0")}` : String(pickerYear);
-  const tableEntries = data.filter((entry) => entry.date.startsWith(scopePrefix));
+  const assetTypeOptions = ["Todos", ...Array.from(new Set(data.map((entry) => entry.asset_type))).sort()];
+  const tableEntries = data.filter(
+    (entry) =>
+      entry.date.startsWith(scopePrefix) && (assetTypeFilter === "Todos" || entry.asset_type === assetTypeFilter),
+  );
   const tableTotal = tableEntries.reduce((sum, entry) => sum + entry.value, 0);
   const keyCounts = new Map<string, number>();
   const keyedEntries = tableEntries.map((entry) => {
@@ -161,15 +167,31 @@ export function DividendsPage() {
               <span className={tableStyles.count}>{tableEntries.length}</span>
               <span className={tableStyles.saldoNeutral}>{fmt(tableTotal)}</span>
             </div>
-            <MonthYearPicker
-              year={pickerYear}
-              month={pickerMonth}
-              align="right"
-              onChange={(year, month) => {
-                setPickerYear(year);
-                setPickerMonth(month);
-              }}
-            />
+            <div className={tableStyles.controls}>
+              <div className={tableStyles.filterWrapper}>
+                <Filter size={14} className={tableStyles.filterIcon} />
+                <select
+                  className={tableStyles.filterSelect}
+                  value={assetTypeFilter}
+                  onChange={(event) => setAssetTypeFilter(event.target.value)}
+                >
+                  {assetTypeOptions.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <MonthYearPicker
+                year={pickerYear}
+                month={pickerMonth}
+                align="right"
+                onChange={(year, month) => {
+                  setPickerYear(year);
+                  setPickerMonth(month);
+                }}
+              />
+            </div>
           </div>
 
           <div className={tableStyles.tableWrapper} ref={scrollRef}>

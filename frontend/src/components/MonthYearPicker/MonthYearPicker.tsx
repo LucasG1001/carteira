@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { MESES } from "../../utils/date";
 import styles from "./MonthYearPicker.module.css";
+
+type PopoverCoords = { top: number; left?: number; right?: number };
 
 const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -16,12 +19,42 @@ interface MonthYearPickerProps {
 export function MonthYearPicker({ year, month, onChange, markedKeys, align = "left" }: MonthYearPickerProps) {
   const [open, setOpen] = useState(false);
   const [browseYear, setBrowseYear] = useState(year);
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<PopoverCoords>({ top: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  const updateCoords = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const next: PopoverCoords = { top: rect.bottom + 6 };
+    if (align === "right") {
+      next.right = window.innerWidth - rect.right;
+    } else {
+      next.left = rect.left;
+    }
+    setCoords(next);
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updateCoords();
+    const onReposition = () => updateCoords();
+    window.addEventListener("scroll", onReposition, true);
+    window.addEventListener("resize", onReposition);
+    return () => {
+      window.removeEventListener("scroll", onReposition, true);
+      window.removeEventListener("resize", onReposition);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
     const onClick = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (popoverRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -40,14 +73,19 @@ export function MonthYearPicker({ year, month, onChange, markedKeys, align = "le
   const label = month ? `${MESES[month - 1]} ${year}` : String(year);
 
   return (
-    <div className={styles.wrapper} ref={ref}>
-      <button type="button" className={styles.trigger} onClick={toggle}>
+    <div className={styles.wrapper}>
+      <button type="button" className={styles.trigger} onClick={toggle} ref={triggerRef}>
         <Calendar size={15} />
         <span>{label}</span>
       </button>
 
-      {open && (
-        <div className={`${styles.popover} ${align === "right" ? styles.alignRight : styles.alignLeft}`}>
+      {open &&
+        createPortal(
+          <div
+            className={styles.popover}
+            ref={popoverRef}
+            style={{ top: coords.top, left: coords.left, right: coords.right }}
+          >
           <div className={styles.yearNav}>
             <button type="button" className={styles.yearArrow} onClick={() => setBrowseYear((y) => y - 1)}>
               <ChevronLeft size={16} />
@@ -84,8 +122,9 @@ export function MonthYearPicker({ year, month, onChange, markedKeys, align = "le
               );
             })}
           </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

@@ -1,15 +1,16 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 106;
+  z-index: 105;
   max-width: 1440px;
-  margin: 0 auto var(--spacing-sm);
+  margin: 0 auto var(--spacing-base);
   padding: var(--spacing-sm) 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: var(--spacing-base);
   background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .tabs {
@@ -44,4 +45,30 @@
 .tabActive {
   color: var(--color-accent);
   background: var(--color-accent-subtle);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.eyeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.eyeButton:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-accent);
+  background: var(--color-surface-hover);
 }
