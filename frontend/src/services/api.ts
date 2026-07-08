@@ -275,3 +275,54 @@ export async function setBudget(category: string, amount: number): Promise<Budge
     body: JSON.stringify({ category, amount }),
   });
 }
+
+export type BackendGoal = {
+  id: number;
+  user_id: string;
+  name: string;
+  target_amount: number;
+  saved_amount: number;
+  deadline: string | null;
+  icon: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type GoalPayload = {
+  name: string;
+  target_amount: number;
+  deadline?: string | null;
+  icon?: string | null;
+};
+
+export async function getGoals(): Promise<BackendGoal[]> {
+  return request('/goals/');
+}
+
+export async function createGoal(payload: GoalPayload): Promise<BackendGoal> {
+  return request('/goals/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateGoal(id: number, payload: Partial<GoalPayload>): Promise<BackendGoal> {
+  return request(`/goals/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function addToGoal(id: number, amount: number): Promise<BackendGoal> {
+  return request(`/goals/${id}/add`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount }),
+  });
+}
+
+export async function deleteGoal(id: number): Promise<null> {
+  return request(`/goals/${id}`, { method: 'DELETE' });
+}

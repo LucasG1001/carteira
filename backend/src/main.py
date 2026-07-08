@@ -7,6 +7,7 @@ from src.core.exceptions import setup_exception_handlers
 from src.modules.Upload.upload_router import router as upload_router
 from src.modules.Portfolio.portfolio_router import router as portfolio_router
 from src.modules.Expenses.expenses_router import router as expenses_router
+from src.modules.Goals.goals_router import router as goals_router
 
 
 app = FastAPI(
@@ -31,6 +32,7 @@ setup_exception_handlers(app)
 app.include_router(upload_router, prefix="/api/v1/upload", tags=["Upload"])
 app.include_router(portfolio_router, prefix="/api/v1/portfolio", tags=["Portfolio"])
 app.include_router(expenses_router, prefix="/api/v1/expenses", tags=["Expenses"])
+app.include_router(goals_router, prefix="/api/v1/goals", tags=["Goals"])
 
 
 @app.get("/health", tags=["System"])

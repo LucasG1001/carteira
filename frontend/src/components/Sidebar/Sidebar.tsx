@@ -19,7 +19,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { path: "/investimentos", label: "Investimentos", icon: InvestmentsIcon },
-  { path: "/gastos", label: "Controle de Gastos", icon: ExpensesIcon, badge: "Em breve" },
+  { path: "/gastos", label: "Controle de Gastos", icon: ExpensesIcon },
 ];
 
 interface SidebarProps {

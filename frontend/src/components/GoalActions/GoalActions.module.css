@@ -1,0 +1,28 @@
+.openButton {
+  padding: 0.6rem var(--spacing-base);
+  min-width: 12rem;
+  border: none;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  background: var(--gradient-primary);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  box-shadow: var(--shadow-glow-indigo);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.openButton:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .openButton {
+    display: none;
+  }
+}
