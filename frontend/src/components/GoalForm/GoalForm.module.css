@@ -70,6 +70,11 @@
   background: var(--color-accent-subtle);
 }
 
+.hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
 .error {
   margin-top: var(--spacing-sm);
   color: var(--color-error);

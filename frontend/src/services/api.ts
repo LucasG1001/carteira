@@ -307,7 +307,10 @@ export async function createGoal(payload: GoalPayload): Promise<BackendGoal> {
   });
 }
 
-export async function updateGoal(id: number, payload: Partial<GoalPayload>): Promise<BackendGoal> {
+export async function updateGoal(
+  id: number,
+  payload: Partial<GoalPayload> & { saved_amount?: number },
+): Promise<BackendGoal> {
   return request(`/goals/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

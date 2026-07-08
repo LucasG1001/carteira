@@ -104,7 +104,7 @@ export function GoalCard({ goal, onChanged }: GoalCardProps) {
         </div>
 
         <span className={styles.remaining}>
-          {complete ? 'Meta concluída 🎉' : `Faltam ${fmt(remaining)}`}
+          {complete ? 'Meta concluída 🎉' : `Restam ${fmt(remaining)}`}
         </span>
 
         <button type="button" className={styles.addButton} onClick={openAdd}>

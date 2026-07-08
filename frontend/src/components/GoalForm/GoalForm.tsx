@@ -18,6 +18,7 @@ interface GoalFormProps {
 export function GoalForm({ onClose, onSaved, mode = 'create', initialData, onDeleted }: GoalFormProps) {
   const [name, setName] = useState(initialData?.name ?? '');
   const [targetCents, setTargetCents] = useState(initialData ? Math.round(initialData.target_amount * 100) : 0);
+  const [savedCents, setSavedCents] = useState(initialData ? Math.round(initialData.saved_amount * 100) : 0);
   const [deadlineMonth, setDeadlineMonth] = useState(initialData?.deadline ? initialData.deadline.slice(0, 7) : '');
   const [icon, setIcon] = useState(initialData?.icon ?? GOAL_ICONS[0].key);
 
@@ -26,11 +27,17 @@ export function GoalForm({ onClose, onSaved, mode = 'create', initialData, onDel
 
   const isEdit = mode === 'edit' && initialData != null;
   const targetNumber = targetCents / 100;
+  const savedNumber = savedCents / 100;
   const valid = name.trim().length > 0 && targetNumber > 0;
 
   const onTarget = (event: ChangeEvent<HTMLInputElement>) => {
     const digits = event.target.value.replace(/\D/g, '');
     setTargetCents(digits ? parseInt(digits, 10) : 0);
+  };
+
+  const onSavedAmount = (event: ChangeEvent<HTMLInputElement>) => {
+    const digits = event.target.value.replace(/\D/g, '');
+    setSavedCents(digits ? parseInt(digits, 10) : 0);
   };
 
   const handleSubmit = async () => {
@@ -45,7 +52,7 @@ export function GoalForm({ onClose, onSaved, mode = 'create', initialData, onDel
     };
     try {
       if (isEdit) {
-        await updateGoal(initialData.id, payload);
+        await updateGoal(initialData.id, { ...payload, saved_amount: savedNumber });
       } else {
         await createGoal(payload);
       }
@@ -116,6 +123,21 @@ export function GoalForm({ onClose, onSaved, mode = 'create', initialData, onDel
           />
         </label>
       </div>
+
+      {isEdit && (
+        <label className={styles.field}>
+          <span className={styles.label}>Valor guardado</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={formatBRL(savedNumber)}
+            onChange={onSavedAmount}
+            className={styles.input}
+            placeholder="R$ 0,00"
+          />
+          <span className={styles.hint}>Ajuste caso tenha adicionado um valor errado.</span>
+        </label>
+      )}
 
       <div className={styles.field}>
         <span className={styles.label}>Ícone</span>

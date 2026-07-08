@@ -1,4 +1,6 @@
 .card {
+  display: flex;
+  flex-direction: column;
   cursor: pointer;
 }
 
@@ -6,7 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.6rem;
+  gap: 0.5rem;
 }
 
 .editIcon {
@@ -14,44 +16,9 @@
   flex-shrink: 0;
 }
 
-.rows {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.rowTop {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.catName {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.catValue {
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.over {
-  color: var(--accent-red);
-}
-
 .barTrack {
   height: 7px;
+  margin-top: 0.7rem;
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
@@ -69,6 +36,22 @@
 
 .barOver {
   background: var(--accent-red);
+}
+
+.status {
+  margin-top: 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ok {
+  color: var(--accent-green);
+}
+
+.over {
+  color: var(--accent-red);
 }
 
 .field {

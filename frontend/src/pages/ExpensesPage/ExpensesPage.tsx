@@ -5,7 +5,7 @@ import { Charts } from "../../components/Charts/Charts";
 import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
 import type { TableFilter } from "../../components/ExpensesTable/ExpensesTable";
-import { BudgetCard } from "../../components/BudgetCard/BudgetCard";
+import { MonthExpenseCard } from "../../components/MonthExpenseCard/MonthExpenseCard";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
 import { useExpensesFilter } from "./expensesFilterStore";
@@ -51,27 +51,10 @@ export function ExpensesPage() {
     return null;
   }
 
-  const variation = view.monthScope.variationPct;
   const topSub = view.yearTopSubcategory;
+  const metaGeral = data.budgets.find((budget) => budget.category === "Geral")?.amount ?? 0;
 
   const cards: BigNumberCardProps[] = [
-    {
-      label: "Despesa do Mês",
-      value: fmt(view.monthScope.expense),
-      side:
-        variation != null
-          ? {
-              text: `${variation >= 0 ? "+" : ""}${variation.toFixed(0)}%`,
-              tone: variation > 0 ? "down" : "up",
-            }
-          : undefined,
-      details: [
-        { label: "Referente a", value: monthLabel(view.monthScope.monthKey) },
-        { label: "Média mensal", value: fmt(view.yearAvgMonthly) },
-      ],
-      accentClass: "red",
-      delay: 80,
-    },
     {
       label: `Gasto Total (${year})`,
       value: fmt(view.yearExpense),
@@ -149,7 +132,14 @@ export function ExpensesPage() {
     <div className={styles.container}>
       <BigNumbers
         cards={cards}
-        prepend={<BudgetCard spentByCategory={view.monthScope.byCategory} budgets={data.budgets} onSaved={refresh} />}
+        prepend={
+          <MonthExpenseCard
+            spent={view.monthScope.expense}
+            variationPct={view.monthScope.variationPct}
+            meta={metaGeral}
+            onSaved={refresh}
+          />
+        }
       />
       <Charts bar={bar} pie={pie} />
       <ExpensesTable
