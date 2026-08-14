@@ -6,13 +6,6 @@ import { PortfolioActions } from "../../components/PortfolioActions/PortfolioAct
 import { usePrivacy } from "../../context/privacyStore";
 import styles from "./InvestmentsLayout.module.css";
 
-const TABS = [
-  { to: "/investimentos", label: "Carteira", end: true },
-  { to: "/investimentos/proventos", label: "Proventos", end: false },
-  { to: "/investimentos/lancamentos", label: "Lançamentos", end: false },
-  { to: "/investimentos/imposto-de-renda", label: "Imposto de Renda", end: false },
-];
-
 export function InvestmentsLayout() {
   const { hidden, toggle } = usePrivacy();
   const { pathname } = useLocation();
@@ -21,7 +14,6 @@ export function InvestmentsLayout() {
   return (
     <PortfolioProvider>
       <PageHeader
-        tabs={TABS}
         actions={
           <>
             <button

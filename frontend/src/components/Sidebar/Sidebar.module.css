@@ -10,7 +10,7 @@
   flex-direction: column;
   z-index: 100;
   overflow: hidden;
-  transition: width var(--transition-base);
+  transition: width var(--sidebar-transition);
 }
 
 .logo {
@@ -47,7 +47,7 @@
   font-weight: var(--font-weight-semibold);
   letter-spacing: -0.015em;
   color: var(--color-text-primary);
-  transition: max-width var(--transition-base), opacity var(--transition-base);
+  transition: max-width var(--sidebar-transition), opacity var(--sidebar-transition);
 }
 
 .toggle {
@@ -85,19 +85,6 @@
   gap: var(--spacing-xs);
 }
 
-.navSection {
-  padding: var(--spacing-sm) var(--spacing-base) var(--spacing-xs);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  transition: max-height var(--transition-base), opacity var(--transition-base),
-    padding var(--transition-base);
-}
-
 .navItem {
   display: flex;
   align-items: center;
@@ -119,6 +106,86 @@
 .navItem:hover {
   color: var(--color-text-primary);
   background: var(--color-bg-hover);
+}
+
+.subNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  margin: 2px 0 var(--spacing-sm) calc(var(--spacing-base) + 10px);
+  padding-left: var(--spacing-md);
+  border-left: 1px solid var(--color-neutral-900);
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transition: max-height var(--sidebar-transition), opacity var(--sidebar-transition),
+    margin var(--sidebar-transition), border-color var(--sidebar-transition),
+    visibility 0s linear 0s;
+}
+
+.subItem {
+  padding: 7px var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.subItem:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.subItemActive,
+.subItemActive:hover {
+  color: var(--color-accent-200);
+  background: var(--color-accent-tint);
+}
+
+.flyout {
+  position: fixed;
+  z-index: 400;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.flyoutTitle {
+  padding: 4px var(--spacing-md) var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+
+.flyoutItem {
+  padding: 9px var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  color: var(--color-neutral-300);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.flyoutItem:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.flyoutItemActive,
+.flyoutItemActive:hover {
+  color: var(--color-accent-200);
+  background: var(--color-accent-tint);
 }
 
 .navItem:hover .navIcon {
@@ -160,7 +227,7 @@
   max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
-  transition: max-width var(--transition-base), opacity var(--transition-base);
+  transition: max-width var(--sidebar-transition), opacity var(--sidebar-transition);
 }
 
 .navBadge {
@@ -206,11 +273,17 @@
   opacity: 0;
 }
 
-.collapsed .navSection {
+.collapsed .subNav {
   max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
   opacity: 0;
+  border-color: transparent;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-height var(--sidebar-transition), opacity var(--sidebar-transition),
+    margin var(--sidebar-transition), border-color var(--sidebar-transition),
+    visibility 0s linear 180ms;
 }
 
 .collapsed .toggle {
@@ -265,8 +338,21 @@
     display: none;
   }
 
-  .navSection {
+  .subNav {
     display: none;
+  }
+
+  .sidebar.collapsed {
+    width: 100%;
+  }
+
+  .collapsed .navItem {
+    gap: 2px;
+  }
+
+  .collapsed .navLabel {
+    max-width: none;
+    opacity: 1;
   }
 
   .nav {

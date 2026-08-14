@@ -12,11 +12,6 @@ import { usePrivacy } from "../../context/privacyStore";
 import type { ExpensesOutletContext } from "./expensesFilterStore";
 import styles from "./ExpensesLayout.module.css";
 
-const TABS = [
-  { to: "/gastos", label: "Gastos", end: true },
-  { to: "/gastos/caixinhas", label: "Caixinhas", end: false },
-];
-
 function EyeButton() {
   const { hidden, toggle } = usePrivacy();
   return (
@@ -46,7 +41,6 @@ function GastosShell() {
   return (
     <>
       <PageHeader
-        tabs={TABS}
         center={
           <MonthStepper
             year={year}
@@ -74,7 +68,6 @@ function CaixinhasShell() {
   return (
     <>
       <PageHeader
-        tabs={TABS}
         actions={
           <>
             <EyeButton />

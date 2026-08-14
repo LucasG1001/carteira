@@ -101,6 +101,7 @@
 
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
+  --sidebar-transition: 180ms ease;
 
   --sidebar-width: 240px;
   --sidebar-collapsed: 72px;

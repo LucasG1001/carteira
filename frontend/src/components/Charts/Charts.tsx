@@ -134,7 +134,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
           <div className={styles.chartBody}>
             {!barHasData && <div className={styles.chartEmpty}>Sem dados para exibir</div>}
             {barHasData && (
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={230} debounce={180}>
               <BarChart data={bar.data} margin={{ top: 10, right: 2, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -208,7 +208,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
             {pieHasData && (
             <>
             <div className={styles.pieChart}>
-              <ResponsiveContainer width="100%" height={230}>
+              <ResponsiveContainer width="100%" height={230} debounce={180}>
                 <PieChart>
                   <Pie
                     data={pie.data}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar/Sidebar";
 import { PrivacyProvider } from "./context/PrivacyContext";
@@ -15,10 +15,14 @@ import styles from "./App.module.css";
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
 
+const SIDEBAR_ANIMATION_MS = 180;
+
 function App() {
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true"
   );
+  const [animating, setAnimating] = useState(false);
+  const animationTimer = useRef<number | null>(null);
 
   const toggleSidebar = () => {
     setCollapsed((prev) => {
@@ -26,6 +30,12 @@ function App() {
       localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
       return next;
     });
+    setAnimating(true);
+    if (animationTimer.current) window.clearTimeout(animationTimer.current);
+    animationTimer.current = window.setTimeout(
+      () => setAnimating(false),
+      SIDEBAR_ANIMATION_MS + 40,
+    );
   };
 
   return (
@@ -35,7 +45,9 @@ function App() {
         <div className={styles.layout}>
           <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
           <div
-            className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""}`}
+            className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""} ${
+              animating ? styles.contentAnimating : ""
+            }`}
           >
           <main className={styles.main}>
             <Routes>
