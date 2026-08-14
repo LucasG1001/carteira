@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import {
   PieChart,
   Pie,
@@ -11,17 +12,24 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { usePrivacy } from '../../context/privacyStore';
+import {
+  CHART_BORDER,
+  CHART_GRID,
+  CHART_SURFACE,
+  CHART_TEXT,
+  CHART_TEXT_MUTED,
+} from '../../utils/chartColors';
 import styles from './Charts.module.css';
 
 const CHART_TOOLTIP_STYLE = {
-  backgroundColor: '#12121a',
-  border: '1px solid #2a2a40',
-  borderRadius: '10px',
+  backgroundColor: CHART_SURFACE,
+  border: `1px solid ${CHART_BORDER}`,
+  borderRadius: '8px',
   padding: '10px 14px',
-  boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+  boxShadow: '0 16px 40px rgba(0,0,0,0.65)',
 };
 
-const CHART_LABEL_STYLE = { fill: '#9090a8', fontSize: 11 };
+const CHART_LABEL_STYLE = { fill: CHART_TEXT_MUTED, fontSize: 11 };
 
 export interface BarDatum {
   label: string;
@@ -72,11 +80,11 @@ function CustomPieTooltip({ active, payload }: { active?: boolean; payload?: Pie
   const data = payload[0];
   return (
     <div style={CHART_TOOLTIP_STYLE}>
-      <p style={{ color: '#9090a8', fontSize: '0.75rem', marginBottom: 4 }}>{data.name}</p>
-      <p style={{ color: data.payload.color, fontSize: '1rem', fontWeight: 700 }}>
+      <p style={{ color: CHART_TEXT_MUTED, fontSize: 12, marginBottom: 4 }}>{data.name}</p>
+      <p style={{ color: data.payload.color, fontSize: 15, fontWeight: 600 }}>
         {data.payload.formatted}
       </p>
-      <p style={{ color: '#e8e8f0', fontSize: '0.8rem' }}>{data.payload.percent.toFixed(1)}%</p>
+      <p style={{ color: CHART_TEXT, fontSize: 12 }}>{data.payload.percent.toFixed(1)}%</p>
     </div>
   );
 }
@@ -94,14 +102,15 @@ function CustomBarTooltip({
   const point = payload[0].payload;
   return (
     <div style={CHART_TOOLTIP_STYLE}>
-      <p style={{ color: '#9090a8', fontSize: '0.75rem', marginBottom: 4 }}>{point.label}</p>
-      <p style={{ color: barColor, fontSize: '1rem', fontWeight: 700 }}>{point.formatted}</p>
+      <p style={{ color: CHART_TEXT_MUTED, fontSize: 12, marginBottom: 4 }}>{point.label}</p>
+      <p style={{ color: barColor, fontSize: 15, fontWeight: 600 }}>{point.formatted}</p>
     </div>
   );
 }
 
 export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig }) {
   const { hidden } = usePrivacy();
+  const gradientId = `${useId().replace(/:/g, '')}-bar`;
 
   const formatAxis = (value: number) =>
     hidden ? '•••' : value.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
@@ -128,12 +137,12 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
             <ResponsiveContainer width="100%" height={230}>
               <BarChart data={bar.data} margin={{ top: 10, right: 2, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="gradientBar" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={bar.color} stopOpacity={0.95} />
                     <stop offset="100%" stopColor={bar.color} stopOpacity={0.5} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e30" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
                 <XAxis dataKey="label" tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={formatAxis} tick={CHART_LABEL_STYLE} axisLine={false} tickLine={false} width={48} />
                 <Tooltip
@@ -152,7 +161,7 @@ export function Charts({ bar, pie }: { bar: BarChartConfig; pie: PieChartConfig 
                   {bar.data.map((d, i) => (
                     <Cell
                       key={i}
-                      fill="url(#gradientBar)"
+                      fill={`url(#${gradientId})`}
                       fillOpacity={bar.activeBar && bar.activeBar !== d.key ? 0.3 : 1}
                     />
                   ))}

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
+import { PageHeader } from "../../components/PageHeader/PageHeader";
+import { MonthStepper } from "../../components/MonthStepper/MonthStepper";
 import { ExpenseActions } from "../../components/ExpenseActions/ExpenseActions";
 import { GoalActions } from "../../components/GoalActions/GoalActions";
 import { ExpensesProvider } from "../../context/ExpensesContext";
@@ -15,23 +16,6 @@ const TABS = [
   { to: "/gastos", label: "Gastos", end: true },
   { to: "/gastos/caixinhas", label: "Caixinhas", end: false },
 ];
-
-function Tabs() {
-  return (
-    <nav className={styles.tabs}>
-      {TABS.map((tab) => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          end={tab.end}
-          className={({ isActive }) => `${styles.tab} ${isActive ? styles.tabActive : ""}`}
-        >
-          {tab.label}
-        </NavLink>
-      ))}
-    </nav>
-  );
-}
 
 function EyeButton() {
   const { hidden, toggle } = usePrivacy();
@@ -61,23 +45,26 @@ function GastosShell() {
 
   return (
     <>
-      <div className={styles.header}>
-        <Tabs />
-        <div className={styles.actions}>
-          <MonthYearPicker
+      <PageHeader
+        tabs={TABS}
+        center={
+          <MonthStepper
             year={year}
             month={month}
             markedKeys={markedKeys}
-            align="right"
             onChange={(nextYear, nextMonth) => {
               setYear(nextYear);
               setMonth(nextMonth);
             }}
           />
-          <EyeButton />
-          <ExpenseActions />
-        </div>
-      </div>
+        }
+        actions={
+          <>
+            <EyeButton />
+            <ExpenseActions />
+          </>
+        }
+      />
       <Outlet context={context} />
     </>
   );
@@ -86,13 +73,15 @@ function GastosShell() {
 function CaixinhasShell() {
   return (
     <>
-      <div className={styles.header}>
-        <Tabs />
-        <div className={styles.actions}>
-          <EyeButton />
-          <GoalActions />
-        </div>
-      </div>
+      <PageHeader
+        tabs={TABS}
+        actions={
+          <>
+            <EyeButton />
+            <GoalActions />
+          </>
+        }
+      />
       <Outlet />
     </>
   );

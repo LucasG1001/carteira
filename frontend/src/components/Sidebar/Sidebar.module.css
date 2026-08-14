@@ -22,16 +22,16 @@
 }
 
 .logoIcon {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--color-accent), #a78bfa);
+  width: 36px;
+  height: 36px;
+  background: var(--color-accent-900);
+  border: 1px solid var(--color-accent-line);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: var(--color-accent-300);
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm);
 }
 
 .logoMark {
@@ -127,13 +127,13 @@
 
 .navItemActive,
 .navItemActive:hover {
-  color: var(--color-accent);
-  background: var(--color-accent-subtle);
+  color: var(--color-accent-200);
+  background: var(--color-accent-tint);
 }
 
 .navItemActive .navIcon,
 .navItemActive:hover .navIcon {
-  color: var(--color-accent);
+  color: var(--color-accent-300);
 }
 
 .navItemActive::before {
@@ -171,8 +171,8 @@
   font-size: var(--font-size-xs);
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  background: var(--color-accent-subtle);
-  color: var(--color-accent);
+  background: var(--color-accent-900);
+  color: var(--color-accent-300);
   font-weight: var(--font-weight-medium);
   transition: max-width var(--transition-base), opacity var(--transition-base),
     margin var(--transition-base), padding var(--transition-base);
@@ -246,10 +246,10 @@
     margin: 0 0.5rem;
     transform: translateY(-12px);
     border-radius: var(--radius-full);
-    background: var(--gradient-primary);
-    color: #fff;
-    box-shadow: var(--shadow-glow-indigo), var(--shadow-md);
-    border: 3px solid var(--color-bg-primary);
+    background: var(--color-accent-900);
+    color: var(--color-accent-200);
+    border: 1px solid var(--color-accent);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
   }
 
   .fabIcon {

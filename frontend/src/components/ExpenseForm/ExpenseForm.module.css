@@ -23,7 +23,7 @@
   width: 100%;
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.78rem 0.9rem;
   color: var(--text-primary);
   font-size: 0.92rem;
@@ -37,17 +37,17 @@
 }
 
 .inputError {
-  border-color: rgba(239, 68, 68, 0.55);
+  border-color: color-mix(in srgb, var(--color-warn) 55%, transparent);
 }
 
 .inputError:focus {
-  border-color: rgba(239, 68, 68, 0.7);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  border-color: var(--color-warn);
+  box-shadow: 0 0 0 3px var(--color-warn-tint);
 }
 
 .fieldError {
   font-size: 0.75rem;
-  color: #ffb4b4;
+  color: var(--color-warn);
 }
 
 .textarea {
@@ -98,12 +98,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.7rem 0.9rem;
   font-size: 0.82rem;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #ffb4b4;
+  background: var(--color-warn-tint);
+  border: 1px solid color-mix(in srgb, var(--color-warn) 30%, transparent);
+  color: var(--color-warn);
 }
 
 @media (max-width: 768px) {

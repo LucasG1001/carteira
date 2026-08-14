@@ -2,11 +2,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  background: var(--gradient-card);
-  border: 1px solid var(--color-border);
+  padding: 20px 22px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   border-radius: var(--radius-lg);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: box-shadow var(--transition-fast);
 }
 
 .head {
@@ -73,19 +73,19 @@
 .barTrack {
   height: 8px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-neutral-900);
   overflow: hidden;
 }
 
 .barFill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: var(--gradient-primary);
+  background: linear-gradient(90deg, var(--color-accent-700), var(--color-accent-500));
   transition: width var(--transition-base);
 }
 
 .barComplete {
-  background: var(--gradient-success);
+  background: var(--color-success);
 }
 
 .amounts {
@@ -115,26 +115,11 @@
 }
 
 .addButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
+  composes: btnSecondary from '../../styles/controls.module.css';
   width: 100%;
   margin-top: var(--spacing-xs);
-  padding: 0.7rem var(--spacing-base);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.addButton:hover {
-  border-color: var(--color-accent);
-  background: var(--color-accent-subtle);
-  color: var(--color-accent);
+  padding: 8px 14px;
+  font-size: var(--font-size-base);
 }
 
 .field {
@@ -144,18 +129,14 @@
 }
 
 .fieldLabel {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  composes: kicker from '../../styles/controls.module.css';
 }
 
 .input {
   width: 100%;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
   padding: 0.7rem 0.85rem;
   color: var(--color-text-primary);
   font-size: var(--font-size-base);

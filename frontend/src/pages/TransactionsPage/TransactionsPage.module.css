@@ -22,7 +22,7 @@
   padding: 3px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border-subtle);
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
 }
 
 .segment {
@@ -40,8 +40,9 @@
 }
 
 .segmentActive {
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--color-accent-tint);
+  border-color: var(--color-accent-line);
+  color: var(--color-accent-200);
 }
 
 .badge {
@@ -60,7 +61,7 @@
 
 .badgeB3 {
   color: var(--accent-green);
-  background: rgba(16, 185, 129, 0.12);
+  background: var(--color-success-tint);
 }
 
 /* Edit form (inside Modal) */

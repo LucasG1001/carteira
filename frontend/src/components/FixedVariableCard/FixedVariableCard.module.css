@@ -1,0 +1,118 @@
+.card {
+  composes: card from '../../styles/controls.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kicker {
+  composes: kicker from '../../styles/controls.module.css';
+}
+
+.proportion {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.proportionEmpty {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--color-neutral-900);
+}
+
+.segmentLocked {
+  background: var(--color-neutral-700);
+  transition: width var(--transition-base);
+}
+
+.segmentFree {
+  background: var(--color-accent-500);
+  transition: width var(--transition-base);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.entryRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.entryName {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-200);
+}
+
+.swatchLocked,
+.swatchFree {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.swatchLocked {
+  background: var(--color-neutral-700);
+}
+
+.swatchFree {
+  background: var(--color-accent-500);
+}
+
+.entryValue {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.entryNote {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  padding-left: 16px;
+}
+
+.divider {
+  composes: divider from '../../styles/controls.module.css';
+}
+
+.averages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.averageRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.averageLabel {
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-400);
+}
+
+.averageValue {
+  font-size: var(--font-size-base);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

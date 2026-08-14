@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="_ds/nocturne-1ce28976-a421-462a-a114-6754a1926182/styles.css">
+<script src="_ds/nocturne-1ce28976-a421-462a-a114-6754a1926182/_ds_bundle.js"></script>
+<style>
+  :root { --color-warn: oklch(0.68 0.13 12); --color-warn-strong: oklch(0.60 0.14 12); }
+  body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
+  a { color: var(--color-accent-300); text-decoration: none; }
+  a:hover { color: var(--color-accent-200); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--color-neutral-800); border-radius: 8px; }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: var(--color-bg); font-family: var(--font-body); font-size: 14px; color: var(--color-text); padding: 0 0 64px;">
+
+  <div style="position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--color-bg) 92%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-neutral-900);">
+    <div style="max-width: 1320px; margin: 0 auto; padding: 14px 32px; display: flex; align-items: center; gap: 28px;">
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+          <button onClick="{{ tab.go }}" style="{{ tab.style }}">{{ tab.label }}</button>
+        </sc-for>
+      </div>
+      <div style="flex: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button onClick="{{ prevMonth }}" title="Mês anterior" style="{{ navPrevStyle }}"><i class="ph ph-caret-left"></i></button>
+        <div style="min-width: 132px; text-align: center;">
+          <div style="font-size: 13px; color: var(--color-text);">{{ monthLabel }}</div>
+          <div style="font-size: 11px; color: var(--color-neutral-500);">{{ monthSub }}</div>
+        </div>
+        <button onClick="{{ nextMonth }}" title="Mês seguinte" style="{{ navNextStyle }}"><i class="ph ph-caret-right"></i></button>
+        <sc-if value="{{ notCurrent }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ goToday }}" class="btn btn-ghost" style="font-size: 12px; padding: 5px 10px;">hoje</button>
+        </sc-if>
+      </div>
+      <button onClick="{{ openAdd }}" class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;">+ Lançar</button>
+    </div>
+  </div>
+
+  <div style="max-width: 1320px; margin: 0 auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 28px;">
+
+    <sc-if value="{{ isPainel }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 28px;">
+
+        <div style="display: grid; grid-template-columns: 1.45fr 1fr; gap: 20px;">
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 24px 26px 22px; display: flex; flex-direction: column; gap: 18px;">
+            <div style="display: flex; align-items: baseline; justify-content: space-between;">
+              <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">{{ monthTitle }}</div>
+              <div style="font-size: 12px; color: var(--color-neutral-500);">meta R$ 583,33</div>
+            </div>
+            <div style="display: flex; align-items: flex-end; gap: 14px;">
+              <div style="font-size: 44px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums;">{{ monthTotal }}</div>
+              <div style="{{ overStyle }}">{{ overText }}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="position: relative; height: 10px; border-radius: 6px; background: var(--color-neutral-900); overflow: visible;">
+                <div style="{{ metaFillStyle }}"></div>
+                <div style="{{ metaMarkStyle }}"></div>
+              </div>
+              <div style="display: flex; justify-content: flex-end; font-size: 12px; color: var(--color-neutral-500);">
+                <span style="{{ metaNoteStyle }}">{{ metaNote }}</span>
+              </div>
+            </div>
+            <div style="height: 1px; background: var(--color-neutral-900);"></div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+              <sc-for list="{{ compare }}" as="c" hint-placeholder-count="2">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="font-size: 12px; color: var(--color-neutral-500);">{{ c.label }}</div>
+                  <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ c.valor }}</span>
+                    <span style="{{ c.deltaStyle }}">{{ c.delta }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 24px 26px; display: flex; flex-direction: column; gap: 18px;">
+            <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">{{ splitTitle }}</div>
+            <div style="display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px;">
+              <div style="{{ splitFixoStyle }}"></div>
+              <div style="{{ splitVarStyle }}"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <sc-for list="{{ split }}" as="s" hint-placeholder-count="2">
+                <div style="display: flex; gap: 12px; align-items: baseline;">
+                  <div style="{{ s.dotStyle }}"></div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline;">
+                      <span style="font-size: 13px;">{{ s.nome }}</span>
+                      <span style="font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;">{{ s.valor }}</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--color-neutral-500); margin-top: 3px;">{{ s.nota }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height: 1px; background: var(--color-neutral-900);"></div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; gap: 16px; font-size: 13px;">
+                <span style="color: var(--color-neutral-400); min-width: 0;">Média fixa · 12 meses</span>
+                <span style="font-variant-numeric: tabular-nums;">R$ 548,10</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; gap: 16px; font-size: 13px;">
+                <span style="color: var(--color-neutral-400); min-width: 0;">Média variável · 12 meses</span>
+                <span style="font-variant-numeric: tabular-nums;">R$ 326,52</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 24px 26px;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px;">
+            <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">O que já está travado nos próximos meses</div>
+            <a href="#" onClick="{{ goFuturo }}" style="font-size: 13px;">ver detalhe →</a>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; align-items: end;">
+            <sc-for list="{{ futureMonths }}" as="m" hint-placeholder-count="6">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em;">{{ m.valor }}</div>
+                <div style="position: relative; height: 6px; border-radius: 4px; background: var(--color-neutral-900);">
+                  <div style="{{ m.barStyle }}"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-500);">
+                  <span>{{ m.label }}</span>
+                  <span>{{ m.pct }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--color-neutral-900); display: flex; gap: 40px; align-items: baseline;">
+            <div>
+              <span style="font-size: 13px; color: var(--color-neutral-400);">Total já comprometido </span>
+              <span style="font-size: 20px; font-weight: 600;">R$ 2.348,64</span>
+            </div>
+            <div style="font-size: 13px; color: var(--color-neutral-400);">= <strong style="color: var(--color-text); font-weight: 500;">4 meses</strong> da sua meta, em 3 compras que você já fez.</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 24px 26px; display: flex; flex-direction: column; gap: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+              <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Para onde o dinheiro vai</div>
+              <div class="field" style="margin: 0;">
+                <select class="input" value="{{ groupBy }}" onChange="{{ setGroupBy }}" style="font-size: 12px; padding: 6px 30px 6px 10px;">
+                  <option value="sub">por subcategoria</option>
+                  <option value="desc">por descrição</option>
+                  <option value="origem">por origem</option>
+                </select>
+              </div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 10px;">
+              <span style="font-size: 13px; color: var(--color-neutral-400);">{{ breakdownSub }}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <sc-for list="{{ breakdown }}" as="g" hint-placeholder-count="5">
+                <div onClick="{{ g.pick }}" style="display: flex; flex-direction: column; gap: 7px; cursor: pointer;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;">
+                    <span>{{ g.nome }}</span>
+                    <span style="display: flex; gap: 12px; align-items: baseline; flex-shrink: 0;">
+                      <span style="color: var(--color-neutral-400);">{{ g.pct }}</span>
+                      <span style="font-weight: 500; font-variant-numeric: tabular-nums;">{{ g.valor }}</span>
+                    </span>
+                  </div>
+                  <div style="height: 6px; border-radius: 4px; background: var(--color-neutral-900);">
+                    <div style="{{ g.barStyle }}"></div>
+                  </div>
+                  <div style="font-size: 12px; color: var(--color-neutral-500);">{{ g.nota }}</div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ noBreakdown }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 13px; color: var(--color-neutral-500); padding: 8px 0;">Nenhum gasto neste mês.</div>
+              </sc-if>
+            </div>
+          </div>
+
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 24px 26px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px;">
+              <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Ritmo mês a mês</div>
+              <div style="display: flex; gap: 16px; font-size: 12px; color: var(--color-neutral-500);">
+                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--color-accent-500); display: inline-block;"></span>realizado</span>
+                <span style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--color-neutral-700); display: inline-block;"></span>travado</span>
+              </div>
+            </div>
+            <div style="flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; align-items: end; min-height: 180px; position: relative;">
+              <div style="position: absolute; left: 0; right: 0; bottom: 46px; border-top: 1px dashed var(--color-neutral-700);"></div>
+              <sc-for list="{{ history }}" as="h" hint-placeholder-count="7">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end;">
+                  <div style="font-size: 11px; color: var(--color-neutral-400);">{{ h.short }}</div>
+                  <div style="{{ h.barStyle }}"></div>
+                  <div style="font-size: 11px; color: var(--color-neutral-500);">{{ h.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: var(--color-neutral-500);">linha tracejada = meta de R$ 583,33/mês</div>
+          </div>
+        </div>
+
+        <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <div style="padding: 18px 26px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--color-neutral-900); flex-wrap: wrap;">
+            <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Lançamentos</div>
+            <input class="input" value="{{ query }}" onChange="{{ setQuery }}" placeholder="Buscar descrição…" style="flex: 1; min-width: 180px; max-width: 280px; font-size: 13px; padding: 7px 12px;">
+            <div style="position: relative;">
+              <button onClick="{{ toggleFilters }}" style="{{ filterBtnStyle }}">
+                <i class="ph ph-funnel" style="font-size: 15px; line-height: 1;"></i>
+                <span>Filtros</span>
+                <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+                  <span style="min-width: 17px; height: 17px; padding: 0 5px; border-radius: 999px; background: var(--color-accent-600); color: var(--color-accent-100); font-size: 11px; display: inline-flex; align-items: center; justify-content: center;">{{ filterCount }}</span>
+                </sc-if>
+              </button>
+              <sc-if value="{{ filtersOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; width: max-content; max-width: 520px; background: var(--color-surface); border: 1px solid var(--color-neutral-800); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 18px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <button onClick="{{ clearFilters }}" style="{{ clearStyle }}">Limpar tudo</button>
+                    <button onClick="{{ toggleFilters }}" class="btn btn-ghost btn-icon" aria-label="Fechar filtros"><i class="ph ph-x" style="font-size: 15px;"></i></button>
+                  </div>
+                  <sc-for list="{{ filterGroups }}" as="grp" hint-placeholder-count="3">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                      <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">{{ grp.titulo }}</div>
+                      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <sc-for list="{{ grp.opts }}" as="o" hint-placeholder-count="3">
+                          <button onClick="{{ o.pick }}" style="{{ o.style }}">
+                            <span style="{{ o.boxStyle }}"><i class="{{ o.markClass }}"></i></span>
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ o.label }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex: 1;"></div>
+            <div style="font-size: 13px; color: var(--color-neutral-400);">{{ rowsSummary }}</div>
+          </div>
+          <table class="table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-neutral-500);">
+                <th style="text-align: left; padding: 12px 26px; font-weight: 500;">Descrição</th>
+                <th style="text-align: left; padding: 12px; font-weight: 500;">Data</th>
+                <th style="text-align: left; padding: 12px; font-weight: 500;">Subcategoria</th>
+                <th style="text-align: left; padding: 12px; font-weight: 500;">Origem</th>
+                <th style="text-align: left; padding: 12px; font-weight: 500;">Parcela</th>
+                <th style="text-align: right; padding: 12px; font-weight: 500;">Valor</th>
+                <th style="padding: 12px 26px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+                <tr style="border-top: 1px solid var(--color-neutral-900);">
+                  <td style="padding: 14px 26px;">
+                    <span style="font-weight: 500;">{{ r.desc }}</span>
+                    <span style="{{ r.tagStyle }}">{{ r.tag }}</span>
+                  </td>
+                  <td style="padding: 14px 12px; color: var(--color-neutral-400);">{{ r.data }}</td>
+                  <td style="padding: 14px 12px; color: var(--color-neutral-400);">{{ r.sub }}</td>
+                  <td style="padding: 14px 12px; color: var(--color-neutral-400);">{{ r.origem }}</td>
+                  <td style="padding: 14px 12px; color: var(--color-neutral-400);">{{ r.parcela }}</td>
+                  <td style="padding: 14px 12px; text-align: right; font-variant-numeric: tabular-nums;">{{ r.valor }}</td>
+                  <td style="padding: 14px 26px; text-align: right; white-space: nowrap;">
+                    <button onClick="{{ r.edit }}" class="btn btn-ghost" style="font-size: 12px; padding: 4px 10px;">editar</button>
+                    <button onClick="{{ r.remove }}" class="btn btn-ghost" style="font-size: 12px; padding: 4px 10px; color: var(--color-warn);">excluir</button>
+                  </td>
+                </tr>
+              </sc-for>
+              <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+                <tr style="border-top: 1px solid var(--color-neutral-900);">
+                  <td colspan="7" style="padding: 32px 26px; text-align: center; color: var(--color-neutral-500); font-size: 13px;">Nenhum lançamento com esse filtro.</td>
+                </tr>
+              </sc-if>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isFuturo }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+          <div>
+            <div style="font-size: 26px; font-weight: 500; letter-spacing: -0.02em;">Você já gastou R$ 2.348,64 do seu futuro</div>
+            <div style="font-size: 14px; color: var(--color-neutral-400); margin-top: 8px;">Três compras parceladas ainda vão descontar da sua meta até fevereiro de 2027.</div>
+          </div>
+          <button onClick="{{ openAdd }}" class="btn btn-secondary" style="font-size: 13px;">Simular uma compra</button>
+        </div>
+
+        <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 26px;">
+          <div style="display: flex; flex-direction: column; gap: 22px;">
+            <sc-for list="{{ commitments }}" as="c" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <div style="display: flex; gap: 12px; align-items: baseline;">
+                    <span style="font-weight: 500; font-size: 15px;">{{ c.nome }}</span>
+                    <span style="font-size: 12px; color: var(--color-neutral-500);">{{ c.sub }}</span>
+                  </div>
+                  <div style="font-size: 13px; color: var(--color-neutral-400);">restam <strong style="color: var(--color-text); font-weight: 500;">{{ c.restante }}</strong> em {{ c.restantes }}</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px;">
+                  <sc-for list="{{ c.cells }}" as="cell" hint-placeholder-count="9">
+                    <div style="{{ cell.style }}"></div>
+                  </sc-for>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--color-neutral-500);">
+                  <span>{{ c.inicio }}</span>
+                  <span>{{ c.fim }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 22px 24px;">
+            <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Mês mais pesado</div>
+            <div style="font-size: 26px; font-weight: 600; margin: 12px 0 6px; letter-spacing: -0.02em;">set/26</div>
+            <div style="font-size: 13px; color: var(--color-neutral-400);">R$ 789,70 travados — 135% da meta antes de você comprar nada.</div>
+          </div>
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 22px 24px;">
+            <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Primeiro mês livre</div>
+            <div style="font-size: 26px; font-weight: 600; margin: 12px 0 6px; letter-spacing: -0.02em;">mar/27</div>
+            <div style="font-size: 13px; color: var(--color-neutral-400);">O primeiro mês sem nenhuma parcela pendente.</div>
+          </div>
+          <div class="card" style="background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 22px 24px;">
+            <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Se parar de parcelar hoje</div>
+            <div style="font-size: 26px; font-weight: 600; margin: 12px 0 6px; letter-spacing: -0.02em;">R$ 391,44/mês</div>
+            <div style="font-size: 13px; color: var(--color-neutral-400);">é o que sobra da meta, na média, até fevereiro.</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAdd }}" style="position: fixed; inset: 0; background: color-mix(in srgb, var(--color-bg) 66%, transparent); z-index: 40; display: flex; justify-content: flex-end;">
+      <div onClick="{{ stop }}" style="width: 420px; height: 100%; background: var(--color-surface); box-shadow: var(--shadow-lg); padding: 28px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 16px; font-weight: 500;">Novo lançamento</div>
+          <button onClick="{{ closeAdd }}" class="btn btn-ghost btn-icon" aria-label="Fechar"><i class="ph ph-x" style="font-size: 16px;"></i></button>
+        </div>
+
+        <div>
+          <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500); margin-bottom: 10px;">Repetir um gasto seu</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <sc-for list="{{ quick }}" as="q" hint-placeholder-count="5">
+              <button onClick="{{ q.pick }}" style="{{ q.style }}">{{ q.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="height: 1px; background: var(--color-neutral-900);"></div>
+
+        <div class="field">
+          <label style="font-size: 12px; color: var(--color-neutral-400);">Descrição</label>
+          <input class="input" value="{{ draftDesc }}" onChange="{{ setDesc }}" placeholder="Gasolina">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="field">
+            <label style="font-size: 12px; color: var(--color-neutral-400);">Valor</label>
+            <input class="input" value="{{ draftValor }}" onChange="{{ setValor }}" placeholder="R$ 0,00">
+          </div>
+          <div class="field">
+            <label style="font-size: 12px; color: var(--color-neutral-400);">Parcelas</label>
+            <input class="input" value="{{ draftParcelas }}" onChange="{{ setParcelas }}" placeholder="1x">
+          </div>
+        </div>
+
+        <div style="background: var(--color-bg); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-neutral-500);">Impacto</div>
+          <div style="font-size: 14px; line-height: 1.5; color: var(--color-neutral-200);">{{ impacto }}</div>
+        </div>
+
+        <div style="flex: 1;"></div>
+        <button onClick="{{ closeAdd }}" class="btn btn-primary btn-block">Salvar lançamento</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100}}">
+const BRL = n => 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const META = 583.33;
+const plural = (n, sing, plur) => n + ' ' + (n === 1 ? sing : plur);
+
+class Component extends DCLogic {
+  state = { tab: 'painel', addOpen: false, desc: '', valor: '', parcelas: '', quickIdx: -1,
+            monthOffset: 0, query: '', filter: 'todos', removed: [], groupBy: 'sub',
+            fTipo: [], fOrigem: [], fSub: [], filtersOpen: false };
+
+  navBtn(disabled) {
+    return 'font: inherit; font-size: 16px; line-height: 1; width: 28px; height: 28px; border-radius: var(--radius-md); ' +
+      'border: 1px solid var(--color-neutral-800); background: transparent; color: var(--color-neutral-300); ' +
+      'display: inline-flex; align-items: center; justify-content: center; font-size: 14px; cursor: ' + (disabled ? 'default' : 'pointer') + '; opacity: ' + (disabled ? '0.45' : '1') + ';';
+  }
+
+  checkStyle(active) {
+    return 'font: inherit; font-size: 13px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 9px; ' +
+      'padding: 9px 12px; border-radius: var(--radius-md); border: 1px solid ' +
+      (active ? 'var(--color-accent-600)' : 'var(--color-neutral-800)') +
+      '; background: ' + (active ? 'var(--color-accent-900)' : 'transparent') +
+      '; color: ' + (active ? 'var(--color-accent-200)' : 'var(--color-neutral-200)') + '; min-width: 0;';
+  }
+
+  boxStyle(active) {
+    return 'width: 14px; height: 14px; flex-shrink: 0; border-radius: 3px; display: inline-flex; align-items: center; ' +
+      'justify-content: center; font-size: 9px; line-height: 1; border: 1px solid ' +
+      (active ? 'var(--color-accent-500)' : 'var(--color-neutral-700)') +
+      '; background: ' + (active ? 'var(--color-accent-600)' : 'transparent') +
+      '; color: var(--color-accent-100);';
+  }
+
+  chipStyle(active) {
+    return 'font: inherit; font-size: 12px; cursor: pointer; padding: 5px 11px; border-radius: 999px; border: 1px solid ' +
+      (active ? 'var(--color-accent-600)' : 'var(--color-neutral-800)') +
+      '; background: ' + (active ? 'var(--color-accent-900)' : 'transparent') +
+      '; color: ' + (active ? 'var(--color-accent-200)' : 'var(--color-neutral-300)') + ';';
+  }
+
+  tabStyle(active) {
+    return 'font: inherit; font-size: 13px; cursor: pointer; padding: 7px 14px; border-radius: var(--radius-md); border: 1px solid ' +
+      (active ? 'color-mix(in srgb, var(--color-accent) 45%, transparent)' : 'transparent') +
+      '; background: ' + (active ? 'color-mix(in srgb, var(--color-accent) 14%, transparent)' : 'transparent') +
+      '; color: ' + (active ? 'var(--color-accent-200)' : 'var(--color-neutral-400)') + ';';
+  }
+
+  renderVals() {
+    const t = this.state.tab;
+    const setTab = k => () => this.setState({tab: k});
+
+    const future = [
+      {label: 'set/26', v: 789.70}, {label: 'out/26', v: 789.70},
+      {label: 'nov/26', v: 364.72}, {label: 'dez/26', v: 364.72},
+      {label: 'jan/27', v: 19.90}, {label: 'fev/27', v: 19.90}
+    ].map(m => {
+      const pct = Math.min(100, m.v / META * 100);
+      const over = m.v > META;
+      return {
+        label: m.label, valor: BRL(m.v), pct: Math.round(m.v / META * 100) + '%',
+        barStyle: 'height: 100%; width: ' + pct + '%; border-radius: 4px; background: ' + (over ? 'var(--color-warn-strong)' : 'var(--color-accent-600)') + ';'
+      };
+    });
+
+    const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    const SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const off = this.state.monthOffset;
+    const idx = o => ((7 + o) % 12 + 12) % 12;
+    const yearOf = o => 2026 + Math.floor((7 + o) / 12);
+    const mi = idx(off), year = yearOf(off);
+    const daysIn = new Date(year, mi + 1, 0).getDate();
+    const mm = o => String(idx(o) + 1).padStart(2, '0');
+
+    const hist = [
+      {label: 'jun', v: 661.96, done: true}, {label: 'jul', v: 1402.10, done: true},
+      {label: 'ago', v: 939.70, done: true}, {label: 'set', v: 789.70, done: false},
+      {label: 'out', v: 789.70, done: false}, {label: 'nov', v: 364.72, done: false},
+      {label: 'dez', v: 364.72, done: false}
+    ];
+    const maxH = 1402.10;
+    const history = hist.map(h => ({
+      label: h.label, short: Math.round(h.v),
+      barStyle: 'width: 100%; border-radius: 3px 3px 0 0; height: ' + (h.v / maxH * 150) + 'px; ' +
+        (h.label === SHORT[mi] ? 'outline: 1px solid var(--color-accent-400); outline-offset: 2px; ' : '') + 'background: ' +
+        (h.done ? 'linear-gradient(180deg, var(--color-accent-500), var(--color-accent-700))' : 'var(--color-neutral-800)') + ';'
+    }));
+
+    const FIXOS = [
+      {id: 'azul', desc: 'Azul Seguros', sub: 'Serviços', v: 344.82, from: -2, n: 7, compra: '05/06'},
+      {id: 'rev', desc: 'Revisão', sub: 'Transporte', v: 424.98, from: -1, n: 4, compra: '14/07'},
+      {id: 'inv', desc: 'Investidor10', sub: 'Finanças', v: 19.90, from: -2, n: 9, compra: '05/06'}
+    ];
+    const VARS = {
+      '-2': [{desc: 'Mercado', sub: 'Mercado', v: 232.15, dia: '08'}, {desc: 'Farmácia', sub: 'Saúde', v: 65.09, dia: '19'}],
+      '-1': [{desc: 'Mercado', sub: 'Mercado', v: 380.20, dia: '05'}, {desc: 'Gasolina', sub: 'Transporte', v: 180.00, dia: '12'}, {desc: 'Almoço', sub: 'Alimentação', v: 52.20, dia: '23'}],
+      '0': [{desc: 'Gasolina', sub: 'Transporte', v: 150.00, dia: '11'}]
+    };
+    const monthRows = o => {
+      const fx = FIXOS.filter(f => o >= f.from && o < f.from + f.n).map(f => ({
+        id: f.id + o, desc: f.desc, sub: f.sub, origem: 'Cartão', v: f.v, fixo: true,
+        data: f.compra, parcela: (o - f.from + 1) + ' de ' + f.n
+      }));
+      const vr = (VARS[String(o)] || []).map((r, i) => ({
+        id: 'v' + o + i, desc: r.desc, sub: r.sub, origem: 'Débito', v: r.v, fixo: false,
+        data: r.dia + '/' + mm(o), parcela: 'à vista'
+      }));
+      return vr.concat(fx);
+    };
+    const kept = monthRows(off).filter(r => !this.state.removed.includes(r.id));
+    const monthTotalN = kept.reduce((a, b) => a + b.v, 0);
+    const fixoN = kept.filter(r => r.fixo).reduce((a, b) => a + b.v, 0);
+    const varN = monthTotalN - fixoN;
+    const cartaoN = kept.filter(r => r.origem === 'Cartão').reduce((a, b) => a + b.v, 0);
+    const debitoN = monthTotalN - cartaoN;
+    const prevTotalN = off > -2 ? monthRows(off - 1).reduce((a, b) => a + b.v, 0) : null;
+    const proxN = off < 6 ? monthRows(off + 1).filter(r => r.origem === 'Cartão').reduce((a, b) => a + b.v, 0) : 0;
+    const pct = n => monthTotalN > 0 ? Math.round(n / monthTotalN * 100) : 0;
+
+    const groupBy = this.state.groupBy;
+    const keyOf = groupBy === 'desc' ? (r => r.desc) : groupBy === 'origem' ? (r => r.origem) : (r => r.sub);
+    const gMap = new Map();
+    kept.forEach(r => {
+      const k = keyOf(r);
+      const cur = gMap.get(k) || {v: 0, n: 0, fixo: 0};
+      gMap.set(k, {v: cur.v + r.v, n: cur.n + 1, fixo: cur.fixo + (r.fixo ? 1 : 0)});
+    });
+    const gArr = Array.from(gMap, ([nome, d]) => ({nome, ...d})).sort((a, b) => b.v - a.v);
+    const maxG = gArr.length ? gArr[0].v : 1;
+    const breakdown = gArr.map((g, i) => ({
+      nome: g.nome, valor: BRL(g.v), pct: pct(g.v) + '%',
+      nota: plural(g.n, 'lançamento', 'lançamentos') + (g.fixo === g.n && g.n > 0 ? ' · tudo travado' : g.fixo === 0 ? ' · escolha sua' : ' · ' + g.fixo + ' travado'),
+      barStyle: 'height: 100%; width: ' + (g.v / maxG * 100) + '%; border-radius: 4px; background: ' +
+        (i === 0 ? 'var(--color-accent-500)' : 'var(--color-accent-700)') + ';',
+      pick: () => this.setState(
+        groupBy === 'origem' ? {fOrigem: [g.nome], fTipo: [], fSub: [], query: ''}
+        : groupBy === 'sub'  ? {fSub: [g.nome], fTipo: [], fOrigem: [], query: ''}
+        : {query: g.nome, fTipo: [], fOrigem: [], fSub: []})
+    }));
+
+    const ALL = kept;
+    const q = this.state.query.trim().toLowerCase();
+    const {fTipo, fOrigem, fSub} = this.state;
+    const visible = ALL.filter(r =>
+      !this.state.removed.includes(r.id) &&
+      (!q || r.desc.toLowerCase().includes(q) || r.sub.toLowerCase().includes(q)) &&
+      (fTipo.length === 0 || fTipo.includes(r.fixo ? 'Fixo / parcelado' : 'Variável')) &&
+      (fOrigem.length === 0 || fOrigem.includes(r.origem)) &&
+      (fSub.length === 0 || fSub.includes(r.sub))
+    );
+    const rows = visible.map(r => ({
+      ...r, valor: BRL(r.v),
+      tag: r.fixo ? 'travado' : 'escolha sua',
+      tagStyle: 'margin-left: 10px; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: ' +
+        (r.fixo ? 'var(--color-neutral-900); color: var(--color-neutral-400)' : 'var(--color-accent-900); color: var(--color-accent-300)') + ';',
+      edit: () => this.setState({addOpen: true, desc: r.desc, valor: BRL(r.v), parcelas: r.parcela === 'à vista' ? '1x' : r.parcela.split(' de ')[1] + 'x', quickIdx: -1}),
+      remove: () => this.setState(s => ({removed: s.removed.concat(r.id)}))
+    }));
+    const visTotal = visible.reduce((a, b) => a + b.v, 0);
+    const nFilters = fTipo.length + fOrigem.length + fSub.length;
+
+    const mk = (nome, sub, valor, pagas, total, inicio, fim) => ({
+      nome, sub, inicio, fim,
+      restante: BRL(valor * (total - pagas)), restantes: (total - pagas) + 'x de ' + BRL(valor),
+      cells: Array.from({length: 9}, (_, i) => ({
+        style: 'height: 26px; border-radius: 3px; background: ' +
+          (i >= total ? 'transparent' : i < pagas ? 'var(--color-neutral-800)' : 'var(--color-accent-600)') + ';'
+      }))
+    });
+
+    const quickItems = ['Gasolina R$ 150', 'Mercado R$ 240', 'Almoço R$ 38', 'Farmácia R$ 62', 'Uber R$ 24'];
+    const quick = quickItems.map((label, i) => ({
+      label,
+      pick: () => this.setState({quickIdx: i, desc: label.split(' R$')[0], valor: 'R$ ' + label.split('R$ ')[1] + ',00', parcelas: '1x'}),
+      style: 'font: inherit; font-size: 12px; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 1px solid ' +
+        (this.state.quickIdx === i ? 'var(--color-accent-600)' : 'var(--color-neutral-800)') +
+        '; background: ' + (this.state.quickIdx === i ? 'var(--color-accent-900)' : 'transparent') +
+        '; color: ' + (this.state.quickIdx === i ? 'var(--color-accent-200)' : 'var(--color-neutral-300)') + ';'
+    }));
+
+    const num = parseFloat((this.state.valor || '').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+    const par = parseInt(this.state.parcelas) || 1;
+    const impacto = num === 0
+      ? 'Escolha um valor para ver o que isso faz com a sua meta dos próximos meses.'
+      : par > 1
+        ? 'Trava ' + BRL(num / par) + ' por mês até ' + (par > 6 ? 'o ano que vem' : 'daqui a ' + par + ' meses') + '. Set/26 iria de R$ 789,70 para ' + BRL(789.70 + num / par) + '.'
+        : 'Agosto fecharia em ' + BRL(939.70 + num) + ' — ' + Math.round((939.70 + num) / META * 100) + '% da meta.';
+
+    return {
+      tabs: [
+        {label: 'Painel', go: setTab('painel'), style: this.tabStyle(t === 'painel')},
+        {label: 'Futuro', go: setTab('futuro'), style: this.tabStyle(t === 'futuro')}
+      ],
+      isPainel: t === 'painel', isFuturo: t === 'futuro',
+      goFuturo: e => { e.preventDefault(); this.setState({tab: 'futuro'}); },
+      monthLabel: MONTHS[mi] + ' ' + year,
+      monthSub: off === 0 ? 'dia 11 de ' + daysIn : (off < 0 ? 'fechado · ' + daysIn + ' dias' : 'projetado · ' + daysIn + ' dias'),
+      notCurrent: off !== 0,
+      prevMonth: () => this.setState(s => ({monthOffset: Math.max(-2, s.monthOffset - 1)})),
+      nextMonth: () => this.setState(s => ({monthOffset: Math.min(6, s.monthOffset + 1)})),
+      goToday: () => this.setState({monthOffset: 0}),
+      navPrevStyle: this.navBtn(off <= -2),
+      navNextStyle: this.navBtn(off >= 6),
+
+      monthTitle: off === 0 ? 'O mês até aqui' : (off < 0 ? 'Mês fechado' : 'Já travado neste mês'),
+      monthTotal: BRL(monthTotalN),
+      overText: monthTotalN > META ? '+' + BRL(monthTotalN - META) + ' acima da meta' : BRL(META - monthTotalN) + ' abaixo da meta',
+      overStyle: 'font-size: 13px; padding-bottom: 5px; color: ' + (monthTotalN > META ? 'var(--color-warn)' : 'var(--color-accent-300)') + ';',
+      metaFillStyle: 'position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; width: ' +
+        Math.min(100, monthTotalN / Math.max(monthTotalN, META) * 100) + '%; background: linear-gradient(90deg, var(--color-accent-700), var(--color-accent-500));',
+      metaMarkStyle: 'position: absolute; top: -5px; bottom: -5px; width: 2px; left: ' +
+        (META / Math.max(monthTotalN, META) * 100) + '%; background: ' + (monthTotalN > META ? 'var(--color-warn)' : 'var(--color-neutral-500)') + ';',
+      metaNote: monthTotalN > META
+        ? Math.round((monthTotalN - META) / META * 100) + '% acima do planejado'
+        : Math.round((META - monthTotalN) / META * 100) + '% abaixo do planejado',
+      metaNoteStyle: 'color: ' + (monthTotalN > META ? 'var(--color-warn)' : 'var(--color-neutral-500)') + ';',
+
+      compare: (() => {
+        const AVG12 = 874.62;
+        const rel = (a, b) => (a >= b ? '↑ ' : '↓ ') + Math.round(Math.abs(a - b) / b * 100) + '%';
+        const items = [
+          prevTotalN === null
+            ? {label: 'Mês anterior', valor: '—', delta: 'sem histórico', good: true}
+            : {label: MONTHS[idx(off - 1)].replace(/^./, c => c.toUpperCase()), valor: BRL(prevTotalN),
+               delta: rel(monthTotalN, prevTotalN), good: monthTotalN <= prevTotalN},
+          {label: 'Média dos 12 meses', valor: BRL(AVG12), delta: rel(monthTotalN, AVG12), good: monthTotalN <= AVG12}
+        ];
+        return items.map(c => ({
+          label: c.label, valor: c.valor, delta: c.delta,
+          deltaStyle: 'font-size: 12px; color: ' + (c.good ? 'var(--color-accent-300)' : 'var(--color-warn)') + ';'
+        }));
+      })(),
+
+      splitTitle: 'Fixo x variável · ' + MONTHS[mi],
+      splitFixoStyle: 'width: ' + pct(fixoN) + '%; background: var(--color-neutral-700);',
+      splitVarStyle: 'width: ' + pct(varN) + '%; background: var(--color-accent-500);',
+      split: [
+        {nome: 'Fixo / parcelado', valor: BRL(fixoN), dot: 'var(--color-neutral-700)',
+         nota: pct(fixoN) + '% do mês · ' + plural(kept.filter(r => r.fixo).length, 'compromisso ativo', 'compromissos ativos')},
+        {nome: 'Variável', valor: BRL(varN), dot: 'var(--color-accent-500)',
+         nota: pct(varN) + '% do mês · ' + plural(kept.filter(r => !r.fixo).length, 'lançamento seu', 'lançamentos seus')}
+      ].map(x => ({
+        nome: x.nome, valor: x.valor, nota: x.nota,
+        dotStyle: 'width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; background: ' + x.dot + ';'
+      })),
+
+      groupBy,
+      setGroupBy: e => this.setState({groupBy: e.target.value}),
+      breakdown,
+      noBreakdown: breakdown.length === 0,
+      breakdownSub: MONTHS[mi] + ' · ' + BRL(monthTotalN) + ' em ' + plural(kept.length, 'lançamento', 'lançamentos') + ' · toque para filtrar a lista',
+
+      query: this.state.query,
+      setQuery: e => this.setState({query: e.target.value}),
+      filtersOpen: this.state.filtersOpen,
+      toggleFilters: () => this.setState(st => ({filtersOpen: !st.filtersOpen})),
+      hasFilters: nFilters > 0,
+      filterCount: nFilters,
+      filterBtnStyle: 'font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; ' +
+        'padding: 7px 13px; border-radius: var(--radius-md); border: 1px solid ' +
+        (nFilters > 0 ? 'var(--color-accent-600)' : 'var(--color-neutral-800)') +
+        '; background: ' + (nFilters > 0 ? 'var(--color-accent-900)' : 'transparent') +
+        '; color: ' + (nFilters > 0 ? 'var(--color-accent-200)' : 'var(--color-neutral-200)') + ';',
+      clearFilters: () => this.setState({fTipo: [], fOrigem: [], fSub: [], query: ''}),
+      clearStyle: 'font: inherit; font-size: 13px; cursor: pointer; background: none; border: none; padding: 0; color: ' +
+        (nFilters > 0 ? 'var(--color-accent-300)' : 'var(--color-neutral-500)') + ';',
+      filterGroups: [
+        {titulo: 'Tipo', key: 'fTipo', opts: ['Fixo / parcelado', 'Variável']},
+        {titulo: 'Origem', key: 'fOrigem', opts: Array.from(new Set(kept.map(r => r.origem)))},
+        {titulo: 'Subcategoria', key: 'fSub', opts: Array.from(new Set(kept.map(r => r.sub)))}
+      ].map(grp => ({
+        titulo: grp.titulo,
+        opts: grp.opts.map(label => {
+          const active = this.state[grp.key].includes(label);
+          return {
+            label, markClass: active ? 'ph ph-check' : '',
+            style: this.checkStyle(active), boxStyle: this.boxStyle(active),
+            pick: () => this.setState(st => ({
+              [grp.key]: active ? st[grp.key].filter(x => x !== label) : st[grp.key].concat(label)
+            }))
+          };
+        })
+      })),
+      rowsSummary: visible.length + (visible.length === 1 ? ' lançamento · ' : ' lançamentos · ') + BRL(visTotal),
+      noRows: visible.length === 0,
+      futureMonths: future, history, rows,
+      commitments: [
+        mk('Azul Seguros', 'seguro do carro', 344.82, 3, 7, 'jun/26', 'dez/26'),
+        mk('Revisão', 'oficina', 424.98, 2, 4, 'jul/26', 'out/26'),
+        mk('Investidor10', 'assinatura', 19.90, 3, 9, 'jun/26', 'fev/27')
+      ],
+      quick, impacto,
+      addOpen: this.state.addOpen,
+      openAdd: () => this.setState({addOpen: true}),
+      closeAdd: () => this.setState({addOpen: false}),
+      stop: e => e.stopPropagation(),
+      draftDesc: this.state.desc, draftValor: this.state.valor, draftParcelas: this.state.parcelas,
+      setDesc: e => this.setState({desc: e.target.value}),
+      setValor: e => this.setState({valor: e.target.value}),
+      setParcelas: e => this.setState({parcelas: e.target.value})
+    };
+  }
+}
+
+</script>
+</body>
+</html>

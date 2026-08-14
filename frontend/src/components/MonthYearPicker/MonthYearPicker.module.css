@@ -4,24 +4,26 @@
 }
 
 .trigger {
-  display: inline-flex;
-  align-items: center;
+  composes: btnSecondary from '../../styles/controls.module.css';
   gap: var(--spacing-sm);
-  padding: 0.6rem var(--spacing-base);
-  min-width: 10rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+  padding: 7px 12px;
+  min-width: 9rem;
+  font-size: var(--font-size-base);
 }
 
-.trigger:hover {
-  border-color: var(--color-accent);
-  background: var(--color-surface-hover);
+.triggerBare {
+  display: block;
+  min-width: 132px;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.triggerBare:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
 .popover {
@@ -29,9 +31,9 @@
   z-index: 300;
   width: 16rem;
   padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-neutral-800);
+  background: var(--color-surface);
   box-shadow: var(--shadow-lg);
 }
 
@@ -66,22 +68,11 @@
 }
 
 .allYear {
+  composes: btnSecondary from '../../styles/controls.module.css';
   width: 100%;
-  padding: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.allYear:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-accent);
+  padding: 7px;
+  font-size: var(--font-size-base);
 }
 
 .monthGrid {
@@ -93,35 +84,33 @@
 .month {
   position: relative;
   padding: var(--spacing-sm) 0;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-300);
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .marker {
   position: absolute;
   top: 5px;
   right: 6px;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background: var(--accent-green);
+  background: var(--color-accent-500);
 }
 
 .month:hover {
-  color: var(--color-text-primary);
-  background: var(--color-surface-hover);
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
 }
 
-.active {
-  background: var(--color-accent);
-  color: #fff;
-  border-color: var(--color-accent);
-}
-
+.active,
 .active:hover {
-  color: #fff;
+  background: var(--color-accent-tint);
+  border-color: var(--color-accent-line);
+  color: var(--color-accent-200);
 }

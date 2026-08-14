@@ -1,82 +1,24 @@
 .container {
-  max-width: 1440px;
+  max-width: var(--content-max);
   margin: 0 auto;
-}
-
-.toolbar {
-  z-index: 105;
-  max-width: 1440px;
-  margin: 0 auto var(--spacing-base);
-  padding: var(--spacing-md) 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-sm);
-  background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border-subtle);
+  flex-direction: column;
+  gap: 28px;
 }
 
-.filters {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  min-width: 0;
+.topGrid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 20px;
+  align-items: start;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.filterSelect {
-  padding: 0.6rem var(--spacing-base);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  outline: none;
-  min-width: 8rem;
-  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.filterSelect:hover {
-  border-color: var(--color-accent);
-  background: var(--color-surface-hover);
-}
-
-.filterSelect:focus {
-  border-color: var(--color-accent);
-}
-
-.filterSelect option {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-}
-
-.eyeButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: 0.6rem var(--spacing-base);
-  min-width: 12rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.eyeButton:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-accent);
-  background: var(--color-surface-hover);
+.splitGrid {
+  display: grid
+;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
 }
 
 .state {
@@ -84,34 +26,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+  color: var(--color-neutral-400);
+  font-size: var(--font-size-md);
 }
 
 .error {
-  color: var(--color-error);
+  color: var(--color-warn);
 }
 
-@media (max-width: 768px) {
-  .filters {
-    flex: 1 1 auto;
+@media (max-width: 900px) {
+  .container {
+    gap: var(--spacing-xl);
   }
 
-  .filterSelect {
-    min-width: 0;
-    flex: 1 1 0;
-    padding: 0.6rem var(--spacing-sm);
-  }
-
-  .eyeButton {
-    flex: 0 0 auto;
-    min-width: 0;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-  }
-
-  .eyeLabel {
-    display: none;
+  .topGrid,
+  .splitGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-base);
   }
 }

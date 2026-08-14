@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { FormEvent, MouseEvent, ReactNode } from 'react';
 import { X } from 'lucide-react';
 import styles from './Modal.module.css';
@@ -45,7 +46,7 @@ export function Modal({
     onSubmit();
   };
 
-  return (
+  return createPortal(
     <div className={styles.backdrop} onClick={handleBackdrop}>
       <form className={styles.modal} onSubmit={handleSubmit}>
         <div className={styles.header}>
@@ -78,6 +79,7 @@ export function Modal({
           </div>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }

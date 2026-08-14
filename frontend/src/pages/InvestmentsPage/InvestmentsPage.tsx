@@ -9,7 +9,12 @@ import { usePrivacy } from "../../context/privacyStore";
 import { getEvolution } from "../../services/api";
 import type { BackendAssetSummary, BackendEvolutionPoint } from "../../services/api";
 import { monthLabel } from "../../utils/date";
-import { ASSET_TYPE_COLORS, CHART_FALLBACK_COLOR, CHART_PALETTE } from "../../utils/chartColors";
+import {
+  ASSET_TYPE_COLORS,
+  CHART_ACCENT,
+  CHART_FALLBACK_COLOR,
+  CHART_PALETTE,
+} from "../../utils/chartColors";
 import styles from "./InvestmentsPage.module.css";
 
 function alocacaoPorTipo(assets: BackendAssetSummary[], total: number) {
@@ -129,7 +134,7 @@ export function InvestmentsPage() {
   const bar: BarChartConfig = {
     title: "Evolução do Patrimônio",
     badge: "Aporte acumulado",
-    color: "#8b5cf6",
+    color: CHART_ACCENT,
     data: evolution.map((point) => ({
       label: monthLabel(point.month),
       value: point.invested,

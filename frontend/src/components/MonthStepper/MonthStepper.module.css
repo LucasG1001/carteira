@@ -1,0 +1,31 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.arrow {
+  composes: btnIcon from '../../styles/controls.module.css';
+  width: 28px;
+  height: 28px;
+}
+
+.label {
+  display: block;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.subtitle {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+}
+
+.today {
+  composes: btnGhost from '../../styles/controls.module.css';
+  font-size: var(--font-size-sm);
+  padding: 5px 10px;
+}

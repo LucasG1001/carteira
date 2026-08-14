@@ -156,7 +156,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const handleSubmit = async () => {
     if (hasMissing) {
       setAttempted(true);
-      setError('Preencha os campos obrigatórios destacados.');
+      setError(null);
       return;
     }
     setSubmitting(true);
@@ -222,6 +222,11 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       submitting={submitting}
       onDelete={isEdit ? handleDelete : undefined}
     >
+      {attempted && hasMissing && (
+        <div className={styles.error}>Preencha os campos obrigatórios destacados.</div>
+      )}
+      {error && <div className={styles.error}>{error}</div>}
+
       <div className={styles.row}>
         <label className={`${styles.field} ${styles.grow}`}>
           <span className={styles.label}>Valor *</span>
@@ -416,8 +421,6 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
           rows={2}
         />
       </label>
-
-      {error && <div className={styles.error}>{error}</div>}
     </Modal>
   );
 }

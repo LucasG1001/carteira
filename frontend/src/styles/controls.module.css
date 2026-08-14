@@ -1,0 +1,109 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  composes: btn;
+  color: var(--color-accent-300);
+  border-color: var(--color-accent);
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: var(--color-accent-tint);
+}
+
+.btnPrimary:active:not(:disabled) {
+  background: var(--color-accent-tint-strong);
+}
+
+.btnSecondary {
+  composes: btn;
+  border-color: var(--color-divider);
+  color: var(--color-neutral-200);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.btnSecondary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+
+.btnGhost {
+  composes: btn;
+  color: var(--color-accent-300);
+  padding-inline: 6px;
+}
+
+.btnGhost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.btnDanger {
+  composes: btn;
+  color: var(--color-warn);
+  border-color: color-mix(in srgb, var(--color-warn) 45%, transparent);
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: var(--color-warn-tint);
+}
+
+.btnIcon {
+  composes: btn;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-color: var(--color-neutral-800);
+  color: var(--color-neutral-300);
+}
+
+.btnIcon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  color: var(--color-text);
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px 26px;
+}
+
+.kicker {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-neutral-900);
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+}

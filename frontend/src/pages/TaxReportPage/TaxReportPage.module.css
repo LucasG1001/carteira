@@ -54,7 +54,7 @@
 }
 
 .exportButton:hover:not(:disabled) {
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--color-accent-tint-strong);
 }
 
 .exportButton:disabled {
@@ -126,8 +126,8 @@
 
 .badgeDone {
   color: var(--accent-green);
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.4);
+  background: var(--color-success-tint);
+  border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
 }
 
 .sectionNota {
@@ -202,7 +202,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--accent-green);
-  background: rgba(16, 185, 129, 0.12);
+  background: var(--color-success-tint);
   border-radius: var(--radius-full);
   padding: 2px 8px;
 }

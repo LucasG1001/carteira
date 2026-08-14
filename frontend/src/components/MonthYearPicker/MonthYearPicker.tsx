@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { MESES } from "../../utils/date";
@@ -14,9 +15,17 @@ interface MonthYearPickerProps {
   onChange: (year: number, month: number | null) => void;
   markedKeys?: Set<string>;
   align?: "left" | "right";
+  trigger?: ReactNode;
 }
 
-export function MonthYearPicker({ year, month, onChange, markedKeys, align = "left" }: MonthYearPickerProps) {
+export function MonthYearPicker({
+  year,
+  month,
+  onChange,
+  markedKeys,
+  align = "left",
+  trigger,
+}: MonthYearPickerProps) {
   const [open, setOpen] = useState(false);
   const [browseYear, setBrowseYear] = useState(year);
   const [coords, setCoords] = useState<PopoverCoords>({ top: 0 });
@@ -74,9 +83,18 @@ export function MonthYearPicker({ year, month, onChange, markedKeys, align = "le
 
   return (
     <div className={styles.wrapper}>
-      <button type="button" className={styles.trigger} onClick={toggle} ref={triggerRef}>
-        <Calendar size={15} />
-        <span>{label}</span>
+      <button
+        type="button"
+        className={trigger ? styles.triggerBare : styles.trigger}
+        onClick={toggle}
+        ref={triggerRef}
+      >
+        {trigger ?? (
+          <>
+            <Calendar size={15} />
+            <span>{label}</span>
+          </>
+        )}
       </button>
 
       {open &&

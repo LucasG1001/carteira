@@ -10,7 +10,7 @@ import { usePrivacy } from "../../context/privacyStore";
 import { getDividends } from "../../services/api";
 import type { BackendDividend } from "../../services/api";
 import { formatDate, monthLabel } from "../../utils/date";
-import { CHART_PALETTE } from "../../utils/chartColors";
+import { CHART_PALETTE, CHART_POSITIVE } from "../../utils/chartColors";
 import tableStyles from "../../components/AssetsTable/AssetsTable.module.css";
 import styles from "./DividendsPage.module.css";
 
@@ -118,7 +118,7 @@ export function DividendsPage() {
   const bar: BarChartConfig = {
     title: "Proventos por Mês",
     badge: "Últimos 12 meses",
-    color: "#10b981",
+    color: CHART_POSITIVE,
     data: view.barData.map((point) => ({
       label: monthLabel(point.month),
       value: point.value,

@@ -11,7 +11,7 @@
   width: 100%;
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.78rem 0.9rem;
   font-size: 0.92rem;
   text-align: left;
@@ -26,7 +26,7 @@
 }
 
 .triggerError {
-  border-color: rgba(239, 68, 68, 0.55);
+  border-color: color-mix(in srgb, var(--color-warn) 55%, transparent);
 }
 
 .value {
@@ -57,7 +57,7 @@
   flex-direction: column;
   gap: 0.4rem;
   padding: 0.45rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
   box-shadow: var(--shadow-lg);

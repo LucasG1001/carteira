@@ -1,42 +1,79 @@
 import { useMemo, useState } from "react";
-import { BigNumbers } from "../../components/BigNumbers/BigNumbers";
-import type { BigNumberCardProps } from "../../components/BigNumbers/BigNumbers";
-import { Charts } from "../../components/Charts/Charts";
-import type { BarChartConfig, PieChartConfig } from "../../components/Charts/Charts";
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
-import type { TableFilter } from "../../components/ExpensesTable/ExpensesTable";
-import { MonthExpenseCard } from "../../components/MonthExpenseCard/MonthExpenseCard";
+import { FixedVariableCard } from "../../components/FixedVariableCard/FixedVariableCard";
+import { LockedAheadCard } from "../../components/LockedAheadCard/LockedAheadCard";
+import { MonthSummaryCard } from "../../components/MonthSummaryCard/MonthSummaryCard";
+import type { Comparison } from "../../components/MonthSummaryCard/MonthSummaryCard";
+import { MonthlyPaceCard } from "../../components/MonthlyPaceCard/MonthlyPaceCard";
+import { SpendBreakdownCard } from "../../components/SpendBreakdownCard/SpendBreakdownCard";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
 import { useExpensesFilter } from "./expensesFilterStore";
-import { monthLabel } from "../../utils/date";
-import { buildExpenseView, donutData } from "../../utils/expenseView";
+import { MESES } from "../../utils/date";
 import {
-  CHART_PALETTE,
-  EXPENSE_CATEGORY_COLORS,
-  EXPENSE_SUBCATEGORY_COLORS,
-} from "../../utils/chartColors";
+  groupBreakdown,
+  lockedAhead,
+  monthTotal,
+  paceSeries,
+  scopeTotals,
+  trailingAverages,
+} from "../../utils/expenseView";
+import type { BreakdownGroup, GroupBy } from "../../utils/expenseView";
+import { EMPTY_FILTERS } from "../../utils/expenseFilters";
+import type { ExpenseFilterState } from "../../utils/expenseFilters";
 import styles from "./ExpensesPage.module.css";
+
+function variation(current: number, reference: number): number | null {
+  if (!reference) return null;
+  return ((current - reference) / reference) * 100;
+}
 
 export function ExpensesPage() {
   const { data, loading, error, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
-  const { year, month, setMonth } = useExpensesFilter();
-  const [categoriaFiltro, setCategoriaFiltro] = useState("");
-  const [filter, setFilter] = useState<TableFilter>(null);
+  const { year, month, setYear, setMonth } = useExpensesFilter();
+
+  const [groupBy, setGroupBy] = useState<GroupBy>("sub");
+  const [filters, setFilters] = useState<ExpenseFilterState>(EMPTY_FILTERS);
+  const [query, setQuery] = useState("");
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [scope, setScope] = useState(`${year}-${month}`);
 
   const currentScope = `${year}-${month}`;
   if (currentScope !== scope) {
     setScope(currentScope);
-    setFilter(null);
+    setFilters(EMPTY_FILTERS);
+    setQuery("");
+    setActiveGroup(null);
   }
 
-  const view = useMemo(() => (data ? buildExpenseView(data, { year, month }) : null), [data, year, month]);
-  const donutBase = useMemo(() => (data ? donutData(data, { year, month }, null) : []), [data, year, month]);
-  const donutSub = useMemo(
-    () => (data && categoriaFiltro ? donutData(data, { year, month }, categoriaFiltro) : []),
-    [data, year, month, categoriaFiltro],
+  const entries = useMemo(() => data?.entries ?? [], [data]);
+  const now = new Date();
+  const referenceMonth =
+    month ?? (year === now.getFullYear() ? now.getMonth() + 1 : 12);
+
+  const totals = useMemo(() => scopeTotals(entries, year, month), [entries, year, month]);
+  const groups = useMemo(
+    () => groupBreakdown(entries, year, month, groupBy),
+    [entries, year, month, groupBy],
+  );
+  const locked = useMemo(
+    () => lockedAhead(entries, year, referenceMonth, 6),
+    [entries, year, referenceMonth],
+  );
+  const pace = useMemo(() => paceSeries(entries, year, month), [entries, year, month]);
+  const averages = useMemo(
+    () => trailingAverages(entries, year, referenceMonth, 12),
+    [entries, year, referenceMonth],
+  );
+
+  const origemOptions = useMemo(
+    () => groupBreakdown(entries, year, month, "origem").map((group) => group.name),
+    [entries, year, month],
+  );
+  const subOptions = useMemo(
+    () => groupBreakdown(entries, year, month, "sub").map((group) => group.name),
+    [entries, year, month],
   );
 
   if (loading) {
@@ -47,107 +84,144 @@ export function ExpensesPage() {
     return <div className={`${styles.state} ${styles.error}`}>Erro ao carregar dados: {error.message}</div>;
   }
 
-  if (!data || !view) {
-    return null;
-  }
+  if (!data) return null;
 
-  const topSub = view.yearTopSubcategory;
-  const metaGeral = data.budgets.find((budget) => budget.category === "Geral")?.amount ?? 0;
+  const meta = data.budgets.find((budget) => budget.category === "Geral")?.amount ?? 0;
 
-  const cards: BigNumberCardProps[] = [
-    {
-      label: `Gasto Total (${year})`,
-      value: fmt(view.yearExpense),
-      details: [
-        { label: "Maior subcategoria", value: topSub ? `${topSub.name} · ${fmt(topSub.total)}` : "—" },
-        { label: "Média mensal", value: fmt(view.yearAvgMonthly) },
-      ],
-      accentClass: "amber",
-      delay: 160,
-    },
-    {
-      label: "Gastos Fixos",
-      value: fmt(view.fixedVariable.fixed),
-      details: [
-        { label: "Variáveis", value: fmt(view.fixedVariable.variable) },
-        { label: "% fixo do total", value: `${view.fixedVariable.fixedPct.toFixed(0)}%` },
-      ],
-      accentClass: "green",
-      delay: 240,
-    },
-  ];
+  const activeMonths = pace.filter((point) => point.total > 0).length;
 
-  const bar: BarChartConfig = {
-    title: "Total por Mês",
-    badge: `Ano ${year}`,
-    color: "#ef4444",
-    data: view.barSeries.map((point) => ({
-      label: monthLabel(point.month),
-      value: point.expense,
-      formatted: fmt(point.expense),
-      key: point.month,
-    })),
-    onBarClick: (key) => {
-      const clicked = Number(key.split("-")[1]);
-      setMonth((prev) => (prev === clicked ? null : clicked));
-      setFilter(null);
-    },
-    activeBar: month ? `${year}-${String(month).padStart(2, "0")}` : null,
+  const comparisons: Comparison[] = month
+    ? (() => {
+        const [prevYear, prevMonth] = previousMonth(year, month);
+        const previous = monthTotal(entries, prevYear, prevMonth);
+        return [
+          {
+            label: MESES[prevMonth - 1],
+            value: previous > 0 ? previous : null,
+            variationPct: variation(totals.total, previous),
+          },
+          {
+            label: "Média dos 12 meses",
+            value: averages.total > 0 ? averages.total : null,
+            variationPct: variation(totals.total, averages.total),
+          },
+        ];
+      })()
+    : (() => {
+        const previousYear = scopeTotals(entries, year - 1, null).total;
+        return [
+          {
+            label: `Ano de ${year - 1}`,
+            value: previousYear > 0 ? previousYear : null,
+            variationPct: variation(totals.total, previousYear),
+          },
+          {
+            label: "Média mensal do ano",
+            value: activeMonths > 0 ? totals.total / activeMonths : null,
+            variationPct: null,
+            emptyNote: "sem lançamentos",
+          },
+        ];
+      })();
+
+  const scopeLabel = month ? MESES[month - 1].toLowerCase() : `ano de ${year}`;
+  const kicker = month
+    ? isCurrentMonth(year, month)
+      ? "O mês até aqui"
+      : "Mês fechado"
+    : "O ano até aqui";
+
+  const handlePick = (group: BreakdownGroup) => {
+    if (activeGroup === group.name) {
+      setActiveGroup(null);
+      setFilters(EMPTY_FILTERS);
+      setQuery("");
+      return;
+    }
+    setActiveGroup(group.name);
+    if (groupBy === "desc") {
+      setFilters(EMPTY_FILTERS);
+      setQuery(group.name);
+      return;
+    }
+    setQuery("");
+    if (groupBy === "origem") setFilters({ ...EMPTY_FILTERS, origem: [group.name] });
+    else if (groupBy === "sub") setFilters({ ...EMPTY_FILTERS, sub: [group.name] });
+    else setFilters(EMPTY_FILTERS);
   };
 
-  const donutSlices = categoriaFiltro ? donutSub : donutBase;
-  const categoriaOptions = donutBase.map((item) => item.category);
-  const sliceField = categoriaFiltro ? "subcategory" : "category";
-  const colorMap = categoriaFiltro ? EXPENSE_SUBCATEGORY_COLORS : EXPENSE_CATEGORY_COLORS;
-  const totalPie = donutSlices.reduce((sum, item) => sum + item.total, 0);
-
-  const pie: PieChartConfig = {
-    title: categoriaFiltro ? `Subcategorias — ${categoriaFiltro}` : "Por Categoria",
-    data: donutSlices.map((item, index) => ({
-      name: item.category,
-      value: item.total,
-      percent: totalPie > 0 ? (item.total / totalPie) * 100 : 0,
-      color: colorMap[item.category] || CHART_PALETTE[index % CHART_PALETTE.length],
-      formatted: fmt(item.total),
-    })),
-    select: {
-      value: categoriaFiltro,
-      options: [
-        { value: "", label: "Por categoria" },
-        ...categoriaOptions.map((category) => ({ value: category, label: category })),
-      ],
-      onChange: (value) => {
-        setCategoriaFiltro(value);
-        setFilter(null);
-      },
-    },
-    onSliceClick: (name) =>
-      setFilter((prev) =>
-        prev && prev.field === sliceField && prev.value === name ? null : { field: sliceField, value: name },
-      ),
-    activeSlice: filter && filter.field === sliceField ? filter.value : null,
+  const clearAll = () => {
+    setFilters(EMPTY_FILTERS);
+    setQuery("");
+    setActiveGroup(null);
   };
 
   return (
     <div className={styles.container}>
-      <BigNumbers
-        cards={cards}
-        prepend={
-          <MonthExpenseCard
-            spent={view.monthScope.expense}
-            variationPct={view.monthScope.variationPct}
-            meta={metaGeral}
-            onSaved={refresh}
-          />
-        }
-      />
-      <Charts bar={bar} pie={pie} />
+      <div className={styles.topGrid}>
+        <MonthSummaryCard
+          kicker={kicker}
+          total={totals.total}
+          meta={month ? meta : meta * Math.max(activeMonths, 1)}
+          comparisons={comparisons}
+          onSaved={refresh}
+        />
+        <FixedVariableCard
+          kicker={`Travado x escolha sua · ${scopeLabel}`}
+          totals={totals}
+          averages={averages}
+          averageLabel="12 meses"
+        />
+      </div>
+
+      <LockedAheadCard months={locked} meta={meta} />
+
+      <div className={styles.splitGrid}>
+        <SpendBreakdownCard
+          groups={groups}
+          groupBy={groupBy}
+          onGroupByChange={(value) => {
+            setGroupBy(value);
+            clearAll();
+          }}
+          subtitle={`${scopeLabel} · ${fmt(totals.total)} em ${totals.count} ${
+            totals.count === 1 ? "lançamento" : "lançamentos"
+          } · toque para filtrar a lista`}
+          onPick={handlePick}
+          activeName={activeGroup}
+        />
+        <MonthlyPaceCard
+          points={pace}
+          meta={meta}
+          onPick={(key) => {
+            const [pointYear, pointMonth] = key.split("-").map(Number);
+            setYear(pointYear);
+            setMonth((prev) => (prev === pointMonth && year === pointYear ? null : pointMonth));
+          }}
+        />
+      </div>
+
       <ExpensesTable
-        filter={filter}
-        onClearFilter={() => setFilter(null)}
         year={year}
-        month={view.monthScope.month}
+        month={month}
+        filters={filters}
+        onFiltersChange={setFilters}
+        query={query}
+        onQueryChange={setQuery}
+        onClearAll={clearAll}
+        origemOptions={origemOptions}
+        subOptions={subOptions}
       />
     </div>
   );
+}
+
+function previousMonth(year: number, month: number): [number, number] {
+  const absolute = year * 12 + (month - 1) - 1;
+  return [Math.floor(absolute / 12), (absolute % 12) + 1];
+}
+
+function isCurrentMonth(year: number, month: number): boolean {
+  const now = new Date();
+  return year === now.getFullYear() && month === now.getMonth() + 1;
 }

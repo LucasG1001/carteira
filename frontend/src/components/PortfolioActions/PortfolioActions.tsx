@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
 import { AlertTriangle, CheckCircle2, LoaderCircle, PlusCircle, Upload, X } from 'lucide-react';
 import { usePortfolio } from '../../context/portfolioStore';
@@ -164,7 +165,7 @@ export function PortfolioActions() {
         <span>Adicionar investimentos</span>
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div className={styles.overlay} onClick={handleBackdropClick}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
@@ -383,7 +384,8 @@ export function PortfolioActions() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

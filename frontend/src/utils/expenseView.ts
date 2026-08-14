@@ -1,4 +1,5 @@
 import type { BackendExpenseEntry, BackendExpenseSummary } from '../services/api';
+import { monthLabel } from './date';
 
 export interface MonthPoint {
   month: string;
@@ -44,6 +45,10 @@ function round2(value: number): number {
 }
 
 const ALL_MONTHS: number[] = Array.from({ length: 12 }, (_, i) => i + 1);
+
+export function isLocked(entry: BackendExpenseEntry): boolean {
+  return entry.is_recurring || (entry.installments || 1) > 1;
+}
 
 export function monthContribution(entry: BackendExpenseEntry, year: number, month: number): number {
   const [startYear, startMonth] = entry.date.split('-').map(Number);
@@ -150,7 +155,7 @@ export function buildExpenseView(data: BackendExpenseSummary, filter: ExpenseFil
     for (const m of scopeMonths) {
       const value = monthContribution(entry, year, m);
       if (value <= 0) continue;
-      if (entry.is_recurring) fixed += value;
+      if (isLocked(entry)) fixed += value;
       else variable += value;
     }
   }
@@ -172,6 +177,250 @@ export function buildExpenseView(data: BackendExpenseSummary, filter: ExpenseFil
     yearTopSubcategory,
     yearAvgMonthly,
     fixedVariable: { fixed, variable, total, fixedPct },
+  };
+}
+
+export type GroupBy = 'sub' | 'category' | 'desc' | 'origem';
+
+export interface ScopeTotals {
+  total: number;
+  locked: number;
+  free: number;
+  count: number;
+  lockedCount: number;
+  freeCount: number;
+}
+
+export interface BreakdownGroup {
+  name: string;
+  total: number;
+  pct: number;
+  count: number;
+  lockedCount: number;
+}
+
+export interface LockedMonth {
+  key: string;
+  label: string;
+  total: number;
+}
+
+export interface PacePoint {
+  key: string;
+  label: string;
+  total: number;
+  isFuture: boolean;
+  isSelected: boolean;
+}
+
+function expensesOf(entries: BackendExpenseEntry[]): BackendExpenseEntry[] {
+  return entries.filter((entry) => entry.type === 'expense');
+}
+
+function monthsOf(month: number | null): number[] {
+  return month ? [month] : ALL_MONTHS;
+}
+
+export function monthTotal(entries: BackendExpenseEntry[], year: number, month: number): number {
+  return round2(sumMonth(expensesOf(entries), year, month));
+}
+
+export function scopeTotals(
+  entries: BackendExpenseEntry[],
+  year: number,
+  month: number | null,
+): ScopeTotals {
+  const months = monthsOf(month);
+  let locked = 0;
+  let free = 0;
+  const lockedIds = new Set<number>();
+  const freeIds = new Set<number>();
+
+  for (const entry of expensesOf(entries)) {
+    for (const m of months) {
+      const value = monthContribution(entry, year, m);
+      if (value <= 0) continue;
+      if (isLocked(entry)) {
+        locked += value;
+        lockedIds.add(entry.id);
+      } else {
+        free += value;
+        freeIds.add(entry.id);
+      }
+    }
+  }
+
+  return {
+    total: round2(locked + free),
+    locked: round2(locked),
+    free: round2(free),
+    count: lockedIds.size + freeIds.size,
+    lockedCount: lockedIds.size,
+    freeCount: freeIds.size,
+  };
+}
+
+const GROUP_KEYS: Record<GroupBy, (entry: BackendExpenseEntry) => string> = {
+  sub: (entry) => entry.subcategory || 'Outros',
+  category: (entry) => entry.category,
+  desc: (entry) => entry.description || 'Sem descrição',
+  origem: (entry) => entry.payment_method || 'Não informada',
+};
+
+export function groupBreakdown(
+  entries: BackendExpenseEntry[],
+  year: number,
+  month: number | null,
+  groupBy: GroupBy,
+): BreakdownGroup[] {
+  const months = monthsOf(month);
+  const keyOf = GROUP_KEYS[groupBy];
+  const groups = new Map<string, { total: number; ids: Set<number>; lockedIds: Set<number> }>();
+
+  for (const entry of expensesOf(entries)) {
+    for (const m of months) {
+      const value = monthContribution(entry, year, m);
+      if (value <= 0) continue;
+      const key = keyOf(entry);
+      const group = groups.get(key) ?? { total: 0, ids: new Set(), lockedIds: new Set() };
+      group.total += value;
+      group.ids.add(entry.id);
+      if (isLocked(entry)) group.lockedIds.add(entry.id);
+      groups.set(key, group);
+    }
+  }
+
+  const total = [...groups.values()].reduce((sum, group) => sum + group.total, 0);
+
+  return [...groups.entries()]
+    .map(([name, group]) => ({
+      name,
+      total: round2(group.total),
+      pct: total > 0 ? (group.total / total) * 100 : 0,
+      count: group.ids.size,
+      lockedCount: group.lockedIds.size,
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+export function lockedContribution(
+  entry: BackendExpenseEntry,
+  year: number,
+  month: number,
+): number {
+  const [startYear, startMonth] = entry.date.split('-').map(Number);
+  const absolute = year * 12 + (month - 1);
+  const startAbsolute = startYear * 12 + (startMonth - 1);
+  if (absolute < startAbsolute) return 0;
+
+  const amount = entry.amount || 0;
+
+  if (entry.is_recurring) {
+    const recurrence = entry.recurrence || 'monthly';
+    if (recurrence === 'yearly') return month === startMonth ? amount : 0;
+    if (recurrence === 'weekly') return amount * 4;
+    return amount;
+  }
+
+  const installments = entry.installments || 1;
+  if (installments > 1) {
+    return absolute - startAbsolute < installments ? amount / installments : 0;
+  }
+
+  return 0;
+}
+
+export function lockedAhead(
+  entries: BackendExpenseEntry[],
+  year: number,
+  month: number,
+  count = 6,
+): LockedMonth[] {
+  const locked = expensesOf(entries).filter(isLocked);
+  const points: LockedMonth[] = [];
+
+  for (let step = 1; step <= count; step += 1) {
+    const absolute = year * 12 + (month - 1) + step;
+    const pointYear = Math.floor(absolute / 12);
+    const pointMonth = (absolute % 12) + 1;
+    let total = 0;
+    for (const entry of locked) total += lockedContribution(entry, pointYear, pointMonth);
+    const key = `${pointYear}-${String(pointMonth).padStart(2, '0')}`;
+    points.push({ key, label: monthLabel(key), total: round2(total) });
+  }
+
+  return points;
+}
+
+export function paceSeries(
+  entries: BackendExpenseEntry[],
+  year: number,
+  month: number | null,
+): PacePoint[] {
+  const expenses = expensesOf(entries);
+  const now = new Date();
+  const currentAbsolute = now.getFullYear() * 12 + now.getMonth();
+
+  const build = (pointYear: number, pointMonth: number, selected: boolean): PacePoint => {
+    const key = `${pointYear}-${String(pointMonth).padStart(2, '0')}`;
+    const isFuture = pointYear * 12 + (pointMonth - 1) > currentAbsolute;
+    let total = 0;
+    for (const entry of expenses) {
+      total += isFuture
+        ? lockedContribution(entry, pointYear, pointMonth)
+        : monthContribution(entry, pointYear, pointMonth);
+    }
+    return {
+      key,
+      label: monthLabel(key),
+      total: round2(total),
+      isFuture,
+      isSelected: selected,
+    };
+  };
+
+  if (!month) return ALL_MONTHS.map((m) => build(year, m, false));
+
+  const base = year * 12 + (month - 1);
+  return Array.from({ length: 7 }, (_, index) => {
+    const absolute = base - 2 + index;
+    return build(Math.floor(absolute / 12), (absolute % 12) + 1, index === 2);
+  });
+}
+
+export function trailingAverages(
+  entries: BackendExpenseEntry[],
+  year: number,
+  month: number,
+  monthsBack = 12,
+): { total: number; locked: number; free: number } {
+  const expenses = expensesOf(entries);
+  let total = 0;
+  let locked = 0;
+  let free = 0;
+  let counted = 0;
+
+  for (let step = 0; step < monthsBack; step += 1) {
+    const absolute = year * 12 + (month - 1) - step;
+    const pointYear = Math.floor(absolute / 12);
+    const pointMonth = (absolute % 12) + 1;
+    let monthSumTotal = 0;
+    for (const entry of expenses) {
+      const value = monthContribution(entry, pointYear, pointMonth);
+      if (value <= 0) continue;
+      monthSumTotal += value;
+      if (isLocked(entry)) locked += value;
+      else free += value;
+    }
+    if (monthSumTotal > 0) counted += 1;
+    total += monthSumTotal;
+  }
+
+  const divisor = counted || 1;
+  return {
+    total: round2(total / divisor),
+    locked: round2(locked / divisor),
+    free: round2(free / divisor),
   };
 }
 
