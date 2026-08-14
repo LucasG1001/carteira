@@ -33,7 +33,10 @@ export function MonthlyPaceCard({ points, meta, onPick }: MonthlyPaceCardProps) 
         </div>
       </div>
 
-      <div className={styles.chart} style={{ gridTemplateColumns: `repeat(${points.length}, 1fr)` }}>
+      <div
+        className={`${styles.chart} ${points.length > 7 ? styles.dense : ''}`}
+        style={{ gridTemplateColumns: `repeat(${points.length}, 1fr)` }}
+      >
         {meta > 0 && (
           <div
             className={styles.metaLine}

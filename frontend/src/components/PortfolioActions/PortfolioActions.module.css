@@ -320,7 +320,7 @@
 }
 
 @media (max-width: 768px) {
-  .openButton {
+  .openButton.openButton {
     display: none;
   }
 

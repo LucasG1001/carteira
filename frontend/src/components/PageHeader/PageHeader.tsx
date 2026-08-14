@@ -17,7 +17,7 @@ interface PageHeaderProps {
 export function PageHeader({ tabs, center, actions }: PageHeaderProps) {
   return (
     <header className={styles.header}>
-      <div className={styles.inner}>
+      <div className={`${styles.inner} ${center ? '' : styles.innerSingleRow}`}>
         <nav className={styles.tabs}>
           {tabs.map((tab) => (
             <NavLink

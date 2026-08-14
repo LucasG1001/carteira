@@ -104,6 +104,7 @@
 
 .divider {
   composes: divider from '../../styles/controls.module.css';
+  margin-top: auto;
 }
 
 .comparisons {
