@@ -12,7 +12,7 @@ import { useExpensesFilter } from "./expensesFilterStore";
 import { monthLabel } from "../../utils/date";
 import { buildExpenseView, donutData } from "../../utils/expenseView";
 import {
-  CHART_FALLBACK_COLOR,
+  CHART_PALETTE,
   EXPENSE_CATEGORY_COLORS,
   EXPENSE_SUBCATEGORY_COLORS,
 } from "../../utils/chartColors";
@@ -103,11 +103,11 @@ export function ExpensesPage() {
 
   const pie: PieChartConfig = {
     title: categoriaFiltro ? `Subcategorias — ${categoriaFiltro}` : "Por Categoria",
-    data: donutSlices.map((item) => ({
+    data: donutSlices.map((item, index) => ({
       name: item.category,
       value: item.total,
       percent: totalPie > 0 ? (item.total / totalPie) * 100 : 0,
-      color: colorMap[item.category] || CHART_FALLBACK_COLOR,
+      color: colorMap[item.category] || CHART_PALETTE[index % CHART_PALETTE.length],
       formatted: fmt(item.total),
     })),
     select: {

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { Modal } from '../Modal/Modal';
 import { Autocomplete } from '../Autocomplete/Autocomplete';
+import { ComboSelect } from '../ComboSelect/ComboSelect';
 import { useExpenses } from '../../context/expensesStore';
 import { createExpense, deleteExpense, updateExpense } from '../../services/api';
 import type { BackendExpenseEntry, RecurrenceType } from '../../services/api';
@@ -18,16 +19,40 @@ import styles from './ExpenseForm.module.css';
 
 const CATEGORIES = ['Essenciais', 'Lazer'];
 const SUBCATEGORIES = [
-  'Moradia',
-  'Alimentação',
-  'Transporte',
-  'Saúde',
-  'Educação',
-  'Compras',
-  'Serviços',
-  'Finanças',
+  'Condomínio',
+  'Água',
+  'Luz',
+  'Gás',
+  'Internet',
+  'Manutenção',
+  'Móveis',
+  'Padaria',
+  'Café',
+  'Mercado',
+  'Transporte Público',
+  'Uber',
+  'Manutenção Veículo',
+  'Estacionamento',
+  'Pedágio',
+  'Financiamento',
+  'Seguro Veículo',
+  'Farmácia',
+  'Consulta',
+  'Academia',
+  'Cinema',
+  'Viagens',
+  'Hobbies',
+  'Barbearia/Salão',
+  'Netflix',
+  'Spotify',
+  'IFood',
+  'Show',
+  'Cursos',
+  'Livros',
+  'Roupa',
+  'Cuidados Pessoais',
+  'Presente',
   'Pets',
-  'Outros',
 ];
 const PAYMENT_METHODS = ['Dinheiro', 'Pix', 'Débito', 'Crédito', 'Boleto', 'Transferência'];
 const RECURRENCES: { value: RecurrenceType; label: string }[] = [
@@ -255,24 +280,20 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
           </select>
           {invalid('category') && <span className={styles.fieldError}>Obrigatório</span>}
         </label>
-        <label className={`${styles.field} ${styles.grow}`}>
+        <div className={`${styles.field} ${styles.grow}`}>
           <span className={styles.label}>Subcategoria *</span>
-          <select
+          <ComboSelect
             value={subcategory}
-            onChange={(e) => setSubcategory(e.target.value)}
-            className={controlClass('subcategory')}
-          >
-            <option value="" disabled>
-              Selecione...
-            </option>
-            {subcategoryOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+            onChange={setSubcategory}
+            options={subcategoryOptions}
+            searchPlaceholder="Buscar ou criar..."
+            emptyLabel="Digite para criar uma nova"
+            allowCreate
+            maxLength={50}
+            invalid={invalid('subcategory')}
+          />
           {invalid('subcategory') && <span className={styles.fieldError}>Obrigatório</span>}
-        </label>
+        </div>
       </div>
 
       <div className={styles.row}>
