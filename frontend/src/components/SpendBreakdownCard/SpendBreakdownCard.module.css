@@ -16,6 +16,14 @@
   composes: kicker from '../../styles/controls.module.css';
 }
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .select {
   background: var(--color-bg);
   border: 1px solid var(--color-divider);

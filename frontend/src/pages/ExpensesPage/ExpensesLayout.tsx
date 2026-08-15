@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
@@ -7,7 +6,6 @@ import { GoalActions } from "../../components/GoalActions/GoalActions";
 import { ExpensesProvider } from "../../context/ExpensesContext";
 import { GoalsProvider } from "../../context/GoalsContext";
 import { usePrivacy } from "../../context/privacyStore";
-import type { ExpensesOutletContext } from "./expensesFilterStore";
 import styles from "./ExpensesLayout.module.css";
 
 function EyeButton() {
@@ -25,11 +23,6 @@ function EyeButton() {
 }
 
 function GastosShell() {
-  const [year, setYear] = useState(() => new Date().getFullYear());
-  const [month, setMonth] = useState<number | null>(null);
-
-  const context: ExpensesOutletContext = { year, month, setYear, setMonth };
-
   return (
     <>
       <PageHeader
@@ -40,7 +33,7 @@ function GastosShell() {
           </>
         }
       />
-      <Outlet context={context} />
+      <Outlet />
     </>
   );
 }

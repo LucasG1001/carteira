@@ -5,13 +5,12 @@ import { FixedVariableCard } from "../../components/FixedVariableCard/FixedVaria
 import { MonthSummaryCard } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import type { Comparison } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import { MonthlyPaceCard } from "../../components/MonthlyPaceCard/MonthlyPaceCard";
-import { MonthStepper } from "../../components/MonthStepper/MonthStepper";
+import { MonthYearPicker } from "../../components/MonthYearPicker/MonthYearPicker";
 import { PeriodFilter } from "../../components/PeriodFilter/PeriodFilter";
 import type { PeriodGroup } from "../../components/PeriodFilter/PeriodFilter";
 import { SpendBreakdownCard } from "../../components/SpendBreakdownCard/SpendBreakdownCard";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
-import { useExpensesFilter } from "./expensesFilterStore";
 import { MESES } from "../../utils/date";
 import {
   availableYears,
@@ -27,9 +26,20 @@ import { EMPTY_FILTERS } from "../../utils/expenseFilters";
 import type { ExpenseFilterState } from "../../utils/expenseFilters";
 import styles from "./ExpensesPage.module.css";
 
+type Scope = { year: number; month: number | null };
+
 function variation(current: number, reference: number): number | null {
   if (!reference) return null;
   return ((current - reference) / reference) * 100;
+}
+
+function scopeLabelOf(scope: Scope): string {
+  return scope.month ? MESES[scope.month - 1].toLowerCase() : `ano de ${scope.year}`;
+}
+
+function previousMonth(year: number, month: number): [number, number] {
+  const absolute = year * 12 + (month - 1) - 1;
+  return [Math.floor(absolute / 12), (absolute % 12) + 1];
 }
 
 const PACE_QUICK_OPTIONS = [
@@ -48,18 +58,29 @@ function paceRangeOf(value: string): PaceRange {
 export function ExpensesPage() {
   const { data, loading, error, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
-  const { year, month, setYear, setMonth } = useExpensesFilter();
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
 
   const [groupBy, setGroupBy] = useState<GroupBy>("sub");
   const [filters, setFilters] = useState<ExpenseFilterState>(EMPTY_FILTERS);
   const [query, setQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [paceRange, setPaceRange] = useState("last12");
-  const [scope, setScope] = useState(`${year}-${month}`);
+  const [breakdownScope, setBreakdownScope] = useState<Scope>({
+    year: currentYear,
+    month: currentMonth,
+  });
+  const [tableScope, setTableScope] = useState<Scope>({
+    year: currentYear,
+    month: currentMonth,
+  });
+  const [lastTableScope, setLastTableScope] = useState(`${currentYear}-${currentMonth}`);
 
-  const currentScope = `${year}-${month}`;
-  if (currentScope !== scope) {
-    setScope(currentScope);
+  const tableScopeKey = `${tableScope.year}-${tableScope.month}`;
+  if (tableScopeKey !== lastTableScope) {
+    setLastTableScope(tableScopeKey);
     setFilters(EMPTY_FILTERS);
     setQuery("");
     setActiveGroup(null);
@@ -70,27 +91,39 @@ export function ExpensesPage() {
     () => new Set(entries.map((entry) => entry.date.slice(0, 7))),
     [entries],
   );
-  const now = new Date();
-  const referenceMonth =
-    month ?? (year === now.getFullYear() ? now.getMonth() + 1 : 12);
 
-  const totals = useMemo(() => scopeTotals(entries, year, month), [entries, year, month]);
-  const groups = useMemo(
-    () => groupBreakdown(entries, year, month, groupBy),
-    [entries, year, month, groupBy],
+  const monthTotals = useMemo(
+    () => scopeTotals(entries, currentYear, currentMonth),
+    [entries, currentYear, currentMonth],
+  );
+  const averages = useMemo(
+    () => trailingAverages(entries, currentYear, currentMonth, 12),
+    [entries, currentYear, currentMonth],
   );
   const activeCommitments = useMemo(
-    () => commitments(entries, year, referenceMonth),
-    [entries, year, referenceMonth],
+    () => commitments(entries, currentYear, currentMonth),
+    [entries, currentYear, currentMonth],
   );
+
+  const breakdownTotals = useMemo(
+    () => scopeTotals(entries, breakdownScope.year, breakdownScope.month),
+    [entries, breakdownScope],
+  );
+  const groups = useMemo(
+    () => groupBreakdown(entries, breakdownScope.year, breakdownScope.month, groupBy),
+    [entries, breakdownScope, groupBy],
+  );
+
   const pace = useMemo(
     () =>
       paceWindow(
         entries,
         paceRangeOf(paceRange),
-        month ? `${year}-${String(month).padStart(2, "0")}` : null,
+        breakdownScope.month
+          ? `${breakdownScope.year}-${String(breakdownScope.month).padStart(2, "0")}`
+          : null,
       ),
-    [entries, paceRange, year, month],
+    [entries, paceRange, breakdownScope],
   );
   const paceGroups: PeriodGroup[] = useMemo(
     () => [
@@ -105,25 +138,20 @@ export function ExpensesPage() {
     ],
     [entries],
   );
-  const monthsWithSpending = useMemo(
-    () =>
-      Array.from({ length: 12 }, (_, index) => index + 1).filter(
-        (candidate) => monthTotal(entries, year, candidate) > 0,
-      ),
-    [entries, year],
-  );
-  const averages = useMemo(
-    () => trailingAverages(entries, year, referenceMonth, 12),
-    [entries, year, referenceMonth],
-  );
 
   const origemOptions = useMemo(
-    () => groupBreakdown(entries, year, month, "origem").map((group) => group.name),
-    [entries, year, month],
+    () =>
+      groupBreakdown(entries, tableScope.year, tableScope.month, "origem").map(
+        (group) => group.name,
+      ),
+    [entries, tableScope],
   );
   const subOptions = useMemo(
-    () => groupBreakdown(entries, year, month, "sub").map((group) => group.name),
-    [entries, year, month],
+    () =>
+      groupBreakdown(entries, tableScope.year, tableScope.month, "sub").map(
+        (group) => group.name,
+      ),
+    [entries, tableScope],
   );
 
   if (loading) {
@@ -138,45 +166,26 @@ export function ExpensesPage() {
 
   const meta = data.budgets.find((budget) => budget.category === "Geral")?.amount ?? 0;
 
-  const activeMonths = monthsWithSpending.length;
+  const [prevYear, prevMonth] = previousMonth(currentYear, currentMonth);
+  const previousTotal = monthTotal(entries, prevYear, prevMonth);
+  const comparisons: Comparison[] = [
+    {
+      label: MESES[prevMonth - 1],
+      value: previousTotal > 0 ? previousTotal : null,
+      variationPct: variation(monthTotals.total, previousTotal),
+    },
+    {
+      label: "Média dos 12 meses",
+      value: averages.total > 0 ? averages.total : null,
+      variationPct: variation(monthTotals.total, averages.total),
+    },
+  ];
 
-  const comparisons: Comparison[] = month
-    ? (() => {
-        const [prevYear, prevMonth] = previousMonth(year, month);
-        const previous = monthTotal(entries, prevYear, prevMonth);
-        return [
-          {
-            label: MESES[prevMonth - 1],
-            value: previous > 0 ? previous : null,
-            variationPct: variation(totals.total, previous),
-          },
-          {
-            label: "Média dos 12 meses",
-            value: averages.total > 0 ? averages.total : null,
-            variationPct: variation(totals.total, averages.total),
-          },
-        ];
-      })()
-    : (() => {
-        const previousYear = scopeTotals(entries, year - 1, null).total;
-        return [
-          {
-            label: `Ano de ${year - 1}`,
-            value: previousYear > 0 ? previousYear : null,
-            variationPct: variation(totals.total, previousYear),
-          },
-          {
-            label: "Média mensal do ano",
-            value: activeMonths > 0 ? totals.total / activeMonths : null,
-            variationPct: null,
-            emptyNote: "sem lançamentos",
-          },
-        ];
-      })();
-
-  const scopeLabel = month ? MESES[month - 1].toLowerCase() : `ano de ${year}`;
+  const breakdownLabel = scopeLabelOf(breakdownScope);
 
   const handlePick = (group: BreakdownGroup) => {
+    setTableScope(breakdownScope);
+
     if (activeGroup === group.name) {
       setActiveGroup(null);
       setFilters(EMPTY_FILTERS);
@@ -205,25 +214,15 @@ export function ExpensesPage() {
     <div className={styles.container}>
       <div className={styles.topGrid}>
         <MonthSummaryCard
-          period={
-            <MonthStepper
-              year={year}
-              month={month}
-              markedKeys={markedKeys}
-              onChange={(nextYear, nextMonth) => {
-                setYear(nextYear);
-                setMonth(nextMonth);
-              }}
-            />
-          }
-          total={totals.total}
-          meta={month ? meta : meta * Math.max(activeMonths, 1)}
+          kicker={`${MESES[currentMonth - 1]} · o mês até aqui`}
+          total={monthTotals.total}
+          meta={meta}
           comparisons={comparisons}
           onSaved={refresh}
         />
         <FixedVariableCard
-          kicker={`Travado x escolha sua · ${scopeLabel}`}
-          totals={totals}
+          kicker={`Travado x escolha sua · ${MESES[currentMonth - 1].toLowerCase()}`}
+          totals={monthTotals}
           averages={averages}
           averageLabel="12 meses"
         />
@@ -237,8 +236,9 @@ export function ExpensesPage() {
         }
         onPick={(key) => {
           const [pointYear, pointMonth] = key.split("-").map(Number);
-          setYear(pointYear);
-          setMonth((prev) => (prev === pointMonth && year === pointYear ? null : pointMonth));
+          const next: Scope = { year: pointYear, month: pointMonth };
+          setBreakdownScope(next);
+          setTableScope(next);
         }}
       />
 
@@ -250,8 +250,19 @@ export function ExpensesPage() {
             setGroupBy(value);
             clearAll();
           }}
-          subtitle={`${scopeLabel} · ${fmt(totals.total)} em ${totals.count} ${
-            totals.count === 1 ? "lançamento" : "lançamentos"
+          filter={
+            <MonthYearPicker
+              year={breakdownScope.year}
+              month={breakdownScope.month}
+              markedKeys={markedKeys}
+              align="right"
+              onChange={(nextYear, nextMonth) =>
+                setBreakdownScope({ year: nextYear, month: nextMonth })
+              }
+            />
+          }
+          subtitle={`${breakdownLabel} · ${fmt(breakdownTotals.total)} em ${breakdownTotals.count} ${
+            breakdownTotals.count === 1 ? "lançamento" : "lançamentos"
           } · toque para filtrar a lista`}
           onPick={handlePick}
           activeName={activeGroup}
@@ -260,8 +271,18 @@ export function ExpensesPage() {
       </div>
 
       <ExpensesTable
-        year={year}
-        month={month}
+        year={tableScope.year}
+        month={tableScope.month}
+        filter={
+          <MonthYearPicker
+            year={tableScope.year}
+            month={tableScope.month}
+            markedKeys={markedKeys}
+            onChange={(nextYear, nextMonth) =>
+              setTableScope({ year: nextYear, month: nextMonth })
+            }
+          />
+        }
         filters={filters}
         onFiltersChange={setFilters}
         query={query}
@@ -272,9 +293,4 @@ export function ExpensesPage() {
       />
     </div>
   );
-}
-
-function previousMonth(year: number, month: number): [number, number] {
-  const absolute = year * 12 + (month - 1) - 1;
-  return [Math.floor(absolute / 12), (absolute % 12) + 1];
 }

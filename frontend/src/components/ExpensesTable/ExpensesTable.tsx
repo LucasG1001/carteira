@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ArrowUpDown, TrendingDown, TrendingUp } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
@@ -26,6 +26,7 @@ const RECURRENCE_LABEL: Record<string, string> = {
 interface ExpensesTableProps {
   year: number;
   month: number | null;
+  filter?: ReactNode;
   filters: ExpenseFilterState;
   onFiltersChange: (state: ExpenseFilterState) => void;
   query: string;
@@ -55,6 +56,7 @@ function installmentLabel(entry: BackendExpenseEntry, year: number, month: numbe
 export function ExpensesTable({
   year,
   month,
+  filter,
   filters,
   onFiltersChange,
   query,
@@ -137,6 +139,8 @@ export function ExpensesTable({
         <span className={styles.summary}>
           {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'} · {fmt(total)}
         </span>
+
+        {filter}
       </div>
 
       <div className={styles.tableWrapper} ref={scrollRef}>

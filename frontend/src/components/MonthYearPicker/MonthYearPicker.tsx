@@ -5,7 +5,9 @@ import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { MESES } from "../../utils/date";
 import styles from "./MonthYearPicker.module.css";
 
-type PopoverCoords = { top: number; left?: number; right?: number };
+type PopoverCoords = { top?: number; bottom?: number; left?: number; right?: number };
+
+const FALLBACK_POPOVER_HEIGHT = 300;
 
 const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -35,7 +37,11 @@ export function MonthYearPicker({
   const updateCoords = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const next: PopoverCoords = { top: rect.bottom + 6 };
+    const height = popoverRef.current?.offsetHeight ?? FALLBACK_POPOVER_HEIGHT;
+    const next: PopoverCoords =
+      window.innerHeight - rect.bottom < height + 12 && rect.top > height + 12
+        ? { bottom: window.innerHeight - rect.top + 6 }
+        : { top: rect.bottom + 6 };
     if (align === "right") {
       next.right = window.innerWidth - rect.right;
     } else {
@@ -102,7 +108,12 @@ export function MonthYearPicker({
           <div
             className={styles.popover}
             ref={popoverRef}
-            style={{ top: coords.top, left: coords.left, right: coords.right }}
+            style={{
+              top: coords.top,
+              bottom: coords.bottom,
+              left: coords.left,
+              right: coords.right,
+            }}
           >
           <div className={styles.yearNav}>
             <button type="button" className={styles.yearArrow} onClick={() => setBrowseYear((y) => y - 1)}>

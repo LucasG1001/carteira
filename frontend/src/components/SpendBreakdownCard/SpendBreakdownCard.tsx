@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BreakdownGroup, GroupBy } from '../../utils/expenseView';
 import styles from './SpendBreakdownCard.module.css';
@@ -13,6 +14,7 @@ interface SpendBreakdownCardProps {
   groups: BreakdownGroup[];
   groupBy: GroupBy;
   onGroupByChange: (value: GroupBy) => void;
+  filter?: ReactNode;
   subtitle: string;
   onPick: (group: BreakdownGroup) => void;
   activeName?: string | null;
@@ -29,6 +31,7 @@ export function SpendBreakdownCard({
   groups,
   groupBy,
   onGroupByChange,
+  filter,
   subtitle,
   onPick,
   activeName,
@@ -40,17 +43,20 @@ export function SpendBreakdownCard({
     <section className={styles.card}>
       <div className={styles.header}>
         <span className={styles.kicker}>Para onde o dinheiro vai</span>
-        <select
-          className={styles.select}
-          value={groupBy}
-          onChange={(event) => onGroupByChange(event.target.value as GroupBy)}
-        >
-          {GROUP_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className={styles.controls}>
+          <select
+            className={styles.select}
+            value={groupBy}
+            onChange={(event) => onGroupByChange(event.target.value as GroupBy)}
+          >
+            {GROUP_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {filter}
+        </div>
       </div>
 
       <p className={styles.subtitle}>{subtitle}</p>

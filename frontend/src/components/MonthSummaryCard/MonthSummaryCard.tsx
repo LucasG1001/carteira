@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { Modal } from '../Modal/Modal';
 import { usePrivacy } from '../../context/privacyStore';
 import { setBudget } from '../../services/api';
@@ -14,7 +14,7 @@ export interface Comparison {
 }
 
 interface MonthSummaryCardProps {
-  period: ReactNode;
+  kicker: string;
   total: number;
   meta: number;
   comparisons: Comparison[];
@@ -22,7 +22,7 @@ interface MonthSummaryCardProps {
 }
 
 export function MonthSummaryCard({
-  period,
+  kicker,
   total,
   meta,
   comparisons,
@@ -60,7 +60,7 @@ export function MonthSummaryCard({
     <>
       <section className={styles.card}>
         <div className={styles.top}>
-          {period}
+          <span className={styles.kicker}>{kicker}</span>
           <button type="button" className={styles.metaButton} onClick={openEdit}>
             {hasMeta ? `meta ${fmt(meta)}` : 'definir meta'}
           </button>

@@ -23,7 +23,10 @@ interface PeriodFilterProps {
 
 export function PeriodFilter({ title = 'Período', groups, value, onChange }: PeriodFilterProps) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, right: 0 });
+  const [coords, setCoords] = useState<{ top?: number; bottom?: number; right: number }>({
+    top: 0,
+    right: 0,
+  });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +35,13 @@ export function PeriodFilter({ title = 'Período', groups, value, onChange }: Pe
     const update = () => {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
-      setCoords({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+      const height = popoverRef.current?.offsetHeight ?? 280;
+      const right = window.innerWidth - rect.right;
+      setCoords(
+        window.innerHeight - rect.bottom < height + 12 && rect.top > height + 12
+          ? { bottom: window.innerHeight - rect.top + 6, right }
+          : { top: rect.bottom + 6, right },
+      );
     };
     update();
     window.addEventListener('scroll', update, true);
@@ -83,7 +92,7 @@ export function PeriodFilter({ title = 'Período', groups, value, onChange }: Pe
           <div
             ref={popoverRef}
             className={styles.popover}
-            style={{ top: coords.top, right: coords.right }}
+            style={{ top: coords.top, bottom: coords.bottom, right: coords.right }}
             role="listbox"
           >
             <span className={styles.title}>{title}</span>
