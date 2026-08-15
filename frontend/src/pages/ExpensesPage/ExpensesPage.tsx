@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
+import { CommitmentsCard } from "../../components/CommitmentsCard/CommitmentsCard";
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
 import { FixedVariableCard } from "../../components/FixedVariableCard/FixedVariableCard";
-import { LockedAheadCard } from "../../components/LockedAheadCard/LockedAheadCard";
 import { MonthSummaryCard } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import type { Comparison } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import { MonthlyPaceCard } from "../../components/MonthlyPaceCard/MonthlyPaceCard";
@@ -12,8 +12,8 @@ import { usePrivacy } from "../../context/privacyStore";
 import { useExpensesFilter } from "./expensesFilterStore";
 import { MESES } from "../../utils/date";
 import {
+  commitments,
   groupBreakdown,
-  lockedAhead,
   monthTotal,
   paceSeries,
   scopeTotals,
@@ -62,8 +62,8 @@ export function ExpensesPage() {
     () => groupBreakdown(entries, year, month, groupBy),
     [entries, year, month, groupBy],
   );
-  const locked = useMemo(
-    () => lockedAhead(entries, year, referenceMonth, 6),
+  const activeCommitments = useMemo(
+    () => commitments(entries, year, referenceMonth),
     [entries, year, referenceMonth],
   );
   const pace = useMemo(() => paceSeries(entries, year, month), [entries, year, month]);
@@ -184,7 +184,15 @@ export function ExpensesPage() {
         />
       </div>
 
-      <LockedAheadCard months={locked} meta={meta} />
+      <MonthlyPaceCard
+        points={pace}
+        meta={meta}
+        onPick={(key) => {
+          const [pointYear, pointMonth] = key.split("-").map(Number);
+          setYear(pointYear);
+          setMonth((prev) => (prev === pointMonth && year === pointYear ? null : pointMonth));
+        }}
+      />
 
       <div className={styles.splitGrid}>
         <SpendBreakdownCard
@@ -200,15 +208,7 @@ export function ExpensesPage() {
           onPick={handlePick}
           activeName={activeGroup}
         />
-        <MonthlyPaceCard
-          points={pace}
-          meta={meta}
-          onPick={(key) => {
-            const [pointYear, pointMonth] = key.split("-").map(Number);
-            setYear(pointYear);
-            setMonth((prev) => (prev === pointMonth && year === pointYear ? null : pointMonth));
-          }}
-        />
+        <CommitmentsCard items={activeCommitments} />
       </div>
 
       <ExpensesTable

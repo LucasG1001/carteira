@@ -199,10 +199,16 @@ export interface BreakdownGroup {
   lockedCount: number;
 }
 
-export interface LockedMonth {
-  key: string;
-  label: string;
-  total: number;
+export interface Commitment {
+  id: number;
+  name: string;
+  monthly: number;
+  kind: 'recurring' | 'installment';
+  recurrence: string | null;
+  startKey: string;
+  paid: number | null;
+  installments: number | null;
+  endKey: string | null;
 }
 
 export interface PacePoint {
@@ -330,26 +336,42 @@ export function lockedContribution(
   return 0;
 }
 
-export function lockedAhead(
+function monthKey(absolute: number): string {
+  return `${Math.floor(absolute / 12)}-${String((absolute % 12) + 1).padStart(2, '0')}`;
+}
+
+export function commitments(
   entries: BackendExpenseEntry[],
   year: number,
   month: number,
-  count = 6,
-): LockedMonth[] {
-  const locked = expensesOf(entries).filter(isLocked);
-  const points: LockedMonth[] = [];
+): Commitment[] {
+  const reference = year * 12 + (month - 1);
+  const list: Commitment[] = [];
 
-  for (let step = 1; step <= count; step += 1) {
-    const absolute = year * 12 + (month - 1) + step;
-    const pointYear = Math.floor(absolute / 12);
-    const pointMonth = (absolute % 12) + 1;
-    let total = 0;
-    for (const entry of locked) total += lockedContribution(entry, pointYear, pointMonth);
-    const key = `${pointYear}-${String(pointMonth).padStart(2, '0')}`;
-    points.push({ key, label: monthLabel(key), total: round2(total) });
+  for (const entry of expensesOf(entries).filter(isLocked)) {
+    const [startYear, startMonth] = entry.date.split('-').map(Number);
+    const start = startYear * 12 + (startMonth - 1);
+    if (reference < start) continue;
+
+    const installments = entry.installments || 1;
+    const isInstallment = !entry.is_recurring && installments > 1;
+    const elapsed = reference - start;
+    if (isInstallment && elapsed >= installments) continue;
+
+    list.push({
+      id: entry.id,
+      name: entry.description || entry.subcategory || entry.category,
+      monthly: round2(lockedContribution(entry, year, month)),
+      kind: isInstallment ? 'installment' : 'recurring',
+      recurrence: entry.is_recurring ? entry.recurrence || 'monthly' : null,
+      startKey: monthKey(start),
+      paid: isInstallment ? elapsed + 1 : null,
+      installments: isInstallment ? installments : null,
+      endKey: isInstallment ? monthKey(start + installments - 1) : null,
+    });
   }
 
-  return points;
+  return list.sort((a, b) => b.monthly - a.monthly);
 }
 
 export function paceSeries(
