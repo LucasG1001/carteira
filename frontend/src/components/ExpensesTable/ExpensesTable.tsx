@@ -12,7 +12,7 @@ import { matchesFilters } from '../../utils/expenseFilters';
 import type { ExpenseFilterState } from '../../utils/expenseFilters';
 import styles from './ExpensesTable.module.css';
 
-type SortKey = 'date' | 'amount' | 'sub';
+type SortKey = 'date' | 'amount' | 'grupo' | 'destino';
 type SortDir = 'asc' | 'desc';
 
 const ALL_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
@@ -33,7 +33,9 @@ interface ExpensesTableProps {
   onQueryChange: (query: string) => void;
   onClearAll: () => void;
   origemOptions: string[];
-  subOptions: string[];
+  grupoOptions: string[];
+  destinoOptions: string[];
+  classificacaoOptions: string[];
 }
 
 function scopeAmount(entry: BackendExpenseEntry, year: number, month: number | null) {
@@ -63,7 +65,9 @@ export function ExpensesTable({
   onQueryChange,
   onClearAll,
   origemOptions,
-  subOptions,
+  grupoOptions,
+  destinoOptions,
+  classificacaoOptions,
 }: ExpensesTableProps) {
   const { data, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
@@ -88,9 +92,11 @@ export function ExpensesTable({
     .map((entry) => ({ entry, amount: scopeAmount(entry, year, month) }))
     .filter(({ entry, amount }) => amount > 0 && matchesFilters(entry, filters, query))
     .sort((a, b) => {
-      if (sortKey === 'sub') {
-        const left = a.entry.subcategory ?? '';
-        const right = b.entry.subcategory ?? '';
+      if (sortKey === 'grupo' || sortKey === 'destino') {
+        const pick = (entry: BackendExpenseEntry) =>
+          (sortKey === 'grupo' ? entry.category : entry.destination) ?? '';
+        const left = pick(a.entry);
+        const right = pick(b.entry);
         return sortDir === 'asc' ? left.localeCompare(right) : right.localeCompare(left);
       }
       if (sortKey === 'amount') {
@@ -130,7 +136,9 @@ export function ExpensesTable({
           onChange={onFiltersChange}
           onClearAll={onClearAll}
           origemOptions={origemOptions}
-          subOptions={subOptions}
+          grupoOptions={grupoOptions}
+          destinoOptions={destinoOptions}
+          classificacaoOptions={classificacaoOptions}
           hasQuery={query.length > 0}
         />
 
@@ -154,8 +162,13 @@ export function ExpensesTable({
                 </button>
               </th>
               <th>
-                <button type="button" className={styles.thButton} onClick={() => handleSort('sub')}>
-                  Subcategoria {renderSortIcon('sub')}
+                <button type="button" className={styles.thButton} onClick={() => handleSort('grupo')}>
+                  Grupo {renderSortIcon('grupo')}
+                </button>
+              </th>
+              <th>
+                <button type="button" className={styles.thButton} onClick={() => handleSort('destino')}>
+                  Destino {renderSortIcon('destino')}
                 </button>
               </th>
               <th>Forma</th>
@@ -181,7 +194,8 @@ export function ExpensesTable({
                   </span>
                 </td>
                 <td>{formatDate(entry.date).slice(0, 5)}</td>
-                <td>{entry.subcategory || 'Outros'}</td>
+                <td>{entry.category}</td>
+                <td>{entry.destination || '—'}</td>
                 <td>{entry.payment_method || '—'}</td>
                 <td>{installmentLabel(entry, year, month)}</td>
                 <td className={styles.cellValue}>{fmt(amount)}</td>
@@ -190,7 +204,7 @@ export function ExpensesTable({
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className={styles.empty}>
+                <td colSpan={7} className={styles.empty}>
                   Nenhum lançamento com esse filtro.
                 </td>
               </tr>

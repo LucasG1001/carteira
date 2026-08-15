@@ -101,6 +101,7 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 `uploads` — `id` PK, `user_id`, `filename`, `file_hash`, `created_at`
 `transactions` — `id` PK, `upload_id` FK→uploads (cascade), `user_id`, `ticker`, `operation_type`, `entry_side`, `date`, `quantity`, `unit_price`, `operation_value`
 `stock_prices` — `(ticker, date)` PK, `open`, `high`, `low`, `close`, `volume`, `created_at`
+`expenses` — `id` PK, `user_id`, `type`, `description`, `amount`, `date`, `payment_method`, `installments`, `is_recurring`, `recurrence` + a taxonomia em 3 eixos: `category` = **Grupo** (Automóvel), `destination` = **Destino** (Onix, Lucas), `classification` = **Classificação** (Essencial/Lazer)
 
 > App de usuário único: `user_id` é sempre `settings.SINGLE_USER_ID` (`"local"`). As colunas existem mas não há escopo multiusuário.
 

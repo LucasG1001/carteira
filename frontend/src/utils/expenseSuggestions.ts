@@ -3,7 +3,8 @@ import { normalizeText } from './text';
 
 export type SuggestionFill = {
   category?: string;
-  subcategory?: string;
+  destination?: string;
+  classification?: string;
   paymentMethod?: string;
   place?: string;
   address?: string;
@@ -22,7 +23,7 @@ type Group = {
   entries: BackendExpenseEntry[];
 };
 
-type FieldName = 'category' | 'subcategory' | 'payment_method';
+type FieldName = 'category' | 'destination' | 'classification' | 'payment_method';
 
 function expenseEntries(entries: BackendExpenseEntry[]): BackendExpenseEntry[] {
   return entries.filter((entry) => entry.type === 'expense');
@@ -68,7 +69,8 @@ function latestValue(group: Group, pick: (entry: BackendExpenseEntry) => string 
 function groupFill(group: Group): SuggestionFill {
   return {
     category: latestValue(group, (entry) => entry.category),
-    subcategory: latestValue(group, (entry) => entry.subcategory),
+    destination: latestValue(group, (entry) => entry.destination),
+    classification: latestValue(group, (entry) => entry.classification),
     paymentMethod: latestValue(group, (entry) => entry.payment_method),
     place: latestValue(group, (entry) => entry.place),
     address: latestValue(group, (entry) => entry.address),
@@ -85,7 +87,7 @@ export function buildDescriptionSuggestions(entries: BackendExpenseEntry[]): Exp
     const fill = groupFill(group);
     return {
       label: group.label,
-      hint: joinHint([fill.category, fill.subcategory, fill.paymentMethod]),
+      hint: joinHint([fill.category, fill.destination, fill.paymentMethod]),
       fill,
     };
   });

@@ -182,7 +182,8 @@ export type BackendExpenseEntry = {
   type: ExpenseEntryType;
   amount: number;
   category: string;
-  subcategory: string | null;
+  destination: string | null;
+  classification: string | null;
   date: string;
   description: string | null;
   payment_method: string | null;
@@ -208,7 +209,7 @@ export type BackendExpenseSummary = {
   avg_monthly_income: number;
   monthly: { month: string; income: number; expense: number; balance: number }[];
   by_category: { category: string; total: number }[];
-  by_subcategory: { category: string; total: number }[];
+  by_destination: { category: string; total: number }[];
   month_by_category: { category: string; total: number }[];
   budgets: BudgetItem[];
 };
@@ -222,7 +223,8 @@ export type ExpenseCreatePayload = {
   type: ExpenseEntryType;
   amount: number;
   category: string;
-  subcategory?: string | null;
+  destination?: string | null;
+  classification?: string | null;
   date: string;
   description?: string | null;
   payment_method?: string | null;

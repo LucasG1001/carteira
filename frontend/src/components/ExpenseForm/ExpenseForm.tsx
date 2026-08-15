@@ -17,8 +17,8 @@ import {
 import type { ExpenseSuggestion } from '../../utils/expenseSuggestions';
 import styles from './ExpenseForm.module.css';
 
-const CATEGORIES = ['Essenciais', 'Lazer'];
-const SUBCATEGORIES = [
+const CLASSIFICATIONS = ['Essencial', 'Lazer'];
+const GROUPS = [
   'Condomínio',
   'Água',
   'Luz',
@@ -80,7 +80,8 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const [amountCents, setAmountCents] = useState(initialData ? Math.round(initialData.amount * 100) : 0);
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [category, setCategory] = useState(initialData?.category ?? '');
-  const [subcategory, setSubcategory] = useState(initialData?.subcategory ?? '');
+  const [destination, setDestination] = useState(initialData?.destination ?? '');
+  const [classification, setClassification] = useState(initialData?.classification ?? '');
   const [date, setDate] = useState(initialData?.date ?? todayAsInputValue());
   const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method ?? '');
   const [installments, setInstallments] = useState(initialData ? String(initialData.installments) : '1');
@@ -102,11 +103,15 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const descriptionSuggestions = useMemo(() => buildDescriptionSuggestions(entries), [entries]);
   const placeSuggestions = useMemo(() => buildPlaceSuggestions(entries), [entries]);
   const categoryOptions = useMemo(
-    () => distinctFieldValues(entries, 'category', CATEGORIES),
+    () => distinctFieldValues(entries, 'category', GROUPS),
     [entries],
   );
-  const subcategoryOptions = useMemo(
-    () => distinctFieldValues(entries, 'subcategory', SUBCATEGORIES),
+  const destinationOptions = useMemo(
+    () => distinctFieldValues(entries, 'destination', []),
+    [entries],
+  );
+  const classificationOptions = useMemo(
+    () => distinctFieldValues(entries, 'classification', CLASSIFICATIONS),
     [entries],
   );
   const paymentOptions = useMemo(
@@ -123,7 +128,8 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     date: date.length === 0,
     description: description.trim().length === 0,
     category: category.length === 0,
-    subcategory: subcategory.length === 0,
+    destination: destination.length === 0,
+    classification: classification.length === 0,
     paymentMethod: paymentMethod.length === 0,
     place: place.trim().length === 0,
     address: address.trim().length === 0,
@@ -136,7 +142,8 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     const fill = findSuggestion(descriptionSuggestions, value)?.fill;
     if (!fill) return;
     if (fill.category) setCategory(fill.category);
-    if (fill.subcategory) setSubcategory(fill.subcategory);
+    if (fill.destination) setDestination(fill.destination);
+    if (fill.classification) setClassification(fill.classification);
     if (fill.paymentMethod) setPaymentMethod(fill.paymentMethod);
     if (fill.place) setPlace(fill.place);
     if (fill.address) setAddress(fill.address);
@@ -149,7 +156,8 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     if (!fill) return;
     if (fill.address) setAddress(fill.address);
     if (fill.category && !category) setCategory(fill.category);
-    if (fill.subcategory && !subcategory) setSubcategory(fill.subcategory);
+    if (fill.destination && !destination) setDestination(fill.destination);
+    if (fill.classification && !classification) setClassification(fill.classification);
     if (fill.paymentMethod && !paymentMethod) setPaymentMethod(fill.paymentMethod);
   };
 
@@ -165,7 +173,8 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       type: 'expense' as const,
       amount: amountNumber,
       category,
-      subcategory,
+      destination,
+      classification,
       date,
       description: description.trim(),
       payment_method: paymentMethod,
@@ -267,37 +276,47 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       </div>
 
       <div className={styles.row}>
-        <label className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Categoria *</span>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={controlClass('category')}
-          >
-            <option value="" disabled>
-              Selecione...
-            </option>
-            {categoryOptions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-          {invalid('category') && <span className={styles.fieldError}>Obrigatório</span>}
-        </label>
         <div className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Subcategoria *</span>
+          <span className={styles.label}>Grupo *</span>
           <ComboSelect
-            value={subcategory}
-            onChange={setSubcategory}
-            options={subcategoryOptions}
+            value={category}
+            onChange={setCategory}
+            options={categoryOptions}
+            searchPlaceholder="Buscar ou criar..."
+            emptyLabel="Digite para criar um novo"
+            allowCreate
+            maxLength={100}
+            invalid={invalid('category')}
+          />
+          {invalid('category') && <span className={styles.fieldError}>Obrigatório</span>}
+        </div>
+        <div className={`${styles.field} ${styles.grow}`}>
+          <span className={styles.label}>Destino *</span>
+          <ComboSelect
+            value={destination}
+            onChange={setDestination}
+            options={destinationOptions}
+            searchPlaceholder="Buscar ou criar..."
+            emptyLabel="Digite para criar um novo"
+            allowCreate
+            maxLength={50}
+            invalid={invalid('destination')}
+          />
+          {invalid('destination') && <span className={styles.fieldError}>Obrigatório</span>}
+        </div>
+        <div className={`${styles.field} ${styles.grow}`}>
+          <span className={styles.label}>Classificação *</span>
+          <ComboSelect
+            value={classification}
+            onChange={setClassification}
+            options={classificationOptions}
             searchPlaceholder="Buscar ou criar..."
             emptyLabel="Digite para criar uma nova"
             allowCreate
-            maxLength={50}
-            invalid={invalid('subcategory')}
+            maxLength={20}
+            invalid={invalid('classification')}
           />
-          {invalid('subcategory') && <span className={styles.fieldError}>Obrigatório</span>}
+          {invalid('classification') && <span className={styles.fieldError}>Obrigatório</span>}
         </div>
       </div>
 

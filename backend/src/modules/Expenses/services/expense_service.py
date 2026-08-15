@@ -31,7 +31,8 @@ class ExpenseService:
             type=payload.type,
             amount=round(payload.amount, 2),
             category=payload.category.strip(),
-            subcategory=payload.subcategory or ("Outros" if payload.type == "expense" else None),
+            destination=payload.destination.strip() if payload.destination else None,
+            classification=payload.classification.strip() if payload.classification else None,
             date=payload.date,
             description=payload.description.strip() if payload.description else None,
             payment_method=payload.payment_method,
@@ -61,7 +62,17 @@ class ExpenseService:
                 setattr(expense, field, data[field])
         if "amount" in data:
             expense.amount = round(data["amount"], 2)
-        for field in ("category", "subcategory", "description", "payment_method", "place", "address", "notes", "tags"):
+        for field in (
+            "category",
+            "destination",
+            "classification",
+            "description",
+            "payment_method",
+            "place",
+            "address",
+            "notes",
+            "tags",
+        ):
             if field in data:
                 value = data[field]
                 setattr(expense, field, value.strip() if isinstance(value, str) else value)
@@ -84,7 +95,7 @@ class ExpenseService:
 
         monthly: List[MonthlyExpensePoint] = []
         category_totals: Dict[str, float] = {}
-        subcategory_totals: Dict[str, float] = {}
+        destination_totals: Dict[str, float] = {}
         month_category_totals: Dict[str, float] = {}
 
         for month_key in months:
@@ -100,8 +111,8 @@ class ExpenseService:
                 else:
                     expense += value
                     category_totals[entry.category] = category_totals.get(entry.category, 0.0) + value
-                    sub = entry.subcategory or "Outros"
-                    subcategory_totals[sub] = subcategory_totals.get(sub, 0.0) + value
+                    destination = entry.destination or "Sem destino"
+                    destination_totals[destination] = destination_totals.get(destination, 0.0) + value
                     if month_key == current_month:
                         month_category_totals[entry.category] = (
                             month_category_totals.get(entry.category, 0.0) + value
@@ -128,8 +139,8 @@ class ExpenseService:
             key=lambda item: item.total,
             reverse=True,
         )
-        by_subcategory = sorted(
-            (CategoryTotal(category=name, total=round(total, 2)) for name, total in subcategory_totals.items()),
+        by_destination = sorted(
+            (CategoryTotal(category=name, total=round(total, 2)) for name, total in destination_totals.items()),
             key=lambda item: item.total,
             reverse=True,
         )
@@ -150,7 +161,7 @@ class ExpenseService:
             avg_monthly_income=avg_monthly_income,
             monthly=monthly,
             by_category=by_category,
-            by_subcategory=by_subcategory,
+            by_destination=by_destination,
             month_by_category=month_by_category,
             budgets=[BudgetItem.model_validate(budget) for budget in budgets],
         )

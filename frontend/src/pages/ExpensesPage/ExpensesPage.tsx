@@ -63,7 +63,7 @@ export function ExpensesPage() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  const [groupBy, setGroupBy] = useState<GroupBy>("sub");
+  const [groupBy, setGroupBy] = useState<GroupBy>("grupo");
   const [filters, setFilters] = useState<ExpenseFilterState>(EMPTY_FILTERS);
   const [query, setQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
@@ -139,20 +139,16 @@ export function ExpensesPage() {
     [entries],
   );
 
-  const origemOptions = useMemo(
-    () =>
-      groupBreakdown(entries, tableScope.year, tableScope.month, "origem").map(
-        (group) => group.name,
-      ),
-    [entries, tableScope],
-  );
-  const subOptions = useMemo(
-    () =>
-      groupBreakdown(entries, tableScope.year, tableScope.month, "sub").map(
-        (group) => group.name,
-      ),
-    [entries, tableScope],
-  );
+  const filterOptions = useMemo(() => {
+    const namesOf = (kind: GroupBy) =>
+      groupBreakdown(entries, tableScope.year, tableScope.month, kind).map((group) => group.name);
+    return {
+      origem: namesOf("origem"),
+      grupo: namesOf("grupo"),
+      destino: namesOf("destino"),
+      classificacao: namesOf("classificacao"),
+    };
+  }, [entries, tableScope]);
 
   if (loading) {
     return <div className={styles.state}>Carregando dados de gastos...</div>;
@@ -200,8 +196,9 @@ export function ExpensesPage() {
     }
     setQuery("");
     if (groupBy === "origem") setFilters({ ...EMPTY_FILTERS, origem: [group.name] });
-    else if (groupBy === "sub") setFilters({ ...EMPTY_FILTERS, sub: [group.name] });
-    else setFilters(EMPTY_FILTERS);
+    else if (groupBy === "grupo") setFilters({ ...EMPTY_FILTERS, grupo: [group.name] });
+    else if (groupBy === "destino") setFilters({ ...EMPTY_FILTERS, destino: [group.name] });
+    else setFilters({ ...EMPTY_FILTERS, classificacao: [group.name] });
   };
 
   const clearAll = () => {
@@ -288,8 +285,10 @@ export function ExpensesPage() {
         query={query}
         onQueryChange={setQuery}
         onClearAll={clearAll}
-        origemOptions={origemOptions}
-        subOptions={subOptions}
+        origemOptions={filterOptions.origem}
+        grupoOptions={filterOptions.grupo}
+        destinoOptions={filterOptions.destino}
+        classificacaoOptions={filterOptions.classificacao}
       />
     </div>
   );

@@ -11,7 +11,8 @@ class ExpenseCreateRequest(BaseModel):
     type: ExpenseType = "expense"
     amount: float = Field(gt=0)
     category: str = Field(min_length=1, max_length=100)
-    subcategory: Optional[str] = Field(default=None, max_length=50)
+    destination: Optional[str] = Field(default=None, max_length=50)
+    classification: Optional[str] = Field(default=None, max_length=20)
     date: date_type
     description: Optional[str] = Field(default=None, max_length=255)
     payment_method: Optional[str] = Field(default=None, max_length=30)
@@ -28,7 +29,8 @@ class ExpenseUpdateRequest(BaseModel):
     type: Optional[ExpenseType] = None
     amount: Optional[float] = Field(default=None, gt=0)
     category: Optional[str] = Field(default=None, min_length=1, max_length=100)
-    subcategory: Optional[str] = Field(default=None, max_length=50)
+    destination: Optional[str] = Field(default=None, max_length=50)
+    classification: Optional[str] = Field(default=None, max_length=20)
     date: Optional[date_type] = None
     description: Optional[str] = Field(default=None, max_length=255)
     payment_method: Optional[str] = Field(default=None, max_length=30)
@@ -47,7 +49,8 @@ class ExpenseResponse(BaseModel):
     type: ExpenseType
     amount: float
     category: str
-    subcategory: Optional[str] = None
+    destination: Optional[str] = None
+    classification: Optional[str] = None
     date: date_type
     description: Optional[str] = None
     payment_method: Optional[str] = None
@@ -99,6 +102,6 @@ class ExpenseSummaryResponse(BaseModel):
     avg_monthly_income: float
     monthly: List[MonthlyExpensePoint]
     by_category: List[CategoryTotal]
-    by_subcategory: List[CategoryTotal]
+    by_destination: List[CategoryTotal]
     month_by_category: List[CategoryTotal]
     budgets: List[BudgetItem]

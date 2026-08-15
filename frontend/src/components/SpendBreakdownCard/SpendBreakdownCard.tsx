@@ -4,8 +4,9 @@ import type { BreakdownGroup, GroupBy } from '../../utils/expenseView';
 import styles from './SpendBreakdownCard.module.css';
 
 const GROUP_OPTIONS: { value: GroupBy; label: string }[] = [
-  { value: 'sub', label: 'por subcategoria' },
-  { value: 'category', label: 'por categoria' },
+  { value: 'grupo', label: 'por grupo' },
+  { value: 'destino', label: 'por destino' },
+  { value: 'classificacao', label: 'por classificação' },
   { value: 'desc', label: 'por descrição' },
   { value: 'origem', label: 'por forma de pagamento' },
 ];

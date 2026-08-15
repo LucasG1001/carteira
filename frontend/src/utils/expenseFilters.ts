@@ -1,5 +1,5 @@
 import type { BackendExpenseEntry } from '../services/api';
-import { isLocked } from './expenseView';
+import { isLocked, SEM_CLASSIFICACAO, SEM_DESTINO } from './expenseView';
 import { normalizeText } from './text';
 
 export const TIPO_LOCKED = 'Travado / parcelado';
@@ -9,15 +9,29 @@ export const TIPO_OPTIONS = [TIPO_LOCKED, TIPO_FREE];
 export type ExpenseFilterState = {
   tipo: string[];
   origem: string[];
-  sub: string[];
+  grupo: string[];
+  destino: string[];
+  classificacao: string[];
 };
 
 export type FilterGroup = keyof ExpenseFilterState;
 
-export const EMPTY_FILTERS: ExpenseFilterState = { tipo: [], origem: [], sub: [] };
+export const EMPTY_FILTERS: ExpenseFilterState = {
+  tipo: [],
+  origem: [],
+  grupo: [],
+  destino: [],
+  classificacao: [],
+};
 
 export function filterCount(state: ExpenseFilterState): number {
-  return state.tipo.length + state.origem.length + state.sub.length;
+  return (
+    state.tipo.length +
+    state.origem.length +
+    state.grupo.length +
+    state.destino.length +
+    state.classificacao.length
+  );
 }
 
 export function toggleFilter(
@@ -39,7 +53,13 @@ export function matchesFilters(
 ): boolean {
   const term = normalizeText(query);
   if (term) {
-    const haystack = [entry.description, entry.subcategory, entry.category, entry.place]
+    const haystack = [
+      entry.description,
+      entry.category,
+      entry.destination,
+      entry.classification,
+      entry.place,
+    ]
       .filter(Boolean)
       .map((value) => normalizeText(String(value)));
     if (!haystack.some((value) => value.includes(term))) return false;
@@ -54,7 +74,18 @@ export function matchesFilters(
     return false;
   }
 
-  if (state.sub.length > 0 && !state.sub.includes(entry.subcategory ?? 'Outros')) {
+  if (state.grupo.length > 0 && !state.grupo.includes(entry.category)) {
+    return false;
+  }
+
+  if (state.destino.length > 0 && !state.destino.includes(entry.destination ?? SEM_DESTINO)) {
+    return false;
+  }
+
+  if (
+    state.classificacao.length > 0 &&
+    !state.classificacao.includes(entry.classification ?? SEM_CLASSIFICACAO)
+  ) {
     return false;
   }
 
