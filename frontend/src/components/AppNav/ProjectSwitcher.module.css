@@ -1,0 +1,111 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 7px var(--spacing-md);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.trigger:hover,
+.triggerOpen {
+  border-color: var(--color-accent-line);
+  background: var(--color-bg-hover);
+}
+
+.triggerIcon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: var(--color-accent-300);
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.triggerOpen .chevron {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: fixed;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.menuTitle {
+  padding: 4px var(--spacing-md) var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: 9px var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  text-align: left;
+  color: var(--color-neutral-300);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.option:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.optionActive,
+.optionActive:hover {
+  color: var(--color-accent-200);
+  background: var(--color-accent-tint);
+}
+
+.optionIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+}
+
+.optionActive .optionIcon,
+.optionCheck {
+  color: var(--color-accent-300);
+}
+
+.optionLabel {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.optionCheck {
+  flex-shrink: 0;
+}

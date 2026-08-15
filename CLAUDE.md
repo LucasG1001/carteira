@@ -75,12 +75,14 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 
 ### Frontend (`frontend/src/`)
 
-- **`App.tsx`** — `BrowserRouter` + layout (Sidebar + content); rotas `/investimentos` e `/gastos`
-- **`components/Sidebar/`** — menu lateral padrão (colapsável, nav inferior no mobile), ícones SVG inline em `Sidebar.icons.tsx`
-- **`pages/InvestmentsPage/`** — dashboard da carteira (envolve `PortfolioProvider`)
-- **`pages/ExpensesPage/`** — placeholder "Em breve" (Controle de Gastos virá depois)
-- **`components/`** — `PortfolioActions`, `BigNumbers`, `Charts`, `AssetsTable`
-- **`context/PortfolioContext.tsx`** — estado global da carteira
+- **`App.tsx`** — `BrowserRouter` + layout (conteúdo full-width + nav inferior só no mobile); rotas `/investimentos` e `/gastos`
+- **`components/AppNav/`** — fonte única da navegação: `navItems.ts` (projetos + páginas filhas), `ProjectSwitcher` (dropdown que troca entre Investimentos e Gastos) e ícones SVG inline em `nav.icons.tsx`
+- **`components/PageHeader/`** — header sticky com toda a navegação de desktop (switcher + abas do projeto) e os slots `center`/`actions` preenchidos pelos layouts; a nav some em ≤768px
+- **`components/MobileNav/`** — barra inferior do mobile (ícones por projeto, flyout com as páginas, FAB de adicionar via `QuickAddContext`); renderizada só quando `useIsMobile()`
+- **`pages/InvestmentsPage/`** — `InvestmentsLayout` (envolve `PortfolioProvider` + header) e as rotas filhas `InvestmentsPage`, `DividendsPage`, `TransactionsPage`, `TaxReportPage`
+- **`pages/ExpensesPage/`** — `ExpensesLayout` (envolve `ExpensesProvider` ou `GoalsProvider` conforme a rota) + `ExpensesPage` (gastos do mês: cards, breakdown e tabela filtrável) e `pages/GoalsPage/` (caixinhas)
+- **`components/`** — `PortfolioActions`, `BigNumbers`, `Charts`, `AssetsTable`, `ExpensesTable`, `ExpenseForm`, `MonthStepper`, `GoalCard`
+- **`context/`** — um provider por domínio (`Portfolio`, `Expenses`, `Goals`, `Privacy`, `QuickAdd`); o `*Store.ts` ao lado exporta o contexto e o hook `use*`
 - **`services/api.ts`** — `fetch` para `import.meta.env.VITE_API_URL ?? '/api/v1'`
 - **`styles/global.css`** — design tokens (`--color-*`) e keyframes globais
 
@@ -129,7 +131,7 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 ### State Management
 
 - React hooks + Context API (`useState`, `useContext`, `useReducer`) — sem Redux/Zustand
-- Sem comentários no código
+- Sem comentários no código, exceto quando registram uma restrição não óbvia
 
 ### HTTP Status Codes
 
@@ -161,3 +163,14 @@ POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, CARTEIRA_DOMAIN
 
 - Para tarefas que envolvam mais de um arquivo, apresente um plano e aguarde aprovação antes de editar.
 - Tarefas simples (1 arquivo, mudança pequena) pode executar direto.
+
+## Manutenção deste arquivo
+
+- Quando uma mudança tornar algo aqui factualmente incorreto (módulo/arquivo renomeado ou
+  removido, comando alterado, nova integração, novo invariante ou gotcha), atualize a linha
+  afetada na mesma tarefa.
+- Edite no lugar e remova o que ficou obsoleto — este arquivo não cresce sem contrapartida.
+  Prefira descrever padrões/invariantes estáveis a listar arquivos.
+- Documente fatos, não preferências. Não adicione convenções ou "boas práticas" novas por conta
+  própria: proponha e deixe a decisão de estilo comigo.
+- Mantenha conciso e em português.

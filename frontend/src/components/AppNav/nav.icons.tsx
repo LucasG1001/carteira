@@ -46,11 +46,3 @@ export function LogoIcon({ className }: IconProps) {
     </Icon>
   );
 }
-
-export function ChevronIcon({ className }: IconProps) {
-  return (
-    <Icon className={className}>
-      <path d="m15 18-6-6 6-6" />
-    </Icon>
-  );
-}

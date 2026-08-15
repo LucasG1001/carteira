@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Sidebar } from "./components/Sidebar/Sidebar";
+import { MobileNav } from "./components/MobileNav/MobileNav";
+import { useIsMobile } from "./hooks/useIsMobile";
 import { PrivacyProvider } from "./context/PrivacyContext";
 import { QuickAddProvider } from "./context/QuickAddContext";
 import { InvestmentsLayout } from "./pages/InvestmentsPage/InvestmentsLayout";
@@ -13,60 +13,33 @@ import { DividendsPage } from "./pages/DividendsPage/DividendsPage";
 import { TransactionsPage } from "./pages/TransactionsPage/TransactionsPage";
 import styles from "./App.module.css";
 
-const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
-
-const SIDEBAR_ANIMATION_MS = 180;
-
 function App() {
-  const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true"
-  );
-  const [animating, setAnimating] = useState(false);
-  const animationTimer = useRef<number | null>(null);
-
-  const toggleSidebar = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
-      return next;
-    });
-    setAnimating(true);
-    if (animationTimer.current) window.clearTimeout(animationTimer.current);
-    animationTimer.current = window.setTimeout(
-      () => setAnimating(false),
-      SIDEBAR_ANIMATION_MS + 40,
-    );
-  };
+  const isMobile = useIsMobile();
 
   return (
     <BrowserRouter>
       <PrivacyProvider>
         <QuickAddProvider>
-        <div className={styles.layout}>
-          <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
-          <div
-            className={`${styles.content} ${collapsed ? styles.contentCollapsed : ""} ${
-              animating ? styles.contentAnimating : ""
-            }`}
-          >
-          <main className={styles.main}>
-            <Routes>
-              <Route path="/" element={<Navigate to="/investimentos" replace />} />
-              <Route path="/investimentos" element={<InvestmentsLayout />}>
-                <Route index element={<InvestmentsPage />} />
-                <Route path="proventos" element={<DividendsPage />} />
-                <Route path="lancamentos" element={<TransactionsPage />} />
-                <Route path="imposto-de-renda" element={<TaxReportPage />} />
-              </Route>
-              <Route path="/gastos" element={<ExpensesLayout />}>
-                <Route index element={<ExpensesPage />} />
-                <Route path="caixinhas" element={<GoalsPage />} />
-              </Route>
-              <Route path="*" element={<Navigate to="/investimentos" replace />} />
-            </Routes>
-          </main>
+          <div className={styles.layout}>
+            <main className={styles.main}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/investimentos" replace />} />
+                <Route path="/investimentos" element={<InvestmentsLayout />}>
+                  <Route index element={<InvestmentsPage />} />
+                  <Route path="proventos" element={<DividendsPage />} />
+                  <Route path="lancamentos" element={<TransactionsPage />} />
+                  <Route path="imposto-de-renda" element={<TaxReportPage />} />
+                </Route>
+                <Route path="/gastos" element={<ExpensesLayout />}>
+                  <Route index element={<ExpensesPage />} />
+                  <Route path="caixinhas" element={<GoalsPage />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/investimentos" replace />} />
+              </Routes>
+            </main>
           </div>
-        </div>
+
+          {isMobile && <MobileNav />}
         </QuickAddProvider>
       </PrivacyProvider>
     </BrowserRouter>

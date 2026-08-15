@@ -4,23 +4,94 @@
   z-index: 105;
   margin: calc(var(--spacing-xl) * -1) calc(var(--spacing-2xl) * -1) var(--spacing-xl);
   background: color-mix(in srgb, var(--color-bg) 92%, transparent);
-  backdrop-filter: var(--header-blur, blur(12px));
-  -webkit-backdrop-filter: var(--header-blur, blur(12px));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-neutral-900);
 }
 
 .inner {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 14px var(--spacing-2xl);
+  padding: 10px var(--spacing-2xl);
   display: flex;
   align-items: center;
-  gap: 28px;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) 28px;
   min-height: 62px;
 }
 
-.spacer {
-  flex: 1;
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-accent-line);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-900);
+  color: var(--color-accent-300);
+}
+
+.brandMark {
+  width: 19px;
+  height: 19px;
+}
+
+.divider {
+  width: 1px;
+  height: 22px;
+  flex-shrink: 0;
+  background: var(--color-neutral-900);
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  padding: 7px var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-400);
+  white-space: nowrap;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.tabActive,
+.tabActive:hover {
+  color: var(--color-accent-200);
+  background: var(--color-accent-tint);
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 0;
 }
 
 .center,
@@ -32,7 +103,8 @@
 }
 
 @media (max-width: 900px) {
-  .inner {
+  .inner,
+  .right {
     gap: var(--spacing-md);
   }
 }
@@ -47,6 +119,14 @@
     gap: var(--spacing-sm);
     padding: 10px var(--spacing-base);
     min-height: 0;
+  }
+
+  .right {
+    gap: var(--spacing-sm);
+  }
+
+  .nav {
+    display: none;
   }
 
   .center {

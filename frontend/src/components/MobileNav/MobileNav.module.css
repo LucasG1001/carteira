@@ -1,0 +1,120 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--mobile-nav-height);
+  display: flex;
+  align-items: stretch;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-subtle);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 100;
+}
+
+.navItem {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.navItemActive {
+  color: var(--color-accent-200);
+}
+
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 3px;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+}
+
+.navIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.navItemActive .navIcon {
+  color: var(--color-accent-300);
+}
+
+.navLabel {
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 0.5rem;
+  transform: translateY(-12px);
+  border-radius: var(--radius-full);
+  background: var(--color-accent-900);
+  color: var(--color-accent-200);
+  border: 1px solid var(--color-accent);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.fabIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.flyout {
+  position: fixed;
+  z-index: 400;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.flyoutTitle {
+  padding: 4px var(--spacing-md) var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+
+.flyoutItem {
+  padding: 9px var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  color: var(--color-neutral-300);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.flyoutItemActive {
+  color: var(--color-accent-200);
+  background: var(--color-accent-tint);
+}
