@@ -6,20 +6,23 @@ import { MonthSummaryCard } from "../../components/MonthSummaryCard/MonthSummary
 import type { Comparison } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import { MonthlyPaceCard } from "../../components/MonthlyPaceCard/MonthlyPaceCard";
 import { MonthStepper } from "../../components/MonthStepper/MonthStepper";
+import { PeriodFilter } from "../../components/PeriodFilter/PeriodFilter";
+import type { PeriodGroup } from "../../components/PeriodFilter/PeriodFilter";
 import { SpendBreakdownCard } from "../../components/SpendBreakdownCard/SpendBreakdownCard";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
 import { useExpensesFilter } from "./expensesFilterStore";
 import { MESES } from "../../utils/date";
 import {
+  availableYears,
   commitments,
   groupBreakdown,
   monthTotal,
-  paceSeries,
+  paceWindow,
   scopeTotals,
   trailingAverages,
 } from "../../utils/expenseView";
-import type { BreakdownGroup, GroupBy } from "../../utils/expenseView";
+import type { BreakdownGroup, GroupBy, PaceRange } from "../../utils/expenseView";
 import { EMPTY_FILTERS } from "../../utils/expenseFilters";
 import type { ExpenseFilterState } from "../../utils/expenseFilters";
 import styles from "./ExpensesPage.module.css";
@@ -27,6 +30,19 @@ import styles from "./ExpensesPage.module.css";
 function variation(current: number, reference: number): number | null {
   if (!reference) return null;
   return ((current - reference) / reference) * 100;
+}
+
+const PACE_QUICK_OPTIONS = [
+  { value: "last6", label: "Últimos 6 meses" },
+  { value: "last12", label: "Últimos 12 meses" },
+  { value: "next12", label: "Próximos 12 meses" },
+];
+
+function paceRangeOf(value: string): PaceRange {
+  if (value.startsWith("year:")) return { kind: "year", year: Number(value.slice(5)) };
+  if (value === "next12") return { kind: "next", count: 12 };
+  if (value === "last6") return { kind: "last", count: 6 };
+  return { kind: "last", count: 12 };
 }
 
 export function ExpensesPage() {
@@ -38,6 +54,7 @@ export function ExpensesPage() {
   const [filters, setFilters] = useState<ExpenseFilterState>(EMPTY_FILTERS);
   const [query, setQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [paceRange, setPaceRange] = useState("last12");
   const [scope, setScope] = useState(`${year}-${month}`);
 
   const currentScope = `${year}-${month}`;
@@ -66,7 +83,35 @@ export function ExpensesPage() {
     () => commitments(entries, year, referenceMonth),
     [entries, year, referenceMonth],
   );
-  const pace = useMemo(() => paceSeries(entries, year, month), [entries, year, month]);
+  const pace = useMemo(
+    () =>
+      paceWindow(
+        entries,
+        paceRangeOf(paceRange),
+        month ? `${year}-${String(month).padStart(2, "0")}` : null,
+      ),
+    [entries, paceRange, year, month],
+  );
+  const paceGroups: PeriodGroup[] = useMemo(
+    () => [
+      { title: "Filtros rápidos", options: PACE_QUICK_OPTIONS },
+      {
+        title: "Filtro anual",
+        options: availableYears(entries).map((option) => ({
+          value: `year:${option}`,
+          label: String(option),
+        })),
+      },
+    ],
+    [entries],
+  );
+  const monthsWithSpending = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => index + 1).filter(
+        (candidate) => monthTotal(entries, year, candidate) > 0,
+      ),
+    [entries, year],
+  );
   const averages = useMemo(
     () => trailingAverages(entries, year, referenceMonth, 12),
     [entries, year, referenceMonth],
@@ -93,7 +138,7 @@ export function ExpensesPage() {
 
   const meta = data.budgets.find((budget) => budget.category === "Geral")?.amount ?? 0;
 
-  const activeMonths = pace.filter((point) => point.total > 0).length;
+  const activeMonths = monthsWithSpending.length;
 
   const comparisons: Comparison[] = month
     ? (() => {
@@ -187,6 +232,9 @@ export function ExpensesPage() {
       <MonthlyPaceCard
         points={pace}
         meta={meta}
+        filter={
+          <PeriodFilter groups={paceGroups} value={paceRange} onChange={setPaceRange} />
+        }
         onPick={(key) => {
           const [pointYear, pointMonth] = key.split("-").map(Number);
           setYear(pointYear);

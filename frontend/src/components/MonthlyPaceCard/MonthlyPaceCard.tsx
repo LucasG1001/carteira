@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { usePrivacy } from '../../context/privacyStore';
 import type { PacePoint } from '../../utils/expenseView';
 import styles from './MonthlyPaceCard.module.css';
@@ -7,6 +8,7 @@ const BAR_AREA = 150;
 interface MonthlyPaceCardProps {
   points: PacePoint[];
   meta: number;
+  filter?: ReactNode;
   onPick?: (key: string) => void;
 }
 
@@ -15,7 +17,7 @@ function shortValue(value: number) {
   return String(Math.round(value));
 }
 
-export function MonthlyPaceCard({ points, meta, onPick }: MonthlyPaceCardProps) {
+export function MonthlyPaceCard({ points, meta, filter, onPick }: MonthlyPaceCardProps) {
   const { hidden } = usePrivacy();
   const ceiling = Math.max(meta, ...points.map((point) => point.total)) || 1;
 
@@ -23,13 +25,17 @@ export function MonthlyPaceCard({ points, meta, onPick }: MonthlyPaceCardProps) 
     <section className={styles.card}>
       <div className={styles.header}>
         <span className={styles.kicker}>Ritmo mês a mês</span>
-        <div className={styles.legend}>
-          <span className={styles.legendItem}>
-            <span className={styles.swatchDone} /> realizado
-          </span>
-          <span className={styles.legendItem}>
-            <span className={styles.swatchFuture} /> travado
-          </span>
+
+        <div className={styles.controls}>
+          <div className={styles.legend}>
+            <span className={styles.legendItem}>
+              <span className={styles.swatchDone} /> realizado
+            </span>
+            <span className={styles.legendItem}>
+              <span className={styles.swatchFuture} /> travado
+            </span>
+          </div>
+          {filter}
         </div>
       </div>
 

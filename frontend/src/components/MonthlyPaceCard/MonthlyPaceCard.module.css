@@ -17,6 +17,13 @@
   composes: kicker from '../../styles/controls.module.css';
 }
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .legend {
   display: flex;
   align-items: center;

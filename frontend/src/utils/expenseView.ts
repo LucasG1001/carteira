@@ -374,18 +374,39 @@ export function commitments(
   return list.sort((a, b) => b.monthly - a.monthly);
 }
 
-export function paceSeries(
+export type PaceRange =
+  | { kind: 'last'; count: number }
+  | { kind: 'next'; count: number }
+  | { kind: 'year'; year: number };
+
+export function paceWindow(
   entries: BackendExpenseEntry[],
-  year: number,
-  month: number | null,
+  range: PaceRange,
+  selectedKey: string | null,
 ): PacePoint[] {
   const expenses = expensesOf(entries);
   const now = new Date();
   const currentAbsolute = now.getFullYear() * 12 + now.getMonth();
 
-  const build = (pointYear: number, pointMonth: number, selected: boolean): PacePoint => {
-    const key = `${pointYear}-${String(pointMonth).padStart(2, '0')}`;
-    const isFuture = pointYear * 12 + (pointMonth - 1) > currentAbsolute;
+  let start: number;
+  let count: number;
+  if (range.kind === 'year') {
+    start = range.year * 12;
+    count = 12;
+  } else if (range.kind === 'next') {
+    start = currentAbsolute;
+    count = range.count;
+  } else {
+    start = currentAbsolute - (range.count - 1);
+    count = range.count;
+  }
+
+  return Array.from({ length: count }, (_, index) => {
+    const absolute = start + index;
+    const pointYear = Math.floor(absolute / 12);
+    const pointMonth = (absolute % 12) + 1;
+    const key = monthKey(absolute);
+    const isFuture = absolute > currentAbsolute;
     let total = 0;
     for (const entry of expenses) {
       total += isFuture
@@ -397,16 +418,8 @@ export function paceSeries(
       label: monthLabel(key),
       total: round2(total),
       isFuture,
-      isSelected: selected,
+      isSelected: key === selectedKey,
     };
-  };
-
-  if (!month) return ALL_MONTHS.map((m) => build(year, m, false));
-
-  const base = year * 12 + (month - 1);
-  return Array.from({ length: 7 }, (_, index) => {
-    const absolute = base - 2 + index;
-    return build(Math.floor(absolute / 12), (absolute % 12) + 1, index === 2);
   });
 }
 
