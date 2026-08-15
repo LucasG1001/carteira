@@ -105,6 +105,7 @@
   --mobile-nav-height: 64px;
 
   --content-max: 1320px;
+  --card-list-max: 360px;
 
   --bg-primary: var(--color-bg);
   --bg-secondary: var(--color-bg-secondary);
