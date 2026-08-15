@@ -8,13 +8,10 @@
 
 .top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--spacing-md);
-}
-
-.kicker {
-  composes: kicker from '../../styles/controls.module.css';
+  flex-wrap: wrap;
 }
 
 .metaButton {

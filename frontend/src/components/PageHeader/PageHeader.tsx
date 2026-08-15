@@ -6,11 +6,10 @@ import { findNavItem } from '../AppNav/navItems';
 import styles from './PageHeader.module.css';
 
 interface PageHeaderProps {
-  center?: ReactNode;
   actions?: ReactNode;
 }
 
-export function PageHeader({ center, actions }: PageHeaderProps) {
+export function PageHeader({ actions }: PageHeaderProps) {
   const { pathname } = useLocation();
   const project = findNavItem(pathname);
 
@@ -41,7 +40,6 @@ export function PageHeader({ center, actions }: PageHeaderProps) {
         </div>
 
         <div className={styles.right}>
-          {center && <div className={styles.center}>{center}</div>}
           {actions && <div className={styles.actions}>{actions}</div>}
         </div>
       </div>

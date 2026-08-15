@@ -77,10 +77,10 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 
 - **`App.tsx`** — `BrowserRouter` + layout (conteúdo full-width + nav inferior só no mobile); rotas `/investimentos` e `/gastos`
 - **`components/AppNav/`** — fonte única da navegação: `navItems.ts` (projetos + páginas filhas), `ProjectSwitcher` (dropdown que troca entre Investimentos e Gastos) e ícones SVG inline em `nav.icons.tsx`
-- **`components/PageHeader/`** — header sticky com toda a navegação de desktop (switcher + abas do projeto) e os slots `center`/`actions` preenchidos pelos layouts; a nav some em ≤768px
+- **`components/PageHeader/`** — header (rola junto com a página, não é sticky) com a navegação de desktop (switcher + abas do projeto) e o slot `actions` preenchido pelos layouts; a nav some em ≤768px
 - **`components/MobileNav/`** — barra inferior do mobile (ícones por projeto, flyout com as páginas, FAB de adicionar via `QuickAddContext`); renderizada só quando `useIsMobile()`
 - **`pages/InvestmentsPage/`** — `InvestmentsLayout` (envolve `PortfolioProvider` + header) e as rotas filhas `InvestmentsPage`, `DividendsPage`, `TransactionsPage`, `TaxReportPage`
-- **`pages/ExpensesPage/`** — `ExpensesLayout` (envolve `ExpensesProvider` ou `GoalsProvider` conforme a rota) + `ExpensesPage` (gastos do mês: cards, breakdown e tabela filtrável) e `pages/GoalsPage/` (caixinhas)
+- **`pages/ExpensesPage/`** — `ExpensesLayout` (envolve `ExpensesProvider` ou `GoalsProvider` conforme a rota) + `ExpensesPage` (gastos do mês: cards, breakdown e tabela filtrável) e `pages/GoalsPage/` (caixinhas). O período (`year`/`month`) mora no layout e chega via outlet context (`expensesFilterStore`); quem edita é o `MonthStepper` dentro do `MonthSummaryCard`, e ele escopa a página inteira
 - **`components/`** — `PortfolioActions`, `BigNumbers`, `Charts`, `AssetsTable`, `ExpensesTable`, `ExpenseForm`, `MonthStepper`, `GoalCard`
 - **`context/`** — um provider por domínio (`Portfolio`, `Expenses`, `Goals`, `Privacy`, `QuickAdd`); o `*Store.ts` ao lado exporta o contexto e o hook `use*`
 - **`services/api.ts`** — `fetch` para `import.meta.env.VITE_API_URL ?? '/api/v1'`

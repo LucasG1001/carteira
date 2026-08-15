@@ -5,6 +5,7 @@ import { LockedAheadCard } from "../../components/LockedAheadCard/LockedAheadCar
 import { MonthSummaryCard } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import type { Comparison } from "../../components/MonthSummaryCard/MonthSummaryCard";
 import { MonthlyPaceCard } from "../../components/MonthlyPaceCard/MonthlyPaceCard";
+import { MonthStepper } from "../../components/MonthStepper/MonthStepper";
 import { SpendBreakdownCard } from "../../components/SpendBreakdownCard/SpendBreakdownCard";
 import { useExpenses } from "../../context/expensesStore";
 import { usePrivacy } from "../../context/privacyStore";
@@ -48,6 +49,10 @@ export function ExpensesPage() {
   }
 
   const entries = useMemo(() => data?.entries ?? [], [data]);
+  const markedKeys = useMemo(
+    () => new Set(entries.map((entry) => entry.date.slice(0, 7))),
+    [entries],
+  );
   const now = new Date();
   const referenceMonth =
     month ?? (year === now.getFullYear() ? now.getMonth() + 1 : 12);
@@ -125,11 +130,6 @@ export function ExpensesPage() {
       })();
 
   const scopeLabel = month ? MESES[month - 1].toLowerCase() : `ano de ${year}`;
-  const kicker = month
-    ? isCurrentMonth(year, month)
-      ? "O mês até aqui"
-      : "Mês fechado"
-    : "O ano até aqui";
 
   const handlePick = (group: BreakdownGroup) => {
     if (activeGroup === group.name) {
@@ -160,7 +160,17 @@ export function ExpensesPage() {
     <div className={styles.container}>
       <div className={styles.topGrid}>
         <MonthSummaryCard
-          kicker={kicker}
+          period={
+            <MonthStepper
+              year={year}
+              month={month}
+              markedKeys={markedKeys}
+              onChange={(nextYear, nextMonth) => {
+                setYear(nextYear);
+                setMonth(nextMonth);
+              }}
+            />
+          }
           total={totals.total}
           meta={month ? meta : meta * Math.max(activeMonths, 1)}
           comparisons={comparisons}
@@ -219,9 +229,4 @@ export function ExpensesPage() {
 function previousMonth(year: number, month: number): [number, number] {
   const absolute = year * 12 + (month - 1) - 1;
   return [Math.floor(absolute / 12), (absolute % 12) + 1];
-}
-
-function isCurrentMonth(year: number, month: number): boolean {
-  const now = new Date();
-  return year === now.getFullYear() && month === now.getMonth() + 1;
 }

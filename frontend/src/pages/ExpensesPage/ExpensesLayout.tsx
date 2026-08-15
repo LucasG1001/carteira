@@ -1,12 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
-import { MonthStepper } from "../../components/MonthStepper/MonthStepper";
 import { ExpenseActions } from "../../components/ExpenseActions/ExpenseActions";
 import { GoalActions } from "../../components/GoalActions/GoalActions";
 import { ExpensesProvider } from "../../context/ExpensesContext";
-import { useExpenses } from "../../context/expensesStore";
 import { GoalsProvider } from "../../context/GoalsContext";
 import { usePrivacy } from "../../context/privacyStore";
 import type { ExpensesOutletContext } from "./expensesFilterStore";
@@ -27,31 +25,14 @@ function EyeButton() {
 }
 
 function GastosShell() {
-  const { data } = useExpenses();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState<number | null>(null);
-
-  const markedKeys = useMemo(
-    () => new Set((data?.entries ?? []).map((entry) => entry.date.slice(0, 7))),
-    [data],
-  );
 
   const context: ExpensesOutletContext = { year, month, setYear, setMonth };
 
   return (
     <>
       <PageHeader
-        center={
-          <MonthStepper
-            year={year}
-            month={month}
-            markedKeys={markedKeys}
-            onChange={(nextYear, nextMonth) => {
-              setYear(nextYear);
-              setMonth(nextMonth);
-            }}
-          />
-        }
         actions={
           <>
             <EyeButton />
