@@ -1,0 +1,161 @@
+.card {
+  composes: card from '../../styles/controls.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 26px 22px;
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.kicker {
+  composes: kicker from '../../styles/controls.module.css';
+}
+
+.reference {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totalRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.total {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaGood {
+  font-size: var(--font-size-base);
+  color: var(--color-accent-300);
+}
+
+.deltaBad {
+  font-size: var(--font-size-base);
+  color: var(--color-warn);
+}
+
+.barBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.barTrack {
+  position: relative;
+  height: 10px;
+  border-radius: 6px;
+  background: var(--color-neutral-900);
+  overflow: visible;
+}
+
+.barFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--color-accent-700), var(--color-accent-500));
+  transition: width var(--transition-base);
+}
+
+.barMark {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  background: var(--color-neutral-500);
+}
+
+.barMarkBad {
+  background: var(--color-warn);
+}
+
+.note {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  align-self: flex-end;
+}
+
+.noteBad {
+  font-size: var(--font-size-sm);
+  color: var(--color-warn);
+  align-self: flex-end;
+}
+
+.divider {
+  composes: divider from '../../styles/controls.module.css';
+  margin-top: auto;
+}
+
+.comparisons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.comparisonLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+}
+
+.comparisonRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.comparisonValue {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.comparisonNote {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+}
+
+.varGood {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent-300);
+}
+
+.varBad {
+  font-size: var(--font-size-sm);
+  color: var(--color-warn);
+}
+
+@media (max-width: 768px) {
+  .total {
+    font-size: var(--font-size-2xl);
+  }
+
+  .comparisons {
+    gap: var(--spacing-base);
+  }
+}
