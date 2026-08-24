@@ -1,5 +1,6 @@
 import type { BackendAssetSummary, BackendEvolutionPoint, BackendPortfolioSummary } from '../services/api';
-import { monthLabel } from './date';
+import { monthKey, monthLabel } from './date';
+import { round2 } from './formatting';
 
 export type AllocationGroupBy = 'tipo' | 'ativo' | 'setor';
 
@@ -45,16 +46,6 @@ export interface ResultSplit {
   dividends: number;
   total: number;
   yieldOnCost: number;
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function monthKey(absolute: number): string {
-  const year = Math.floor(absolute / 12);
-  const month = (absolute % 12) + 1;
-  return `${year}-${String(month).padStart(2, '0')}`;
 }
 
 export function assetTypeColor(type: string | null | undefined): string | undefined {
@@ -151,27 +142,6 @@ export function contributionPace(
   const total = points.reduce((sum, point) => sum + point.value, 0);
 
   return { points, total: round2(total), average: points.length ? round2(total / points.length) : 0 };
-}
-
-export function evolutionYears(evolution: BackendEvolutionPoint[]): number[] {
-  const years = new Set<number>([new Date().getFullYear()]);
-  for (const point of evolution) years.add(Number(point.month.split('-')[0]));
-  return Array.from(years).sort((left, right) => right - left);
-}
-
-export function highlights(
-  assets: BackendAssetSummary[],
-  size = 3,
-): { best: BackendAssetSummary[]; worst: BackendAssetSummary[] } {
-  const sorted = [...assets].sort(
-    (left, right) => right.profitability_value - left.profitability_value,
-  );
-  const best = sorted.slice(0, size);
-  const worst = sorted
-    .slice(-size)
-    .reverse()
-    .filter((asset) => !best.includes(asset));
-  return { best, worst };
 }
 
 export function resultSplit(summary: BackendPortfolioSummary): ResultSplit {

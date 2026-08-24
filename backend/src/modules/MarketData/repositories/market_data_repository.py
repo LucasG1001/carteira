@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import closing
-from datetime import datetime
+from datetime import date, datetime
 
 from psycopg2 import connect
 from psycopg2.extras import execute_values
@@ -18,6 +18,13 @@ class MarketDataRepository:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT DISTINCT ticker FROM transactions ORDER BY ticker;")
                 return [row[0] for row in cursor.fetchall()]
+
+    def get_first_transaction_date(self) -> date | None:
+        with closing(connect(self.database_url)) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT MIN(date) FROM transactions;")
+                row = cursor.fetchone()
+                return row[0] if row else None
 
     def get_ticker_info_updated_map(self) -> dict[str, datetime]:
         with closing(connect(self.database_url)) as connection:
@@ -58,6 +65,7 @@ class MarketDataRepository:
                         created_at = EXCLUDED.created_at
                     """,
                     rows,
+                    page_size=1000,
                 )
             connection.commit()
 

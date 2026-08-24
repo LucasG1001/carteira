@@ -8,21 +8,30 @@ import type { RankedGroup } from "../../components/RankedBarsCard/RankedBarsCard
 import { SplitBarCard } from "../../components/SplitBarCard/SplitBarCard";
 import type { SplitSegment } from "../../components/SplitBarCard/SplitBarCard";
 import { SummaryHeroCard } from "../../components/SummaryHeroCard/SummaryHeroCard";
-import type { HeroComparison } from "../../components/SummaryHeroCard/SummaryHeroCard";
 import { usePortfolio } from "../../context/portfolioStore";
 import { usePrivacy } from "../../context/privacyStore";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import { getEvolution } from "../../services/api";
-import type { BackendAssetSummary, BackendEvolutionPoint } from "../../services/api";
+import type { BackendEvolutionPoint } from "../../services/api";
+import { MESES, formatDate, monthLabel } from "../../utils/date";
 import { formatQty } from "../../utils/formatting";
+import {
+  bucketKeysOf,
+  contributionBreakdown,
+  contributionYears,
+  dayLabelStep,
+  daySeries,
+  monthSeries,
+} from "../../utils/performanceView";
+import type { PerformanceRange, PerformanceScope } from "../../utils/performanceView";
 import {
   allocationGroups,
   contributionPace,
-  evolutionYears,
-  highlights,
   monthlyDividendAverage,
   resultSplit,
 } from "../../utils/portfolioView";
-import type { AllocationGroupBy, PortfolioRange } from "../../utils/portfolioView";
+import type { AllocationGroupBy } from "../../utils/portfolioView";
+import { usePerformance } from "./usePerformance";
 import styles from "./InvestmentsPage.module.css";
 
 const ALLOCATION_OPTIONS: { value: AllocationGroupBy; label: string }[] = [
@@ -37,13 +46,21 @@ const BACK_LABEL: Record<AllocationGroupBy, string> = {
   setor: "todos os setores",
 };
 
-const PACE_QUICK_OPTIONS = [
+const GROUP_NOUN: Record<AllocationGroupBy, { one: string; many: string }> = {
+  tipo: { one: "tipo", many: "tipos" },
+  ativo: { one: "ativo", many: "ativos" },
+  setor: { one: "setor", many: "setores" },
+};
+
+const RESULT_QUICK_OPTIONS = [
   { value: "last6", label: "Últimos 6 meses" },
   { value: "last12", label: "Últimos 12 meses" },
   { value: "last24", label: "Últimos 24 meses" },
+  { value: "all", label: "Todo o período" },
 ];
 
-function paceRangeOf(value: string): PortfolioRange {
+function resultRangeOf(value: string): PerformanceRange {
+  if (value === "all") return { kind: "all" };
   if (value.startsWith("year:")) return { kind: "year", year: Number(value.slice(5)) };
   if (value === "last6") return { kind: "last", count: 6 };
   if (value === "last24") return { kind: "last", count: 24 };
@@ -54,13 +71,32 @@ function signed(value: number): string {
   return value >= 0 ? "+" : "−";
 }
 
+function longMonthLabel(key: string): string {
+  const [year, month] = key.split("-").map(Number);
+  return `${MESES[month - 1].toLowerCase()} de ${year}`;
+}
+
+function longDayLabel(key: string): string {
+  const [year, month, day] = key.split("-").map(Number);
+  return `${day} de ${MESES[month - 1].toLowerCase()} de ${year}`;
+}
+
 export function InvestmentsPage() {
   const { data, loading, error } = usePortfolio();
-  const { formatCurrency: fmt } = usePrivacy();
+  const { formatCurrency: fmt, hidden } = usePrivacy();
+  const isMobile = useIsMobile();
   const [allocationBy, setAllocationBy] = useState<AllocationGroupBy>("tipo");
   const [drill, setDrill] = useState<string | null>(null);
-  const [paceRange, setPaceRange] = useState("last12");
   const [evolution, setEvolution] = useState<BackendEvolutionPoint[]>([]);
+
+  const [resultRange, setResultRange] = useState("last12");
+  const [resultScope, setResultScope] = useState<PerformanceScope>({ kind: "window" });
+  const [resultGroupBy, setResultGroupBy] = useState<AllocationGroupBy>("ativo");
+  const [resultDrill, setResultDrill] = useState<string | null>(null);
+  const [lastResultRange, setLastResultRange] = useState("last12");
+
+  const performance = usePerformance();
+  const { monthly, monthlyStatus, days, daysStatus, loadedMonth, loadMonth } = performance;
 
   useEffect(() => {
     let active = true;
@@ -74,6 +110,13 @@ export function InvestmentsPage() {
     };
   }, []);
 
+  if (resultRange !== lastResultRange) {
+    setLastResultRange(resultRange);
+    setResultScope({ kind: "window" });
+    setResultDrill(null);
+    loadMonth(null);
+  }
+
   const assets = useMemo(() => data?.assets ?? [], [data]);
 
   const allocation = useMemo(
@@ -81,26 +124,50 @@ export function InvestmentsPage() {
     [assets, allocationBy, drill],
   );
 
-  const pace = useMemo(
-    () => contributionPace(evolution, paceRangeOf(paceRange)),
-    [evolution, paceRange],
-  );
+  const pace = useMemo(() => contributionPace(evolution, { kind: "last", count: 6 }), [evolution]);
 
-  const paceGroups: PeriodGroup[] = useMemo(
+  const monthBuckets = useMemo(() => monthly?.buckets ?? [], [monthly]);
+
+  const resultGroups: PeriodGroup[] = useMemo(
     () => [
-      { title: "Filtros rápidos", options: PACE_QUICK_OPTIONS },
+      { title: "Filtros rápidos", options: RESULT_QUICK_OPTIONS },
       {
         title: "Filtro anual",
-        options: evolutionYears(evolution).map((year) => ({
+        options: contributionYears(monthBuckets).map((year) => ({
           value: `year:${year}`,
           label: String(year),
         })),
       },
     ],
-    [evolution],
+    [monthBuckets],
   );
 
-  const best = useMemo(() => highlights(assets), [assets]);
+  const windowSeries = useMemo(
+    () => monthSeries(monthBuckets, resultRangeOf(resultRange)),
+    [monthBuckets, resultRange],
+  );
+
+  const drilling = loadedMonth !== null;
+  const dailySeries = useMemo(() => daySeries(days?.buckets ?? []), [days]);
+  const series = drilling ? dailySeries : windowSeries;
+
+  const activeSource = drilling ? days : monthly;
+  const scopeKeys = useMemo(
+    () => bucketKeysOf(resultScope, series),
+    [resultScope, series],
+  );
+
+  const breakdown = useMemo(
+    () =>
+      contributionBreakdown(
+        activeSource?.contributions ?? [],
+        scopeKeys,
+        resultGroupBy,
+        resultDrill,
+        data?.general_current_value ?? 0,
+      ),
+    [activeSource, scopeKeys, resultGroupBy, resultDrill, data],
+  );
 
   if (loading) {
     return <div className={styles.state}>Carregando dados da carteira...</div>;
@@ -124,7 +191,7 @@ export function InvestmentsPage() {
   const shareOf = (value: number) =>
     resultScale > 0 ? Math.round((Math.abs(value) / resultScale) * 100) : 0;
 
-  const comparisons: HeroComparison[] = [
+  const comparisons = [
     {
       label: "Resultado total",
       value: split.total,
@@ -135,6 +202,11 @@ export function InvestmentsPage() {
       label: "Valor investido",
       value: data.general_total_invested,
       note: `${assets.length} ${assets.length === 1 ? "ativo" : "ativos"} em carteira`,
+    },
+    {
+      label: "Aporte médio",
+      value: pace.average,
+      note: "últimos 6 meses",
     },
   ];
 
@@ -171,22 +243,121 @@ export function InvestmentsPage() {
         )}${Math.abs(group.resultPct).toFixed(1)}%`,
   }));
 
-  const asRankedAsset = (asset: BackendAssetSummary): RankedGroup => ({
-    name: asset.ticker,
-    value: asset.profitability_value,
-    pct: asset.profitability_percent,
-    tone: asset.profitability_value >= 0 ? "accent" : "warn",
-    note: `${fmt(asset.current_value)} · ${asset.asset_type}`,
-  });
-
-  const highlightGroups: RankedGroup[] = [
-    ...best.best.map(asRankedAsset),
-    ...best.worst.map(asRankedAsset),
-  ];
-
-  const drilling = drill !== null;
+  const drillingAllocation = drill !== null;
   const allocationLabel = ALLOCATION_OPTIONS.find((option) => option.value === allocationBy)?.label;
   const drillTotal = allocation.reduce((sum, group) => sum + group.value, 0);
+
+  const selectedKey = resultScope.kind === "window" ? null : resultScope.key;
+
+  const resultPoints = series.points.map((point) => ({
+    key: point.key,
+    label: point.label,
+    value: point.value,
+    tone: point.value < 0 ? ("warn" as const) : ("accent" as const),
+    selected: point.key === selectedKey,
+    title: hidden
+      ? undefined
+      : `${drilling ? formatDate(point.key) : monthLabel(point.key)} · ${signed(
+          point.value,
+        )}${fmt(Math.abs(point.value))}`,
+  }));
+
+  const handlePickBar = (key: string) => {
+    if (drilling) {
+      setResultScope((current) =>
+        current.kind === "day" && current.key === key ? { kind: "window" } : { kind: "day", key },
+      );
+      setResultDrill(null);
+      return;
+    }
+
+    if (resultScope.kind === "month" && resultScope.key === key) {
+      loadMonth(key);
+      setResultScope({ kind: "window" });
+      setResultDrill(null);
+      return;
+    }
+
+    setResultScope({ kind: "month", key });
+    setResultDrill(null);
+  };
+
+  const leaveDrill = () => {
+    loadMonth(null);
+    setResultScope({ kind: "window" });
+    setResultDrill(null);
+  };
+
+  const scopeLabel = (() => {
+    if (resultScope.kind === "day") return longDayLabel(resultScope.key);
+    if (resultScope.kind === "month") return longMonthLabel(resultScope.key);
+    if (loadedMonth !== null) return longMonthLabel(loadedMonth);
+    if (resultRange === "all") return "todo o período";
+    if (resultRange.startsWith("year:")) return `ano de ${resultRange.slice(5)}`;
+    const quick = RESULT_QUICK_OPTIONS.find((option) => option.value === resultRange);
+    return quick ? quick.label.toLowerCase() : "período selecionado";
+  })();
+
+  const scopeResult =
+    resultScope.kind === "window"
+      ? series.total
+      : series.points.find((point) => point.key === resultScope.key)?.value ?? 0;
+
+  const noun = GROUP_NOUN[resultDrill ? "ativo" : resultGroupBy];
+  const concentration = breakdown.concentration;
+  const subtitleParts = [
+    scopeLabel,
+    `resultado ${signed(scopeResult)}${fmt(Math.abs(scopeResult))}`,
+  ];
+  if (concentration) {
+    subtitleParts.push(
+      `${concentration.count} ${
+        concentration.count === 1 ? noun.one : noun.many
+      } ${concentration.count === 1 ? "explica" : "explicam"} ${concentration.pct}% do movimento`,
+    );
+  } else if (breakdown.rows.length > 0) {
+    subtitleParts.push(`movimento espalhado por ${breakdown.rows.length} ${noun.many}`);
+  }
+  if (resultScope.kind === "month" && !drilling) {
+    subtitleParts.push("toque de novo na barra para ver os dias");
+  }
+
+  const contributionNote = (row: (typeof breakdown.rows)[number]): string => {
+    const parts: string[] = [];
+    if (row.count > 1) parts.push(`${row.count} ativos`);
+    parts.push(`${row.sharePct.toFixed(1)}% da carteira`);
+    if (!row.priced) {
+      parts.push("avaliado a custo");
+    } else if (row.dividendValue === 0) {
+      parts.push("só variação de preço");
+    } else if (row.priceValue === 0) {
+      parts.push("só provento");
+    } else {
+      parts.push(`${signed(row.priceValue)}${fmt(Math.abs(row.priceValue))} de preço`);
+      parts.push(`${signed(row.dividendValue)}${fmt(Math.abs(row.dividendValue))} de provento`);
+    }
+    return parts.join(" · ");
+  };
+
+  const contributionGroups: RankedGroup[] = breakdown.rows.map((row) => ({
+    name: row.name,
+    value: row.value,
+    pct: row.pct,
+    tone: row.value >= 0 ? "accent" : "warn",
+    note: contributionNote(row),
+  }));
+
+  const resultStatus = drilling ? daysStatus : monthlyStatus;
+  const resultKicker = drilling ? "Resultado dia a dia" : "Resultado mês a mês";
+  const resultLegend = drilling
+    ? [
+        { tone: "accent" as const, label: "dia positivo" },
+        { tone: "warn" as const, label: "dia negativo" },
+      ]
+    : [
+        { tone: "accent" as const, label: "mês positivo" },
+        { tone: "warn" as const, label: "mês negativo" },
+      ];
 
   return (
     <div className={styles.container}>
@@ -212,25 +383,63 @@ export function InvestmentsPage() {
         />
       </div>
 
-      <MonthlyBarsCard
-        kicker="Ritmo de aportes"
-        points={pace.points.map((point) => ({
-          key: point.key,
-          label: point.label,
-          value: point.value,
-          tone: point.value < 0 ? "warn" : "accent",
-        }))}
-        reference={
-          pace.average > 0 ? { value: pace.average, label: "média do período" } : undefined
-        }
-        legend={[
-          { tone: "accent", label: "aporte" },
-          { tone: "warn", label: "venda líquida" },
-        ]}
-        filter={<PeriodFilter groups={paceGroups} value={paceRange} onChange={setPaceRange} />}
-      />
+      {resultStatus === "loading" && (
+        <div className={styles.cardState}>Carregando o resultado...</div>
+      )}
+      {resultStatus === "error" && (
+        <div className={`${styles.cardState} ${styles.error}`}>
+          Não foi possível carregar o resultado do período.
+        </div>
+      )}
+      {resultStatus === "ready" && resultPoints.length > 0 && (
+        <MonthlyBarsCard
+          kicker={resultKicker}
+          diverging
+          points={resultPoints}
+          legend={resultLegend}
+          labelEvery={
+            drilling ? (isMobile ? 7 : dayLabelStep(resultPoints.length)) : undefined
+          }
+          showValues={isMobile || resultPoints.length > 16 ? "extremes" : "all"}
+          onPick={handlePickBar}
+          filter={
+            <>
+              {(drilling || resultScope.kind !== "window") && (
+                <button type="button" className={styles.ghostAction} onClick={leaveDrill}>
+                  {drilling ? "← todos os meses" : "voltar ao período"}
+                </button>
+              )}
+              <PeriodFilter groups={resultGroups} value={resultRange} onChange={setResultRange} />
+            </>
+          }
+        />
+      )}
 
       <div className={styles.splitGrid}>
+        <RankedBarsCard
+          kicker="Quem moveu o ponteiro"
+          select={{
+            value: resultGroupBy,
+            options: ALLOCATION_OPTIONS,
+            onChange: (value) => {
+              setResultGroupBy(value as AllocationGroupBy);
+              setResultDrill(null);
+            },
+          }}
+          subtitle={subtitleParts.join(" · ")}
+          groups={contributionGroups}
+          onPick={
+            resultGroupBy === "ativo" || resultDrill !== null
+              ? undefined
+              : (group) => setResultDrill(group.name)
+          }
+          breadcrumb={
+            resultDrill !== null
+              ? { label: BACK_LABEL[resultGroupBy], onBack: () => setResultDrill(null) }
+              : undefined
+          }
+          emptyLabel="Sem movimento neste período."
+        />
         <RankedBarsCard
           kicker="Onde está o dinheiro"
           select={{
@@ -242,7 +451,7 @@ export function InvestmentsPage() {
             },
           }}
           subtitle={
-            drilling
+            drillingAllocation
               ? `${drill} · ${fmt(drillTotal)} em ${allocation.length} ${
                   allocation.length === 1 ? "ativo" : "ativos"
                 }`
@@ -252,17 +461,15 @@ export function InvestmentsPage() {
           }
           groups={allocationGroupsView}
           onPick={
-            allocationBy === "ativo" || drilling ? undefined : (group) => setDrill(group.name)
+            allocationBy === "ativo" || drillingAllocation
+              ? undefined
+              : (group) => setDrill(group.name)
           }
           breadcrumb={
-            drilling ? { label: BACK_LABEL[allocationBy], onBack: () => setDrill(null) } : undefined
+            drillingAllocation
+              ? { label: BACK_LABEL[allocationBy], onBack: () => setDrill(null) }
+              : undefined
           }
-          emptyLabel="Nenhum ativo na carteira."
-        />
-        <RankedBarsCard
-          kicker="Melhores e piores"
-          subtitle="resultado por ativo, já com os proventos"
-          groups={highlightGroups}
           emptyLabel="Nenhum ativo na carteira."
         />
       </div>

@@ -10,3 +10,7 @@ export function centsFromInput(value: string): number {
   const digits = value.replace(/\D/g, '');
   return digits ? parseInt(digits, 10) : 0;
 }
+
+export function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}

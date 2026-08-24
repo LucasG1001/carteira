@@ -1,5 +1,6 @@
-from datetime import date
-from typing import List
+import calendar
+from datetime import date, timedelta
+from typing import List, Tuple
 
 
 def last_months(count: int) -> List[str]:
@@ -14,6 +15,16 @@ def last_months(count: int) -> List[str]:
             year -= 1
     months.reverse()
     return months
+
+
+def month_bounds(month_key: str) -> Tuple[date, date]:
+    year, month = (int(part) for part in month_key.split("-"))
+    last_day = calendar.monthrange(year, month)[1]
+    return date(year, month, 1), date(year, month, last_day)
+
+
+def previous_month_end(month_key: str) -> date:
+    return month_bounds(month_key)[0] - timedelta(days=1)
 
 
 def months_between(start: date, end: date) -> List[str]:

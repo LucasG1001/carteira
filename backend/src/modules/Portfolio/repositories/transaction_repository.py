@@ -70,6 +70,79 @@ class TransactionRepository:
         result = await self.session.execute(stmt)
         return {price.ticker: price for price in result.scalars().all()}
 
+    async def get_price_series_by_tickers(
+        self, tickers: list[str], start_date: date, end_date: date
+    ) -> dict[str, list[tuple[date, float]]]:
+        if not tickers:
+            return {}
+
+        stmt = (
+            select(StockPrice.ticker, StockPrice.date, StockPrice.close)
+            .where(
+                StockPrice.ticker.in_(tickers),
+                StockPrice.date >= start_date,
+                StockPrice.date <= end_date,
+            )
+            .order_by(StockPrice.ticker.asc(), StockPrice.date.asc())
+        )
+        result = await self.session.execute(stmt)
+
+        series: dict[str, list[tuple[date, float]]] = {}
+        for ticker, price_date, close in result.all():
+            series.setdefault(ticker, []).append((price_date, close))
+        return series
+
+    async def get_last_prices_before(
+        self, tickers: list[str], reference_date: date
+    ) -> dict[str, tuple[date, float]]:
+        if not tickers:
+            return {}
+
+        latest_dates_subquery = (
+            select(
+                StockPrice.ticker.label("ticker"),
+                func.max(StockPrice.date).label("max_date"),
+            )
+            .where(StockPrice.ticker.in_(tickers), StockPrice.date <= reference_date)
+            .group_by(StockPrice.ticker)
+            .subquery()
+        )
+
+        stmt = select(StockPrice.ticker, StockPrice.date, StockPrice.close).where(
+            tuple_(StockPrice.ticker, StockPrice.date).in_(
+                select(latest_dates_subquery.c.ticker, latest_dates_subquery.c.max_date)
+            )
+        )
+        result = await self.session.execute(stmt)
+        return {ticker: (price_date, close) for ticker, price_date, close in result.all()}
+
+    async def get_price_dates_between(
+        self, tickers: list[str], start_date: date, end_date: date
+    ) -> list[date]:
+        if not tickers:
+            return []
+
+        stmt = (
+            select(StockPrice.date)
+            .where(
+                StockPrice.ticker.in_(tickers),
+                StockPrice.date >= start_date,
+                StockPrice.date <= end_date,
+            )
+            .distinct()
+            .order_by(StockPrice.date.asc())
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_first_price_date(self, tickers: list[str]) -> date | None:
+        if not tickers:
+            return None
+
+        stmt = select(func.min(StockPrice.date)).where(StockPrice.ticker.in_(tickers))
+        result = await self.session.execute(stmt)
+        return result.scalar()
+
     async def get_ticker_infos_by_tickers(self, tickers: list[str]) -> dict[str, TickerInfo]:
         if not tickers:
             return {}

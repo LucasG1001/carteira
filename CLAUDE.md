@@ -28,6 +28,10 @@ npm run dev                                # http://localhost:5173 (proxy /api �
 cd backend
 python -m src.jobs.run_stock_sync --once --force   # sincroniza uma vez (ignora janela de mercado)
 python -m src.jobs.run_stock_sync                  # roda agendado (a cada 30 min, em pregão)
+
+# Backfill histórico (manual, uma vez): preenche stock_prices desde a 1ª transação
+python -m src.jobs.run_price_backfill
+python -m src.jobs.run_price_backfill --start 2022-05-01 --tickers PETR4.SA
 ```
 
 ### Build & Lint
@@ -71,6 +75,8 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 - **`modules/Portfolio/`** — cálculo da carteira (`portfolio_service.py`: agrupa por ticker, custo médio, dividendos, rentabilidade) + lançamento manual
 - **`modules/MarketData/`** — cotações via `yfinance_client.py`; `stock_sync_service.py` + `stock_sync_scheduler.py` (worker)
 - **`jobs/run_stock_sync.py`** — entrypoint do worker (`--once`, `--force`)
+- **`jobs/run_price_backfill.py`** — entrypoint do backfill histórico (`--start`, `--end`, `--tickers`, `--chunk-size`)
+- **`Portfolio/services/portfolio_result_service.py`** — resultado por período e atribuição por ativo: um fold sobre as transações vira checkpoints por posição (qty, custo, fluxo e proventos acumulados), consultados por busca binária nas fronteiras dos períodos
 - **`alembic/`** — migrações versionadas (rodar `alembic upgrade head`)
 
 ### Frontend (`frontend/src/`)
@@ -79,9 +85,9 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 - **`components/AppNav/`** — fonte única da navegação: `navItems.ts` (projetos + páginas filhas), `ProjectSwitcher` (dropdown que troca entre Investimentos e Gastos) e ícones SVG inline em `nav.icons.tsx`
 - **`components/PageHeader/`** — header (rola junto com a página, não é sticky) com a navegação de desktop (switcher + abas do projeto) e o slot `actions` preenchido pelos layouts; a nav some em ≤768px
 - **`components/MobileNav/`** — barra inferior do mobile (ícones por projeto, flyout com as páginas, FAB de adicionar via `QuickAddContext`); renderizada só quando `useIsMobile()`
-- **`pages/InvestmentsPage/`** — `InvestmentsLayout` (envolve `PortfolioProvider` + header) e a rota `InvestmentsPage` (carteira); as rotas filhas `DividendsPage`, `TransactionsPage` e `TaxReportPage` ficam em diretórios irmãos dentro de `pages/`. Carteira e Proventos seguem o mesmo vocabulário dos gastos: card herói (referência = valor investido na carteira, 12m anteriores nos proventos), barra de proporção, colunas mês a mês com linha tracejada e listas ranqueadas. Na carteira a tabela (`AssetsTable`) é intocada, então o clique numa alocação faz drill dentro do próprio card; nos proventos o clique na barra do mês ou num grupo alinha e filtra a `DividendsTable`. Proventos abre no último mês com pagamento (não no mês corrente, que costuma estar vazio)
+- **`pages/InvestmentsPage/`** — `InvestmentsLayout` (envolve `PortfolioProvider` + header) e a rota `InvestmentsPage` (carteira); as rotas filhas `DividendsPage`, `TransactionsPage` e `TaxReportPage` ficam em diretórios irmãos dentro de `pages/`. Carteira e Proventos seguem o mesmo vocabulário dos gastos: card herói (referência = valor investido na carteira, 12m anteriores nos proventos), barra de proporção, colunas mês a mês com linha tracejada e listas ranqueadas. Na carteira a tabela (`AssetsTable`) é intocada, então o clique numa alocação faz drill dentro do próprio card; nos proventos o clique na barra do mês ou num grupo alinha e filtra a `DividendsTable`. A carteira tem "Resultado mês a mês" (`MonthlyBarsCard` em modo `diverging`) + "Quem moveu o ponteiro" (`RankedBarsCard`): 1º clique numa barra seleciona o mês, 2º clique abre os dias dele; o ranking sempre reflete o período selecionado. Os dados vêm do hook local `usePerformance` (mensal eager, diário sob demanda com cache). Não há card de aportes: a média de aportes dos últimos 6 meses (via `contributionPace` sobre `/evolution`) é a 3ª comparação do card herói — por isso `.comparisons` do `SummaryHeroCard` usa `auto-fit`, para Proventos seguir com 2 colunas. Proventos abre no último mês com pagamento (não no mês corrente, que costuma estar vazio)
 - **`pages/ExpensesPage/`** — `ExpensesLayout` (envolve `ExpensesProvider` ou `GoalsProvider` conforme a rota) + `ExpensesPage` (gastos do mês: cards, breakdown e tabela filtrável) e `pages/GoalsPage/` (caixinhas). Não há período global: resumo, "travado x escolha sua" e compromissos são sempre o mês corrente; "para onde o dinheiro vai" e a tabela têm cada um seu `MonthYearPicker` (estado local da página) e o "ritmo mês a mês" tem seu `PeriodFilter` (janela deslizante). Clicar num grupo do breakdown ou numa barra do ritmo alinha a tabela ao período de quem foi clicado
-- **`components/`** — cards genéricos usados pelas telas de investimentos (`SummaryHeroCard`, `SplitBarCard`, `MonthlyBarsCard`, `RankedBarsCard`), tabelas (`AssetsTable`, `DividendsTable`, `ExpensesTable`), cards dos gastos (`MonthSummaryCard`, `FixedVariableCard`, `MonthlyPaceCard`, `SpendBreakdownCard`, `CommitmentsCard`) e o resto (`PortfolioActions`, `ExpenseForm`, `MonthStepper`, `GoalCard`). Os cards dos gastos são tipados no domínio de gastos — não reaproveite entre os dois lados
+- **`components/`** — cards genéricos usados pelas telas de investimentos (`SummaryHeroCard`, `SplitBarCard`, `MonthlyBarsCard` — props opcionais `diverging`/`labelEvery`/`showValues`, cujos defaults preservam o modo original —, `RankedBarsCard`), tabelas (`AssetsTable`, `DividendsTable`, `ExpensesTable`), cards dos gastos (`MonthSummaryCard`, `FixedVariableCard`, `MonthlyPaceCard`, `SpendBreakdownCard`, `CommitmentsCard`) e o resto (`PortfolioActions`, `ExpenseForm`, `MonthStepper`, `GoalCard`). Os cards dos gastos são tipados no domínio de gastos — não reaproveite entre os dois lados
 - **`styles/controls.module.css`** — primitivos consumidos por `composes` (`card`, `kicker`, `divider`, `btnPrimary/Secondary/Ghost/Danger/Icon`, `money`); não redeclare fundo/raio/sombra de card localmente
 - **Gráficos são CSS puro** (grid + divs). Não há biblioteca de charts no projeto — `recharts` foi removido junto com os componentes `BigNumbers`/`Charts`
 - **`context/`** — um provider por domínio (`Portfolio`, `Expenses`, `Goals`, `Privacy`, `QuickAdd`); o `*Store.ts` ao lado exporta o contexto e o hook `use*`
@@ -94,6 +100,7 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 - `GET /api/v1/uploads` — lista uploads
 - `DELETE /api/v1/uploads/:id` — remove upload (e transações em cascata)
 - `GET /api/v1/portfolio/` — resumo consolidado da carteira
+- `GET /api/v1/portfolio/performance?granularity=month|day&month=AAAA-MM` — resultado por período + contribuição por ativo (rotas nomeadas precisam vir **antes** do catch-all `GET /:ticker`)
 - `POST /api/v1/portfolio/manual` — lançamento manual
 - `GET /api/v1/portfolio/:ticker` — detalhe de um ativo
 - `GET /health` — healthcheck
@@ -143,7 +150,8 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 ## External Integration: Yahoo Finance
 
 - Cotações via `yfinance`; os tickers são derivados das transações da carteira (sufixo `.SA` para B3) — só busca o que o usuário possui
-- Busca em **lote único** (`yf.download`) por execução; o preço atual vem do close intraday do candle do dia
+- Busca em **lote único** (`yf.download`) por execução, gravando a **janela inteira de 5 dias** (não só o candle do dia) — buracos de até 5 pregões se auto-curam na execução seguinte
+- `auto_adjust=False` é invariante: a quantidade já vem das transações da B3 com desdobro/bonificação; preço ajustado contaria o evento duas vezes
 - Worker roda **a cada 30 min** dentro da janela de pregão (`STOCK_SYNC_START_HOUR`–`END_HOUR`, timezone `America/Sao_Paulo`)
 
 ## Environment Variables

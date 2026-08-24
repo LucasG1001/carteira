@@ -7,7 +7,7 @@ from time import perf_counter
 
 from src.modules.MarketData.schemas.market_data_schema import PriceRecord, TickerInfoRecord, TickerSyncResult
 from src.modules.MarketData.services.market_hours import is_market_sync_time, resolve_timezone
-from src.modules.Portfolio.services.portfolio_service import PortfolioService
+from src.modules.MarketData.services.ticker_resolution import resolve_market_tickers
 
 
 class StockSyncService:
@@ -56,18 +56,18 @@ class StockSyncService:
             return []
 
         self.logger.info("Início da execução | tickers=%s", len(tickers))
-        batch_prices = self.client.fetch_batch_prices(tickers)
-        self.logger.info("OHLCV carregado em lote | tickers_com_preco=%s", len(batch_prices))
+        batch_series = self.client.fetch_batch_price_series(tickers)
+        self.logger.info("OHLCV carregado em lote | tickers_com_preco=%s", len(batch_series))
 
         captured_at = datetime.now(resolve_timezone(self.timezone_name))
         results: list[TickerSyncResult] = []
         prices: list[PriceRecord] = []
         for ticker in tickers:
             try:
-                market_data = self.client.fetch_ticker_data(ticker, captured_at, batch_prices.get(ticker))
-                prices.append(market_data.price)
+                market_data = self.client.fetch_ticker_data(ticker, captured_at, batch_series.get(ticker))
+                prices.extend(market_data.prices)
                 results.append(
-                    TickerSyncResult(ticker=ticker, success=True, price_date=market_data.price.date)
+                    TickerSyncResult(ticker=ticker, success=True, price_date=market_data.prices[-1].date)
                 )
             except Exception as exc:
                 self.logger.exception("Erro ao processar ticker %s", ticker)
@@ -76,6 +76,7 @@ class StockSyncService:
         if prices:
             try:
                 self.repository.upsert_market_data_bulk(prices)
+                self.logger.info("Preços gravados | linhas=%s", len(prices))
             except Exception:
                 self.logger.exception("Falha ao gravar preços em lote")
 
@@ -93,15 +94,7 @@ class StockSyncService:
         return results
 
     def _resolve_tickers(self) -> list[str]:
-        try:
-            portfolio_tickers = self.repository.get_distinct_transaction_tickers()
-        except Exception:
-            self.logger.exception("Falha ao carregar tickers da carteira")
-            return []
-
-        tickers = PortfolioService.market_tickers_for(portfolio_tickers)
-        self.logger.info("Tickers da carteira | total=%s", len(tickers))
-        return tickers
+        return resolve_market_tickers(self.repository, self.logger)
 
     def _sync_ticker_infos(self, tickers: list[str]) -> None:
         now = datetime.now(resolve_timezone(self.timezone_name))

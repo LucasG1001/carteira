@@ -125,6 +125,58 @@
   white-space: nowrap;
 }
 
+.zeroLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--color-neutral-800);
+  pointer-events: none;
+}
+
+.columnDiverging {
+  justify-content: flex-start;
+  gap: 5px;
+}
+
+.plot {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  border-radius: 3px;
+}
+
+.plotSelected {
+  background: var(--color-accent-tint);
+}
+
+.barUp,
+.barDown {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.barDown {
+  border-radius: 0 0 3px 3px;
+}
+
+.valueUp,
+.valueDown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  line-height: 1;
+}
+
+.valueUp {
+  margin-bottom: 3px;
+}
+
+.valueDown {
+  margin-top: 3px;
+}
+
 .footer {
   font-size: var(--font-size-sm);
   color: var(--color-neutral-500);
@@ -139,8 +191,8 @@
     font-size: 10px;
   }
 
-  .dense .column:nth-of-type(even) .month,
-  .dense .column:nth-of-type(even) .value {
+  .dense:not(.thinned) .column:nth-of-type(even) .month,
+  .dense:not(.thinned) .column:nth-of-type(even) .value {
     visibility: hidden;
   }
 }

@@ -16,74 +16,95 @@ from src.modules.MarketData.schemas.market_data_schema import (
 
 
 class YFinanceMarketDataClient:
-    def fetch_batch_prices(self, tickers: list[str]) -> dict[str, BatchPriceSnapshot]:
+    # auto_adjust=False é obrigatório: a quantidade da posição já vem das transações da B3
+    # incluindo desdobro/bonificação. Com preço ajustado o evento seria contado duas vezes.
+    def fetch_batch_price_series(
+        self,
+        tickers: list[str],
+        *,
+        period: str | None = "5d",
+        start: date | None = None,
+        end: date | None = None,
+    ) -> dict[str, list[BatchPriceSnapshot]]:
         if not tickers:
             return {}
 
+        window: dict[str, Any] = {"start": start, "end": end} if start else {"period": period}
         history = yf.download(
             tickers=tickers,
-            period="5d",
             interval="1d",
             auto_adjust=False,
             actions=False,
             progress=False,
             threads=True,
             group_by="ticker",
+            **window,
         )
         if history is None or history.empty:
             return {}
 
-        snapshots: dict[str, BatchPriceSnapshot] = {}
+        series: dict[str, list[BatchPriceSnapshot]] = {}
         for ticker in tickers:
             ticker_frame = self._extract_ticker_frame(history, ticker)
             if ticker_frame is None or ticker_frame.empty:
                 continue
 
-            last_row = ticker_frame.sort_index().tail(1)
-            row = last_row.iloc[0]
-            row_date = self._to_date(last_row.index[-1])
+            snapshots = [
+                snapshot
+                for index, row in ticker_frame.sort_index().iterrows()
+                if (snapshot := self._to_snapshot(ticker, index, row)) is not None
+            ]
+            if snapshots:
+                series[ticker] = snapshots
 
-            open_price = self._as_float(row.get("Open"))
-            high_price = self._as_float(row.get("High"))
-            low_price = self._as_float(row.get("Low"))
-            close_price = self._as_float(row.get("Close"))
-            volume = self._as_int(row.get("Volume"))
-            if None in (open_price, high_price, low_price, close_price) or volume is None:
-                continue
+        return series
 
-            snapshots[ticker] = BatchPriceSnapshot(
-                ticker=ticker,
-                date=row_date,
-                open=open_price,
-                high=high_price,
-                low=low_price,
-                close=close_price,
-                volume=volume,
-            )
+    def fetch_batch_prices(self, tickers: list[str]) -> dict[str, BatchPriceSnapshot]:
+        series = self.fetch_batch_price_series(tickers, period="5d")
+        return {ticker: snapshots[-1] for ticker, snapshots in series.items() if snapshots}
 
-        return snapshots
+    def _to_snapshot(self, ticker: str, index: Any, row: Any) -> BatchPriceSnapshot | None:
+        open_price = self._as_float(row.get("Open"))
+        high_price = self._as_float(row.get("High"))
+        low_price = self._as_float(row.get("Low"))
+        close_price = self._as_float(row.get("Close"))
+        if None in (open_price, high_price, low_price, close_price):
+            return None
+
+        return BatchPriceSnapshot(
+            ticker=ticker,
+            date=self._to_date(index),
+            open=open_price,
+            high=high_price,
+            low=low_price,
+            close=close_price,
+            volume=self._as_int(row.get("Volume")) or 0,
+        )
 
     def fetch_ticker_data(
         self,
         ticker: str,
         captured_at: datetime,
-        price_snapshot: BatchPriceSnapshot | None = None,
+        price_snapshots: list[BatchPriceSnapshot] | None = None,
     ) -> TickerMarketData:
-        price_snapshot = price_snapshot or self.fetch_batch_prices([ticker]).get(ticker)
-        if price_snapshot is None:
+        price_snapshots = price_snapshots or self.fetch_batch_price_series([ticker]).get(ticker)
+        if not price_snapshots:
             raise ValueError(f"Nenhum OHLCV diário retornado para {ticker}")
 
-        price = PriceRecord(
-            ticker=ticker,
-            date=price_snapshot.date,
-            open=price_snapshot.open,
-            high=price_snapshot.high,
-            low=price_snapshot.low,
-            close=price_snapshot.close,
-            volume=price_snapshot.volume,
-            created_at=captured_at,
-        )
-        return TickerMarketData(ticker=ticker, price=price)
+        prices = [
+            PriceRecord(
+                ticker=ticker,
+                date=snapshot.date,
+                open=snapshot.open,
+                high=snapshot.high,
+                low=snapshot.low,
+                close=snapshot.close,
+                volume=snapshot.volume,
+                created_at=captured_at,
+            )
+            for snapshot in price_snapshots
+        ]
+        return TickerMarketData(ticker=ticker, prices=prices)
 
     def fetch_ticker_info(self, ticker: str) -> TickerInfoRecord:
         info: dict[str, Any] = {}
@@ -139,14 +160,14 @@ class YFinanceMarketDataClient:
             result = float(value)
         except (TypeError, ValueError):
             return None
-        return None if math.isnan(result) else result
+        return result if math.isfinite(result) else None
 
     @staticmethod
     def _as_int(value: Any) -> int | None:
         if value is None:
             return None
         try:
-            result = int(value)
+            result = float(value)
         except (TypeError, ValueError):
             return None
-        return result
+        return int(result) if math.isfinite(result) else None

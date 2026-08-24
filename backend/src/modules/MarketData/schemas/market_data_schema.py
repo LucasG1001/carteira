@@ -19,7 +19,7 @@ class PriceRecord:
 @dataclass(slots=True)
 class TickerMarketData:
     ticker: str
-    price: PriceRecord
+    prices: list[PriceRecord]
 
 
 @dataclass(slots=True)
@@ -38,6 +38,16 @@ class TickerSyncResult:
     ticker: str
     success: bool
     price_date: date | None = None
+    error: str | None = None
+
+
+@dataclass(slots=True)
+class TickerBackfillResult:
+    ticker: str
+    success: bool
+    rows: int = 0
+    first_date: date | None = None
+    last_date: date | None = None
     error: str | None = None
 
 

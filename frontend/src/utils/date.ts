@@ -40,3 +40,14 @@ export function formatDate(value: string): string {
 export function todayAsInputValue(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+export function monthKey(absolute: number): string {
+  const year = Math.floor(absolute / 12);
+  const month = (absolute % 12) + 1;
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+export function currentAbsolute(): number {
+  const now = new Date();
+  return now.getFullYear() * 12 + now.getMonth();
+}

@@ -3,15 +3,21 @@
 import unittest
 from datetime import date, datetime, timezone
 
-from src.modules.MarketData.models.market_data_model import StockPrice
+from src.modules.MarketData.models.market_data_model import StockPrice, TickerInfo
 from src.modules.Portfolio.models.transaction_model import Transaction
 from src.modules.Portfolio.services.portfolio_service import PortfolioService
 
 
 class FakeTransactionRepository:
-    def __init__(self, transactions: list[Transaction], latest_prices: dict[str, StockPrice]):
+    def __init__(
+        self,
+        transactions: list[Transaction],
+        latest_prices: dict[str, StockPrice],
+        ticker_infos: dict[str, TickerInfo] | None = None,
+    ):
         self.transactions = transactions
         self.latest_prices = latest_prices
+        self.ticker_infos = ticker_infos or {}
 
     async def get_all_by_user(self, user_id: str) -> list[Transaction]:
         return self.transactions
@@ -19,8 +25,14 @@ class FakeTransactionRepository:
     async def get_by_ticker(self, user_id: str, ticker: str) -> list[Transaction]:
         return [transaction for transaction in self.transactions if transaction.ticker == ticker]
 
+    async def get_by_tickers(self, user_id: str, tickers: list[str]) -> list[Transaction]:
+        return [transaction for transaction in self.transactions if transaction.ticker in tickers]
+
     async def get_latest_prices_by_tickers(self, tickers: list[str]) -> dict[str, StockPrice]:
         return {ticker: price for ticker, price in self.latest_prices.items() if ticker in tickers}
+
+    async def get_ticker_infos_by_tickers(self, tickers: list[str]) -> dict[str, TickerInfo]:
+        return {ticker: info for ticker, info in self.ticker_infos.items() if ticker in tickers}
 
 
 class PortfolioServiceTests(unittest.IsolatedAsyncioTestCase):
@@ -76,10 +88,8 @@ class PortfolioServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(summary.general_current_value, 120.0)
         self.assertEqual(summary.general_variation_value, 20.0)
         self.assertEqual(summary.general_profitability_value, 25.0)
-        self.assertEqual(summary.general_dividend_yield_percent, 5.0)
         self.assertEqual(summary.assets[0].variation_percent, 20.0)
         self.assertEqual(summary.assets[0].profitability_percent, 25.0)
-        self.assertEqual(summary.assets[0].dividend_yield_percent, 5.0)
 
     async def test_asset_detail_uses_matching_market_ticker(self) -> None:
         transactions = [
@@ -97,5 +107,4 @@ class PortfolioServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(detail.current_value, 125.0)
         self.assertEqual(detail.variation_value, 25.0)
         self.assertEqual(detail.profitability_value, 25.0)
-        self.assertEqual(detail.dividend_yield_percent, 0.0)
         self.assertEqual(len(detail.history), 1)

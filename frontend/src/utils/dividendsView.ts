@@ -1,5 +1,6 @@
 import type { BackendDividend } from '../services/api';
-import { monthLabel } from './date';
+import { currentAbsolute, monthKey, monthLabel } from './date';
+import { round2 } from './formatting';
 import { normalizeText } from './text';
 
 export type DividendGroupBy = 'ativo' | 'classe' | 'tipo';
@@ -42,21 +43,6 @@ export type DividendFilterState = {
 export type DividendFilterGroup = keyof DividendFilterState;
 
 export const EMPTY_DIVIDEND_FILTERS: DividendFilterState = { classe: [], tipo: [], ativo: [] };
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function monthKey(absolute: number): string {
-  const year = Math.floor(absolute / 12);
-  const month = (absolute % 12) + 1;
-  return `${year}-${String(month).padStart(2, '0')}`;
-}
-
-function currentAbsolute(): number {
-  const now = new Date();
-  return now.getFullYear() * 12 + now.getMonth();
-}
 
 export function paymentLabel(raw: string): string {
   const normalized = normalizeText(raw);

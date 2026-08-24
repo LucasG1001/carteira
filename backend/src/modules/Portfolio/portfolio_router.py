@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db
 from src.core.security import get_current_user_id
@@ -8,11 +8,13 @@ from src.modules.Portfolio.schemas.portfolio_schema import (
     EvolutionPoint,
     ManualAssetCreateRequest,
     ManualAssetResponse,
+    PerformanceResponse,
     PortfolioSummary,
     TransactionListItem,
     TransactionUpdateRequest,
 )
-from typing import List
+from typing import List, Literal
+from src.modules.Portfolio.services.portfolio_result_service import PortfolioResultService
 from src.modules.Portfolio.services.portfolio_service import PortfolioService
 
 router = APIRouter()
@@ -50,6 +52,16 @@ async def get_evolution(
 ):
     service = PortfolioService(db)
     return await service.get_evolution(user_id)
+
+@router.get("/performance", response_model=PerformanceResponse)
+async def get_performance(
+    granularity: Literal["month", "day"] = Query("month"),
+    month: str | None = Query(None, pattern=r"^\d{4}-\d{2}$"),
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    service = PortfolioResultService(db)
+    return await service.get_performance(user_id, granularity=granularity, month=month)
 
 @router.get("/transactions", response_model=List[TransactionListItem])
 async def list_transactions(

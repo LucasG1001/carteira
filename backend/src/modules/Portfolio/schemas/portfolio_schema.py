@@ -74,6 +74,36 @@ class EvolutionPoint(BaseModel):
     invested: float
 
 
+class PerformanceBucket(BaseModel):
+    key: str
+    start_date: date
+    end_date: date
+    start_value: float
+    end_value: float
+    net_flow: float
+    dividends: float
+    value: float
+
+
+class PerformanceContribution(BaseModel):
+    bucket: str
+    ticker: str
+    asset_type: str
+    sector: Optional[str] = None
+    value: float
+    price_value: float
+    dividend_value: float
+    end_value: float
+    priced: bool
+
+
+class PerformanceResponse(BaseModel):
+    granularity: str
+    coverage_start: Optional[date] = None
+    buckets: List[PerformanceBucket]
+    contributions: List[PerformanceContribution]
+
+
 class PortfolioSummary(BaseModel):
     user_id: str
     assets: List[AssetSummary]

@@ -58,6 +58,15 @@ export type ManualAssetResponse = {
   operation_value: number;
 };
 
+function query(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) search.set(key, String(value));
+  }
+  const serialized = search.toString();
+  return serialized ? `?${serialized}` : '';
+}
+
 async function request(url: string, options: RequestInit = {}) {
   const response = await fetch(`${API_BASE_URL}${url}`, options);
 
@@ -113,6 +122,45 @@ export type BackendEvolutionPoint = {
 
 export async function getEvolution(): Promise<BackendEvolutionPoint[]> {
   return request('/portfolio/evolution');
+}
+
+export type PerformanceGranularity = 'month' | 'day';
+
+export type BackendPerformanceBucket = {
+  key: string;
+  start_date: string;
+  end_date: string;
+  start_value: number;
+  end_value: number;
+  net_flow: number;
+  dividends: number;
+  value: number;
+};
+
+export type BackendPerformanceContribution = {
+  bucket: string;
+  ticker: string;
+  asset_type: string;
+  sector: string | null;
+  value: number;
+  price_value: number;
+  dividend_value: number;
+  end_value: number;
+  priced: boolean;
+};
+
+export type BackendPerformance = {
+  granularity: PerformanceGranularity;
+  coverage_start: string | null;
+  buckets: BackendPerformanceBucket[];
+  contributions: BackendPerformanceContribution[];
+};
+
+export async function getPerformance(params?: {
+  granularity?: PerformanceGranularity;
+  month?: string;
+}): Promise<BackendPerformance> {
+  return request(`/portfolio/performance${query(params ?? {})}`);
 }
 
 export type BackendTransaction = {

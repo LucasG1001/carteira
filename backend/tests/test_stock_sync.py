@@ -15,42 +15,61 @@ from src.modules.MarketData.services.stock_sync_service import StockSyncService
 
 
 class FakeClient:
-    def __init__(self):
+    def __init__(self, days: int = 1):
         self.batch_requests: list[list[str]] = []
+        self.days = days
 
-    def fetch_batch_prices(self, tickers: list[str]) -> dict[str, BatchPriceSnapshot]:
+    def fetch_batch_price_series(
+        self,
+        tickers: list[str],
+        *,
+        period: str | None = "5d",
+        start: date | None = None,
+        end: date | None = None,
+    ) -> dict[str, list[BatchPriceSnapshot]]:
         self.batch_requests.append(list(tickers))
-        snapshots = {}
+        series: dict[str, list[BatchPriceSnapshot]] = {}
         for ticker in tickers:
             if ticker == "FAIL3.SA":
                 continue
-            snapshots[ticker] = BatchPriceSnapshot(
-                ticker=ticker,
-                date=date(2026, 4, 15),
-                open=10.0,
-                high=12.0,
-                low=9.5,
-                close=11.5,
-                volume=1000,
-            )
-        return snapshots
+            series[ticker] = [
+                BatchPriceSnapshot(
+                    ticker=ticker,
+                    date=date(2026, 4, 15 - offset),
+                    open=10.0,
+                    high=12.0,
+                    low=9.5,
+                    close=11.5,
+                    volume=1000,
+                )
+                for offset in reversed(range(self.days))
+            ]
+        return series
 
-    def fetch_ticker_data(self, ticker: str, captured_at: datetime, price_snapshot: BatchPriceSnapshot | None = None) -> TickerMarketData:
-        if price_snapshot is None:
+    def fetch_ticker_data(
+        self,
+        ticker: str,
+        captured_at: datetime,
+        price_snapshots: list[BatchPriceSnapshot] | None = None,
+    ) -> TickerMarketData:
+        if not price_snapshots:
             raise ValueError("snapshot de preço ausente")
 
         return TickerMarketData(
             ticker=ticker,
-            price=PriceRecord(
-                ticker=ticker,
-                date=price_snapshot.date,
-                open=price_snapshot.open,
-                high=price_snapshot.high,
-                low=price_snapshot.low,
-                close=price_snapshot.close,
-                volume=price_snapshot.volume,
-                created_at=captured_at,
-            ),
+            prices=[
+                PriceRecord(
+                    ticker=ticker,
+                    date=snapshot.date,
+                    open=snapshot.open,
+                    high=snapshot.high,
+                    low=snapshot.low,
+                    close=snapshot.close,
+                    volume=snapshot.volume,
+                    created_at=captured_at,
+                )
+                for snapshot in price_snapshots
+            ],
         )
 
     def fetch_ticker_info(self, ticker: str) -> TickerInfoRecord:
@@ -124,6 +143,17 @@ class StockSyncTests(unittest.TestCase):
         self.assertEqual(sum(1 for result in results if result.success), 2)
         self.assertEqual(sum(1 for result in results if not result.success), 1)
         self.assertEqual(client.batch_requests, [["FAIL3.SA", "PETR4.SA", "VALE3.SA"]])
+
+    def test_daily_sync_persists_whole_window(self) -> None:
+        repository = FakeRepository(tickers=["PETR4", "VALE3"])
+        client = FakeClient(days=5)
+        service = self._build_service(repository, client)
+
+        results = service.run_once(force=True)
+
+        self.assertEqual(len(repository.prices), 10)
+        self.assertEqual(len({price.date for price in repository.prices}), 5)
+        self.assertTrue(all(result.price_date == date(2026, 4, 15) for result in results))
 
     def test_service_returns_empty_when_no_tickers(self) -> None:
         repository = FakeRepository(tickers=[])
