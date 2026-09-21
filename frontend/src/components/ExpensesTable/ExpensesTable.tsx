@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { ArrowUpDown, TrendingDown, TrendingUp } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
@@ -16,6 +16,8 @@ type SortKey = 'date' | 'amount' | 'grupo' | 'destino';
 type SortDir = 'asc' | 'desc';
 
 const ALL_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
+
+const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 
 const RECURRENCE_LABEL: Record<string, string> = {
   monthly: 'mensal',
@@ -38,9 +40,24 @@ interface ExpensesTableProps {
   classificacaoOptions: string[];
 }
 
+interface Row {
+  entry: BackendExpenseEntry;
+  amount: number;
+}
+
+interface DayGroup {
+  date: string;
+  rows: Row[];
+}
+
 function scopeAmount(entry: BackendExpenseEntry, year: number, month: number | null) {
   if (month) return monthContribution(entry, year, month);
   return ALL_MONTHS.reduce((sum, m) => sum + monthContribution(entry, year, m), 0);
+}
+
+function weekdayLabel(date: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  return WEEKDAYS[new Date(year, month - 1, day).getDay()];
 }
 
 function installmentLabel(entry: BackendExpenseEntry, year: number, month: number | null) {
@@ -87,11 +104,15 @@ export function ExpensesTable({
     }
   };
 
-  const rows = data.entries
+  const dateDir: SortDir = sortKey === 'date' ? sortDir : 'desc';
+
+  const rows: Row[] = data.entries
     .filter((entry) => entry.type === 'expense')
     .map((entry) => ({ entry, amount: scopeAmount(entry, year, month) }))
     .filter(({ entry, amount }) => amount > 0 && matchesFilters(entry, filters, query))
     .sort((a, b) => {
+      const byDate = a.entry.date.localeCompare(b.entry.date);
+      if (byDate !== 0) return dateDir === 'asc' ? byDate : -byDate;
       if (sortKey === 'grupo' || sortKey === 'destino') {
         const pick = (entry: BackendExpenseEntry) =>
           (sortKey === 'grupo' ? entry.category : entry.destination) ?? '';
@@ -102,10 +123,15 @@ export function ExpensesTable({
       if (sortKey === 'amount') {
         return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
       }
-      return sortDir === 'asc'
-        ? a.entry.date.localeCompare(b.entry.date)
-        : b.entry.date.localeCompare(a.entry.date);
+      return 0;
     });
+
+  const groups = rows.reduce<DayGroup[]>((acc, row) => {
+    const last = acc[acc.length - 1];
+    if (last && last.date === row.entry.date) last.rows.push(row);
+    else acc.push({ date: row.entry.date, rows: [row] });
+    return acc;
+  }, []);
 
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
 
@@ -142,6 +168,15 @@ export function ExpensesTable({
           hasQuery={query.length > 0}
         />
 
+        <button type="button" className={styles.dateSort} onClick={() => handleSort('date')}>
+          Data
+          {dateDir === 'asc' ? (
+            <TrendingUp size={11} className={styles.sortActive} />
+          ) : (
+            <TrendingDown size={11} className={styles.sortActive} />
+          )}
+        </button>
+
         <div className={styles.spacer} />
 
         <span className={styles.summary}>
@@ -157,17 +192,20 @@ export function ExpensesTable({
             <tr>
               <th className={styles.thDesc}>Descrição</th>
               <th>
-                <button type="button" className={styles.thButton} onClick={() => handleSort('date')}>
-                  Data {renderSortIcon('date')}
-                </button>
-              </th>
-              <th>
-                <button type="button" className={styles.thButton} onClick={() => handleSort('grupo')}>
+                <button
+                  type="button"
+                  className={styles.thButton}
+                  onClick={() => handleSort('grupo')}
+                >
                   Grupo {renderSortIcon('grupo')}
                 </button>
               </th>
               <th>
-                <button type="button" className={styles.thButton} onClick={() => handleSort('destino')}>
+                <button
+                  type="button"
+                  className={styles.thButton}
+                  onClick={() => handleSort('destino')}
+                >
                   Destino {renderSortIcon('destino')}
                 </button>
               </th>
@@ -185,26 +223,36 @@ export function ExpensesTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ entry, amount }) => (
-              <tr key={entry.id} className={styles.row} onClick={() => setEditing(entry)}>
-                <td className={styles.cellDesc}>
-                  <span className={styles.desc}>{entry.description || '—'}</span>
-                  <span className={isLocked(entry) ? styles.tagLocked : styles.tagFree}>
-                    {isLocked(entry) ? 'travado' : 'escolha sua'}
-                  </span>
-                </td>
-                <td>{formatDate(entry.date).slice(0, 5)}</td>
-                <td>{entry.category}</td>
-                <td>{entry.destination || '—'}</td>
-                <td>{entry.payment_method || '—'}</td>
-                <td>{installmentLabel(entry, year, month)}</td>
-                <td className={styles.cellValue}>{fmt(amount)}</td>
-              </tr>
+            {groups.map((group) => (
+              <Fragment key={group.date}>
+                <tr className={styles.groupRow}>
+                  <td className={styles.groupCell} colSpan={6}>
+                    <span className={styles.groupWeekday}>{weekdayLabel(group.date)}</span>
+                    <span className={styles.groupDate}>{formatDate(group.date)}</span>
+                  </td>
+                </tr>
+
+                {group.rows.map(({ entry, amount }) => (
+                  <tr key={entry.id} className={styles.row} onClick={() => setEditing(entry)}>
+                    <td className={styles.cellDesc}>
+                      <span className={styles.desc}>{entry.description || '—'}</span>
+                      <span className={isLocked(entry) ? styles.tagLocked : styles.tagFree}>
+                        {isLocked(entry) ? 'travado' : 'escolha sua'}
+                      </span>
+                    </td>
+                    <td>{entry.category}</td>
+                    <td>{entry.destination || '—'}</td>
+                    <td>{entry.payment_method || '—'}</td>
+                    <td>{installmentLabel(entry, year, month)}</td>
+                    <td className={styles.cellValue}>{fmt(amount)}</td>
+                  </tr>
+                ))}
+              </Fragment>
             ))}
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className={styles.empty}>
+                <td colSpan={6} className={styles.empty}>
                   Nenhum lançamento com esse filtro.
                 </td>
               </tr>
