@@ -106,7 +106,9 @@
 
   --content-max: 1320px;
   --card-list-max: 360px;
-  --ledger-max: 620px;
+  /* listas empilhadas na coluna lateral: somadas precisam caber ao lado da --ledger-max */
+  --side-list-max: 280px;
+  --ledger-max: 700px;
 
   --bg-primary: var(--color-bg);
   --bg-secondary: var(--color-bg-secondary);

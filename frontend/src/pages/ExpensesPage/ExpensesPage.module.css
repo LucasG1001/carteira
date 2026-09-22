@@ -20,6 +20,13 @@
   align-items: start;
 }
 
+.ledgerSide {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
 .state {
   min-height: 50vh;
   display: flex;
@@ -41,6 +48,10 @@
   .topGrid,
   .ledgerGrid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-base);
+  }
+
+  .ledgerSide {
     gap: var(--spacing-base);
   }
 }

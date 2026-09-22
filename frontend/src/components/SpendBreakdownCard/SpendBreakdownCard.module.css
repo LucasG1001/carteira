@@ -4,6 +4,7 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 .kicker {
@@ -38,7 +39,7 @@
   gap: 16px;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: var(--card-list-max);
+  max-height: var(--side-list-max);
   overflow-y: auto;
   overflow-x: hidden;
   margin: 0 -8px;

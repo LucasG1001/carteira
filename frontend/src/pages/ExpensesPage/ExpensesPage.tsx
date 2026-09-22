@@ -207,20 +207,22 @@ export function ExpensesPage() {
         }}
       />
 
-      <CommitmentsCard items={activeCommitments} />
-
       <div className={styles.ledgerGrid}>
-        <SpendBreakdownCard
-          groups={groups}
-          groupBy={groupBy}
-          onGroupByChange={(value) => {
-            setGroupBy(value);
-            clearAll();
-          }}
-          icons={groupBy === "grupo"}
-          onPick={handlePick}
-          activeName={activeGroup}
-        />
+        <div className={styles.ledgerSide}>
+          <SpendBreakdownCard
+            groups={groups}
+            groupBy={groupBy}
+            onGroupByChange={(value) => {
+              setGroupBy(value);
+              clearAll();
+            }}
+            icons={groupBy === "grupo"}
+            onPick={handlePick}
+            activeName={activeGroup}
+          />
+
+          <CommitmentsCard items={activeCommitments} />
+        </div>
 
         <ExpensesTable
           year={tableScope.year}
