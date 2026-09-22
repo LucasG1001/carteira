@@ -10,7 +10,6 @@ import { PeriodFilter } from "../../components/PeriodFilter/PeriodFilter";
 import type { PeriodGroup } from "../../components/PeriodFilter/PeriodFilter";
 import { SpendBreakdownCard } from "../../components/SpendBreakdownCard/SpendBreakdownCard";
 import { useExpenses } from "../../context/expensesStore";
-import { usePrivacy } from "../../context/privacyStore";
 import { MESES } from "../../utils/date";
 import {
   availableYears,
@@ -33,10 +32,6 @@ function variation(current: number, reference: number): number | null {
   return ((current - reference) / reference) * 100;
 }
 
-function scopeLabelOf(scope: Scope): string {
-  return scope.month ? MESES[scope.month - 1].toLowerCase() : `ano de ${scope.year}`;
-}
-
 function previousMonth(year: number, month: number): [number, number] {
   const absolute = year * 12 + (month - 1) - 1;
   return [Math.floor(absolute / 12), (absolute % 12) + 1];
@@ -57,8 +52,6 @@ function paceRangeOf(value: string): PaceRange {
 
 export function ExpensesPage() {
   const { data, loading, error, refresh } = useExpenses();
-  const { formatCurrency: fmt } = usePrivacy();
-
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
@@ -68,10 +61,6 @@ export function ExpensesPage() {
   const [query, setQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [paceRange, setPaceRange] = useState("last12");
-  const [breakdownScope, setBreakdownScope] = useState<Scope>({
-    year: currentYear,
-    month: currentMonth,
-  });
   const [tableScope, setTableScope] = useState<Scope>({
     year: currentYear,
     month: currentMonth,
@@ -105,13 +94,9 @@ export function ExpensesPage() {
     [entries, currentYear, currentMonth],
   );
 
-  const breakdownTotals = useMemo(
-    () => scopeTotals(entries, breakdownScope.year, breakdownScope.month),
-    [entries, breakdownScope],
-  );
   const groups = useMemo(
-    () => groupBreakdown(entries, breakdownScope.year, breakdownScope.month, groupBy),
-    [entries, breakdownScope, groupBy],
+    () => groupBreakdown(entries, tableScope.year, tableScope.month, groupBy),
+    [entries, tableScope, groupBy],
   );
 
   const pace = useMemo(
@@ -119,11 +104,11 @@ export function ExpensesPage() {
       paceWindow(
         entries,
         paceRangeOf(paceRange),
-        breakdownScope.month
-          ? `${breakdownScope.year}-${String(breakdownScope.month).padStart(2, "0")}`
+        tableScope.month
+          ? `${tableScope.year}-${String(tableScope.month).padStart(2, "0")}`
           : null,
       ),
-    [entries, paceRange, breakdownScope],
+    [entries, paceRange, tableScope],
   );
   const paceGroups: PeriodGroup[] = useMemo(
     () => [
@@ -138,17 +123,6 @@ export function ExpensesPage() {
     ],
     [entries],
   );
-
-  const filterOptions = useMemo(() => {
-    const namesOf = (kind: GroupBy) =>
-      groupBreakdown(entries, tableScope.year, tableScope.month, kind).map((group) => group.name);
-    return {
-      origem: namesOf("origem"),
-      grupo: namesOf("grupo"),
-      destino: namesOf("destino"),
-      classificacao: namesOf("classificacao"),
-    };
-  }, [entries, tableScope]);
 
   if (loading) {
     return <div className={styles.state}>Carregando dados de gastos...</div>;
@@ -177,11 +151,7 @@ export function ExpensesPage() {
     },
   ];
 
-  const breakdownLabel = scopeLabelOf(breakdownScope);
-
   const handlePick = (group: BreakdownGroup) => {
-    setTableScope(breakdownScope);
-
     if (activeGroup === group.name) {
       setActiveGroup(null);
       setFilters(EMPTY_FILTERS);
@@ -233,13 +203,13 @@ export function ExpensesPage() {
         }
         onPick={(key) => {
           const [pointYear, pointMonth] = key.split("-").map(Number);
-          const next: Scope = { year: pointYear, month: pointMonth };
-          setBreakdownScope(next);
-          setTableScope(next);
+          setTableScope({ year: pointYear, month: pointMonth });
         }}
       />
 
-      <div className={styles.splitGrid}>
+      <CommitmentsCard items={activeCommitments} />
+
+      <div className={styles.ledgerGrid}>
         <SpendBreakdownCard
           groups={groups}
           groupBy={groupBy}
@@ -247,49 +217,29 @@ export function ExpensesPage() {
             setGroupBy(value);
             clearAll();
           }}
-          filter={
-            <MonthYearPicker
-              year={breakdownScope.year}
-              month={breakdownScope.month}
-              markedKeys={markedKeys}
-              align="right"
-              onChange={(nextYear, nextMonth) =>
-                setBreakdownScope({ year: nextYear, month: nextMonth })
-              }
-            />
-          }
-          subtitle={`${breakdownLabel} · ${fmt(breakdownTotals.total)} em ${breakdownTotals.count} ${
-            breakdownTotals.count === 1 ? "lançamento" : "lançamentos"
-          } · toque para filtrar a lista`}
+          icons={groupBy === "grupo"}
           onPick={handlePick}
           activeName={activeGroup}
         />
-        <CommitmentsCard items={activeCommitments} />
-      </div>
 
-      <ExpensesTable
-        year={tableScope.year}
-        month={tableScope.month}
-        filter={
-          <MonthYearPicker
-            year={tableScope.year}
-            month={tableScope.month}
-            markedKeys={markedKeys}
-            onChange={(nextYear, nextMonth) =>
-              setTableScope({ year: nextYear, month: nextMonth })
-            }
-          />
-        }
-        filters={filters}
-        onFiltersChange={setFilters}
-        query={query}
-        onQueryChange={setQuery}
-        onClearAll={clearAll}
-        origemOptions={filterOptions.origem}
-        grupoOptions={filterOptions.grupo}
-        destinoOptions={filterOptions.destino}
-        classificacaoOptions={filterOptions.classificacao}
-      />
+        <ExpensesTable
+          year={tableScope.year}
+          month={tableScope.month}
+          filter={
+            <MonthYearPicker
+              year={tableScope.year}
+              month={tableScope.month}
+              markedKeys={markedKeys}
+              onChange={(nextYear, nextMonth) =>
+                setTableScope({ year: nextYear, month: nextMonth })
+              }
+            />
+          }
+          filters={filters}
+          query={query}
+          onQueryChange={setQuery}
+        />
+      </div>
     </div>
   );
 }

@@ -106,6 +106,7 @@
 
   --content-max: 1320px;
   --card-list-max: 360px;
+  --ledger-max: 620px;
 
   --bg-primary: var(--color-bg);
   --bg-secondary: var(--color-bg-secondary);

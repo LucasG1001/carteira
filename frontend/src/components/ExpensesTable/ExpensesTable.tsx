@@ -1,18 +1,17 @@
 import { Fragment, useState, type ReactNode } from 'react';
-import { ArrowUpDown, TrendingDown, TrendingUp } from 'lucide-react';
+import { TrendingDown, TrendingUp, ArrowUpDown } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
-import { useDragScroll } from '../../hooks/useDragScroll';
 import type { BackendExpenseEntry } from '../../services/api';
 import { ExpenseForm } from '../ExpenseForm/ExpenseForm';
-import { ExpenseFilters } from '../ExpenseFilters/ExpenseFilters';
-import { formatDate } from '../../utils/date';
-import { isLocked, monthContribution } from '../../utils/expenseView';
+import { MESES } from '../../utils/date';
+import { monthContribution } from '../../utils/expenseView';
+import { resolveExpenseIcon } from '../../utils/expenseIcons';
 import { matchesFilters } from '../../utils/expenseFilters';
 import type { ExpenseFilterState } from '../../utils/expenseFilters';
 import styles from './ExpensesTable.module.css';
 
-type SortKey = 'date' | 'amount' | 'grupo' | 'destino';
+type SortKey = 'date' | 'amount';
 type SortDir = 'asc' | 'desc';
 
 const ALL_MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
@@ -30,14 +29,8 @@ interface ExpensesTableProps {
   month: number | null;
   filter?: ReactNode;
   filters: ExpenseFilterState;
-  onFiltersChange: (state: ExpenseFilterState) => void;
   query: string;
   onQueryChange: (query: string) => void;
-  onClearAll: () => void;
-  origemOptions: string[];
-  grupoOptions: string[];
-  destinoOptions: string[];
-  classificacaoOptions: string[];
 }
 
 interface Row {
@@ -47,6 +40,7 @@ interface Row {
 
 interface DayGroup {
   date: string;
+  total: number;
   rows: Row[];
 }
 
@@ -55,9 +49,10 @@ function scopeAmount(entry: BackendExpenseEntry, year: number, month: number | n
   return ALL_MONTHS.reduce((sum, m) => sum + monthContribution(entry, year, m), 0);
 }
 
-function weekdayLabel(date: string) {
+function dayLabel(date: string) {
   const [year, month, day] = date.split('-').map(Number);
-  return WEEKDAYS[new Date(year, month - 1, day).getDay()];
+  const weekday = WEEKDAYS[new Date(year, month - 1, day).getDay()];
+  return `${weekday}, ${String(day).padStart(2, '0')} ${MESES[month - 1].slice(0, 3)} ${year}`;
 }
 
 function installmentLabel(entry: BackendExpenseEntry, year: number, month: number | null) {
@@ -77,18 +72,11 @@ export function ExpensesTable({
   month,
   filter,
   filters,
-  onFiltersChange,
   query,
   onQueryChange,
-  onClearAll,
-  origemOptions,
-  grupoOptions,
-  destinoOptions,
-  classificacaoOptions,
 }: ExpensesTableProps) {
   const { data, refresh } = useExpenses();
   const { formatCurrency: fmt } = usePrivacy();
-  const scrollRef = useDragScroll<HTMLDivElement>();
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [editing, setEditing] = useState<BackendExpenseEntry | null>(null);
@@ -113,13 +101,6 @@ export function ExpensesTable({
     .sort((a, b) => {
       const byDate = a.entry.date.localeCompare(b.entry.date);
       if (byDate !== 0) return dateDir === 'asc' ? byDate : -byDate;
-      if (sortKey === 'grupo' || sortKey === 'destino') {
-        const pick = (entry: BackendExpenseEntry) =>
-          (sortKey === 'grupo' ? entry.category : entry.destination) ?? '';
-        const left = pick(a.entry);
-        const right = pick(b.entry);
-        return sortDir === 'asc' ? left.localeCompare(right) : right.localeCompare(left);
-      }
       if (sortKey === 'amount') {
         return sortDir === 'asc' ? a.amount - b.amount : b.amount - a.amount;
       }
@@ -128,8 +109,12 @@ export function ExpensesTable({
 
   const groups = rows.reduce<DayGroup[]>((acc, row) => {
     const last = acc[acc.length - 1];
-    if (last && last.date === row.entry.date) last.rows.push(row);
-    else acc.push({ date: row.entry.date, rows: [row] });
+    if (last && last.date === row.entry.date) {
+      last.rows.push(row);
+      last.total += row.amount;
+    } else {
+      acc.push({ date: row.entry.date, total: row.amount, rows: [row] });
+    }
     return acc;
   }, []);
 
@@ -146,119 +131,79 @@ export function ExpensesTable({
 
   return (
     <section className={styles.card}>
-      <div className={styles.toolbar}>
-        <span className={styles.kicker}>Lançamentos</span>
+      <header className={styles.header}>
+        <div className={styles.headTop}>
+          <span className={styles.kicker}>Lançamentos</span>
+          <span className={styles.summary}>
+            {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'} · {fmt(total)}
+          </span>
+        </div>
 
-        <input
-          type="text"
-          className={styles.search}
-          placeholder="Buscar descrição…"
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-        />
+        <div className={styles.headMain}>
+          {filter}
 
-        <ExpenseFilters
-          state={filters}
-          onChange={onFiltersChange}
-          onClearAll={onClearAll}
-          origemOptions={origemOptions}
-          grupoOptions={grupoOptions}
-          destinoOptions={destinoOptions}
-          classificacaoOptions={classificacaoOptions}
-          hasQuery={query.length > 0}
-        />
+          <div className={styles.tools}>
+            <input
+              type="text"
+              className={styles.search}
+              placeholder="Buscar descrição…"
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+            />
 
-        <button type="button" className={styles.dateSort} onClick={() => handleSort('date')}>
-          Data
-          {dateDir === 'asc' ? (
-            <TrendingUp size={11} className={styles.sortActive} />
-          ) : (
-            <TrendingDown size={11} className={styles.sortActive} />
-          )}
-        </button>
+            <button type="button" className={styles.sortBtn} onClick={() => handleSort('date')}>
+              Data {renderSortIcon('date')}
+            </button>
 
-        <div className={styles.spacer} />
+            <button type="button" className={styles.sortBtn} onClick={() => handleSort('amount')}>
+              Valor {renderSortIcon('amount')}
+            </button>
+          </div>
+        </div>
+      </header>
 
-        <span className={styles.summary}>
-          {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'} · {fmt(total)}
-        </span>
+      <div className={styles.list}>
+        {groups.map((group) => (
+          <Fragment key={group.date}>
+            <div className={styles.dayHeader}>
+              <span className={styles.dayLabel}>{dayLabel(group.date)}</span>
+              <span className={styles.dayRule} />
+              <span className={styles.dayTotal}>{fmt(group.total)}</span>
+            </div>
 
-        {filter}
-      </div>
+            {group.rows.map(({ entry, amount }) => {
+              const Icon = resolveExpenseIcon(entry.category);
+              const meta = [
+                entry.category,
+                entry.destination,
+                entry.payment_method,
+                installmentLabel(entry, year, month),
+              ]
+                .filter(Boolean)
+                .join(' · ');
 
-      <div className={styles.tableWrapper} ref={scrollRef}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.thDesc}>Descrição</th>
-              <th>
+              return (
                 <button
+                  key={entry.id}
                   type="button"
-                  className={styles.thButton}
-                  onClick={() => handleSort('grupo')}
+                  className={styles.row}
+                  onClick={() => setEditing(entry)}
                 >
-                  Grupo {renderSortIcon('grupo')}
+                  <span className={styles.icon}>
+                    <Icon size={16} />
+                  </span>
+                  <span className={styles.main}>
+                    <span className={styles.desc}>{entry.description || entry.category}</span>
+                    <span className={styles.meta}>{meta}</span>
+                  </span>
+                  <span className={styles.value}>{fmt(amount)}</span>
                 </button>
-              </th>
-              <th>
-                <button
-                  type="button"
-                  className={styles.thButton}
-                  onClick={() => handleSort('destino')}
-                >
-                  Destino {renderSortIcon('destino')}
-                </button>
-              </th>
-              <th>Forma</th>
-              <th>Parcela</th>
-              <th className={styles.thValue}>
-                <button
-                  type="button"
-                  className={styles.thButton}
-                  onClick={() => handleSort('amount')}
-                >
-                  Valor {renderSortIcon('amount')}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {groups.map((group) => (
-              <Fragment key={group.date}>
-                <tr className={styles.groupRow}>
-                  <td className={styles.groupCell} colSpan={6}>
-                    <span className={styles.groupWeekday}>{weekdayLabel(group.date)}</span>
-                    <span className={styles.groupDate}>{formatDate(group.date)}</span>
-                  </td>
-                </tr>
+              );
+            })}
+          </Fragment>
+        ))}
 
-                {group.rows.map(({ entry, amount }) => (
-                  <tr key={entry.id} className={styles.row} onClick={() => setEditing(entry)}>
-                    <td className={styles.cellDesc}>
-                      <span className={styles.desc}>{entry.description || '—'}</span>
-                      <span className={isLocked(entry) ? styles.tagLocked : styles.tagFree}>
-                        {isLocked(entry) ? 'travado' : 'escolha sua'}
-                      </span>
-                    </td>
-                    <td>{entry.category}</td>
-                    <td>{entry.destination || '—'}</td>
-                    <td>{entry.payment_method || '—'}</td>
-                    <td>{installmentLabel(entry, year, month)}</td>
-                    <td className={styles.cellValue}>{fmt(amount)}</td>
-                  </tr>
-                ))}
-              </Fragment>
-            ))}
-
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={6} className={styles.empty}>
-                  Nenhum lançamento com esse filtro.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {rows.length === 0 && <p className={styles.empty}>Nenhum lançamento com esse filtro.</p>}
       </div>
 
       {editing && (

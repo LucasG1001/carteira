@@ -2,46 +2,34 @@
   composes: card from '../../styles/controls.module.css';
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
+  gap: 12px;
+  min-width: 0;
 }
 
 .kicker {
   composes: kicker from '../../styles/controls.module.css';
 }
 
-.controls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .select {
-  background: var(--color-bg);
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 6px 10px;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
-  padding: 6px 10px;
-  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  font-size: var(--font-size-base);
   color: var(--color-neutral-200);
   cursor: pointer;
 }
 
 .select:hover {
-  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  border-color: var(--color-accent-line);
 }
 
-.subtitle {
-  font-size: var(--font-size-base);
-  color: var(--color-neutral-400);
-  margin: 0;
+/* o popup nativo herda a cor do <option>, não do <select>: sem isto o Chrome renderiza branco */
+.select option {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .list {
@@ -82,12 +70,33 @@
 
 .groupRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+}
+
+.groupIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-300);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.group:hover .groupIcon,
+.groupActive .groupIcon {
+  background: var(--color-accent-tint);
+  color: var(--color-accent-300);
 }
 
 .groupName {
+  flex: 1;
+  min-width: 0;
   font-size: var(--font-size-md);
   color: var(--color-text);
   overflow: hidden;

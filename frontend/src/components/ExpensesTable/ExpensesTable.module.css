@@ -2,25 +2,59 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.toolbar {
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 26px 16px;
+  border-bottom: 1px solid var(--color-neutral-900);
+}
+
+.headTop {
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 18px 26px;
-  border-bottom: 1px solid var(--color-neutral-900);
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .kicker {
   composes: kicker from '../../styles/controls.module.css';
 }
 
+.summary {
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-400);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.headMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1;
+}
+
 .search {
   flex: 1;
-  min-width: 180px;
-  max-width: 280px;
+  min-width: 160px;
+  max-width: 240px;
   padding: 7px 12px;
   font-size: var(--font-size-base);
   background: var(--color-bg);
@@ -37,69 +71,13 @@
   border-color: var(--color-accent);
 }
 
-.dateSort {
+.sortBtn {
   composes: btnSecondary from '../../styles/controls.module.css';
   gap: 5px;
   padding: 6px 10px;
   font-size: var(--font-size-base);
   color: var(--color-neutral-300);
   white-space: nowrap;
-}
-
-.spacer {
-  flex: 1;
-}
-
-.summary {
-  font-size: var(--font-size-base);
-  color: var(--color-neutral-400);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.tableWrapper {
-  overflow-x: auto;
-  cursor: grab;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-md);
-}
-
-.table th {
-  text-align: left;
-  padding: 12px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--color-neutral-500);
-  white-space: nowrap;
-}
-
-.thDesc {
-  padding-left: 26px !important;
-}
-
-.thValue {
-  text-align: right !important;
-}
-
-.thButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.thButton:hover {
-  color: var(--color-text);
 }
 
 .sortIdle {
@@ -110,31 +88,50 @@
   color: var(--color-accent-300);
 }
 
-.groupRow {
-  border-top: 1px solid var(--color-neutral-900);
+.list {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--ledger-max);
+  overflow-y: auto;
 }
 
-.groupCell {
-  padding: 10px 26px !important;
-  background: color-mix(in srgb, var(--color-text) 3%, transparent);
-  font-size: var(--font-size-xs);
+.dayHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 26px 8px;
+  background: var(--color-surface);
+  font-size: var(--font-size-base);
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-neutral-500) !important;
 }
 
-.groupWeekday {
-  margin-right: 8px;
-  color: var(--color-neutral-600);
+.dayLabel {
+  color: var(--color-neutral-500);
+  white-space: nowrap;
 }
 
-.groupDate {
-  font-variant-numeric: tabular-nums;
+.dayRule {
+  flex: 1;
+  border-top: 1px dashed var(--color-neutral-800);
+}
+
+.dayTotal {
   color: var(--color-neutral-300);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .row {
-  border-top: 1px solid var(--color-neutral-900);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 26px;
   cursor: pointer;
   transition: background var(--transition-fast);
 }
@@ -143,58 +140,72 @@
   background: color-mix(in srgb, var(--color-text) 4%, transparent);
 }
 
-.table td {
-  padding: 14px 12px;
-  color: var(--color-neutral-400);
-  white-space: nowrap;
-}
-
-.cellDesc {
-  padding-left: 26px !important;
-  color: var(--color-text) !important;
-  max-width: 320px;
-}
-
-.desc {
-  color: var(--color-text);
-  font-weight: var(--font-weight-medium);
-}
-
-.tagLocked,
-.tagFree {
-  margin-left: 10px;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
-}
-
-.tagLocked {
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
   background: var(--color-neutral-900);
-  color: var(--color-neutral-400);
+  color: var(--color-neutral-300);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.tagFree {
-  background: var(--color-accent-900);
+.row:hover .icon {
+  background: var(--color-accent-tint);
   color: var(--color-accent-300);
 }
 
-.cellValue {
-  text-align: right;
-  padding-right: 26px !important;
-  color: var(--color-text) !important;
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.desc {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  flex-shrink: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 
 .empty {
-  padding: 32px 26px !important;
+  margin: 0;
+  padding: 32px 26px;
   text-align: center;
-  color: var(--color-neutral-500) !important;
+  color: var(--color-neutral-500);
   font-size: var(--font-size-base);
 }
 
+@media (max-width: 900px) {
+  .list {
+    max-height: none;
+  }
+}
+
 @media (max-width: 768px) {
-  .toolbar {
+  .header {
     padding: 14px var(--spacing-base);
   }
 
@@ -202,13 +213,18 @@
     max-width: none;
   }
 
-  .thDesc,
-  .cellDesc,
-  .groupCell {
-    padding-left: var(--spacing-base) !important;
+  .tools {
+    justify-content: flex-start;
   }
 
-  .cellValue {
-    padding-right: var(--spacing-base) !important;
+  .dayHeader,
+  .row,
+  .empty {
+    padding-left: var(--spacing-base);
+    padding-right: var(--spacing-base);
+  }
+
+  .row {
+    gap: 12px;
   }
 }

@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BreakdownGroup, GroupBy } from '../../utils/expenseView';
+import { resolveExpenseIcon } from '../../utils/expenseIcons';
 import styles from './SpendBreakdownCard.module.css';
 
 const GROUP_OPTIONS: { value: GroupBy; label: string }[] = [
@@ -15,10 +15,9 @@ interface SpendBreakdownCardProps {
   groups: BreakdownGroup[];
   groupBy: GroupBy;
   onGroupByChange: (value: GroupBy) => void;
-  filter?: ReactNode;
-  subtitle: string;
   onPick: (group: BreakdownGroup) => void;
   activeName?: string | null;
+  icons?: boolean;
 }
 
 function lockedNote(group: BreakdownGroup) {
@@ -32,35 +31,28 @@ export function SpendBreakdownCard({
   groups,
   groupBy,
   onGroupByChange,
-  filter,
-  subtitle,
   onPick,
   activeName,
+  icons = false,
 }: SpendBreakdownCardProps) {
   const { formatCurrency: fmt } = usePrivacy();
   const max = groups.reduce((top, group) => Math.max(top, group.total), 0) || 1;
 
   return (
     <section className={styles.card}>
-      <div className={styles.header}>
-        <span className={styles.kicker}>Para onde o dinheiro vai</span>
-        <div className={styles.controls}>
-          <select
-            className={styles.select}
-            value={groupBy}
-            onChange={(event) => onGroupByChange(event.target.value as GroupBy)}
-          >
-            {GROUP_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {filter}
-        </div>
-      </div>
+      <span className={styles.kicker}>Para onde o dinheiro vai</span>
 
-      <p className={styles.subtitle}>{subtitle}</p>
+      <select
+        className={styles.select}
+        value={groupBy}
+        onChange={(event) => onGroupByChange(event.target.value as GroupBy)}
+      >
+        {GROUP_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
 
       {groups.length === 0 ? (
         <p className={styles.empty}>Nenhum gasto neste período.</p>
@@ -68,6 +60,7 @@ export function SpendBreakdownCard({
         <div className={styles.list}>
           {groups.map((group, index) => {
             const active = activeName === group.name;
+            const Icon = icons ? resolveExpenseIcon(group.name) : null;
             return (
               <button
                 key={group.name}
@@ -76,6 +69,11 @@ export function SpendBreakdownCard({
                 onClick={() => onPick(group)}
               >
                 <div className={styles.groupRow}>
+                  {Icon && (
+                    <span className={styles.groupIcon}>
+                      <Icon size={15} />
+                    </span>
+                  )}
                   <span className={styles.groupName}>{group.name}</span>
                   <span className={styles.groupValues}>
                     <span className={styles.groupPct}>{group.pct.toFixed(0)}%</span>
