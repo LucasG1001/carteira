@@ -334,3 +334,70 @@ export function trailingAverages(
     free: round2(free / divisor),
   };
 }
+
+export interface DailySpend {
+  days: { day: number; total: number; isFuture: boolean }[];
+  firstWeekday: number;
+  free: number;
+  average: number;
+  total: number;
+  locked: number;
+  lockedFixed: number;
+  lockedInstallments: number;
+}
+
+export function dailySpend(
+  entries: BackendExpenseEntry[],
+  year: number,
+  month: number | null,
+): DailySpend {
+  const expenses = expensesOf(entries);
+  let lockedFixed = 0;
+  let lockedInstallments = 0;
+  let free = 0;
+
+  for (const entry of expenses) {
+    for (const m of monthsOf(month)) {
+      const value = monthContribution(entry, year, m);
+      if (value <= 0) continue;
+      if (entry.is_recurring) lockedFixed += value;
+      else if (isLocked(entry)) lockedInstallments += value;
+      else free += value;
+    }
+  }
+
+  const locked = lockedFixed + lockedInstallments;
+  const base = {
+    free: round2(free),
+    total: round2(locked + free),
+    locked: round2(locked),
+    lockedFixed: round2(lockedFixed),
+    lockedInstallments: round2(lockedInstallments),
+  };
+
+  if (!month) return { ...base, days: [], firstWeekday: 0, average: 0 };
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const totals = new Array<number>(daysInMonth).fill(0);
+  const prefix = `${year}-${String(month).padStart(2, '0')}-`;
+  for (const entry of expenses) {
+    if (isLocked(entry) || !entry.date.startsWith(prefix)) continue;
+    totals[Number(entry.date.slice(8, 10)) - 1] += entry.amount || 0;
+  }
+
+  const now = new Date();
+  const absolute = year * 12 + (month - 1);
+  const currentAbsolute = now.getFullYear() * 12 + now.getMonth();
+  const today = absolute === currentAbsolute ? now.getDate() : absolute < currentAbsolute ? daysInMonth : 0;
+
+  return {
+    ...base,
+    days: totals.map((total, index) => ({
+      day: index + 1,
+      total: round2(total),
+      isFuture: index + 1 > today,
+    })),
+    firstWeekday: new Date(year, month - 1, 1).getDay(),
+    average: today > 0 ? round2(free / today) : 0,
+  };
+}

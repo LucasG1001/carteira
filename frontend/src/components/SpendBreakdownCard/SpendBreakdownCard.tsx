@@ -40,19 +40,21 @@ export function SpendBreakdownCard({
 
   return (
     <section className={styles.card}>
-      <span className={styles.kicker}>Para onde o dinheiro vai</span>
+      <div className={styles.header}>
+        <span className={styles.kicker}>Para onde o dinheiro vai</span>
 
-      <select
-        className={styles.select}
-        value={groupBy}
-        onChange={(event) => onGroupByChange(event.target.value as GroupBy)}
-      >
-        {GROUP_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <select
+          className={styles.select}
+          value={groupBy}
+          onChange={(event) => onGroupByChange(event.target.value as GroupBy)}
+        >
+          {GROUP_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {groups.length === 0 ? (
         <p className={styles.empty}>Nenhum gasto neste período.</p>

@@ -13,18 +13,18 @@
   align-items: stretch;
 }
 
-.ledgerGrid {
+.splitGrid {
   display: grid;
-  grid-template-columns: minmax(300px, 380px) 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
-.ledgerSide {
-  display: flex;
-  flex-direction: column;
+.ledgerGrid {
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 360px);
   gap: 20px;
-  min-width: 0;
+  align-items: stretch;
 }
 
 .state {
@@ -46,12 +46,9 @@
   }
 
   .topGrid,
+  .splitGrid,
   .ledgerGrid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-base);
-  }
-
-  .ledgerSide {
     gap: var(--spacing-base);
   }
 }

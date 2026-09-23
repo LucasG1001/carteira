@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { CommitmentsCard } from "../../components/CommitmentsCard/CommitmentsCard";
+import { DailySpendCard } from "../../components/DailySpendCard/DailySpendCard";
 import { ExpensesTable } from "../../components/ExpensesTable/ExpensesTable";
 import { FixedVariableCard } from "../../components/FixedVariableCard/FixedVariableCard";
 import { MonthSummaryCard } from "../../components/MonthSummaryCard/MonthSummaryCard";
@@ -14,6 +15,7 @@ import { MESES } from "../../utils/date";
 import {
   availableYears,
   commitments,
+  dailySpend,
   groupBreakdown,
   monthTotal,
   paceWindow,
@@ -97,6 +99,11 @@ export function ExpensesPage() {
   const groups = useMemo(
     () => groupBreakdown(entries, tableScope.year, tableScope.month, groupBy),
     [entries, tableScope, groupBy],
+  );
+
+  const daily = useMemo(
+    () => dailySpend(entries, tableScope.year, tableScope.month),
+    [entries, tableScope],
   );
 
   const pace = useMemo(
@@ -207,23 +214,22 @@ export function ExpensesPage() {
         }}
       />
 
+      <div className={styles.splitGrid}>
+        <SpendBreakdownCard
+          groups={groups}
+          groupBy={groupBy}
+          onGroupByChange={(value) => {
+            setGroupBy(value);
+            clearAll();
+          }}
+          icons={groupBy === "grupo"}
+          onPick={handlePick}
+          activeName={activeGroup}
+        />
+        <CommitmentsCard items={activeCommitments} />
+      </div>
+
       <div className={styles.ledgerGrid}>
-        <div className={styles.ledgerSide}>
-          <SpendBreakdownCard
-            groups={groups}
-            groupBy={groupBy}
-            onGroupByChange={(value) => {
-              setGroupBy(value);
-              clearAll();
-            }}
-            icons={groupBy === "grupo"}
-            onPick={handlePick}
-            activeName={activeGroup}
-          />
-
-          <CommitmentsCard items={activeCommitments} />
-        </div>
-
         <ExpensesTable
           year={tableScope.year}
           month={tableScope.month}
@@ -241,6 +247,8 @@ export function ExpensesPage() {
           query={query}
           onQueryChange={setQuery}
         />
+
+        <DailySpendCard year={tableScope.year} month={tableScope.month} data={daily} />
       </div>
     </div>
   );
