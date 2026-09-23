@@ -9,8 +9,8 @@ interface ExpenseFiltersProps {
   onChange: (state: ExpenseFilterState) => void;
   onClearAll: () => void;
   origemOptions: string[];
-  grupoOptions: string[];
-  destinoOptions: string[];
+  categoriaOptions: string[];
+  subcategoriaOptions: string[];
   classificacaoOptions: string[];
   hasQuery: boolean;
 }
@@ -20,8 +20,8 @@ export function ExpenseFilters({
   onChange,
   onClearAll,
   origemOptions,
-  grupoOptions,
-  destinoOptions,
+  categoriaOptions,
+  subcategoriaOptions,
   classificacaoOptions,
   hasQuery,
 }: ExpenseFiltersProps) {
@@ -58,8 +58,8 @@ export function ExpenseFilters({
 
   const groups: { key: FilterGroup; label: string; options: string[] }[] = [
     { key: 'tipo', label: 'Tipo', options: TIPO_OPTIONS },
-    { key: 'grupo', label: 'Grupo', options: grupoOptions },
-    { key: 'destino', label: 'Destino', options: destinoOptions },
+    { key: 'categoria', label: 'Categoria', options: categoriaOptions },
+    { key: 'subcategoria', label: 'Subcategoria', options: subcategoriaOptions },
     { key: 'classificacao', label: 'Classificação', options: classificacaoOptions },
     { key: 'origem', label: 'Forma de pagamento', options: origemOptions },
   ];

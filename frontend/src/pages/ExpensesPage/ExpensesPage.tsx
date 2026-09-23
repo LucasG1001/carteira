@@ -58,7 +58,7 @@ export function ExpensesPage() {
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
 
-  const [groupBy, setGroupBy] = useState<GroupBy>("grupo");
+  const [groupBy, setGroupBy] = useState<GroupBy>("categoria");
   const [filters, setFilters] = useState<ExpenseFilterState>(EMPTY_FILTERS);
   const [query, setQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
@@ -173,8 +173,8 @@ export function ExpensesPage() {
     }
     setQuery("");
     if (groupBy === "origem") setFilters({ ...EMPTY_FILTERS, origem: [group.name] });
-    else if (groupBy === "grupo") setFilters({ ...EMPTY_FILTERS, grupo: [group.name] });
-    else if (groupBy === "destino") setFilters({ ...EMPTY_FILTERS, destino: [group.name] });
+    else if (groupBy === "categoria") setFilters({ ...EMPTY_FILTERS, categoria: [group.name] });
+    else if (groupBy === "subcategoria") setFilters({ ...EMPTY_FILTERS, subcategoria: [group.name] });
     else setFilters({ ...EMPTY_FILTERS, classificacao: [group.name] });
   };
 
@@ -222,7 +222,7 @@ export function ExpensesPage() {
             setGroupBy(value);
             clearAll();
           }}
-          icons={groupBy === "grupo"}
+          icons={groupBy === "categoria" || groupBy === "subcategoria"}
           onPick={handlePick}
           activeName={activeGroup}
         />

@@ -52,9 +52,9 @@ function sumMonth(expenses: BackendExpenseEntry[], year: number, month: number):
   return total;
 }
 
-export type GroupBy = 'grupo' | 'destino' | 'classificacao' | 'desc' | 'origem';
+export type GroupBy = 'categoria' | 'subcategoria' | 'classificacao' | 'desc' | 'origem';
 
-export const SEM_DESTINO = 'Sem destino';
+export const SEM_SUBCATEGORIA = 'Sem subcategoria';
 export const SEM_CLASSIFICACAO = 'Sem classificação';
 
 export interface ScopeTotals {
@@ -142,8 +142,8 @@ export function scopeTotals(
 }
 
 const GROUP_KEYS: Record<GroupBy, (entry: BackendExpenseEntry) => string> = {
-  grupo: (entry) => entry.category,
-  destino: (entry) => entry.destination || SEM_DESTINO,
+  categoria: (entry) => entry.category,
+  subcategoria: (entry) => entry.subcategory || SEM_SUBCATEGORIA,
   classificacao: (entry) => entry.classification || SEM_CLASSIFICACAO,
   desc: (entry) => entry.description || 'Sem descrição',
   origem: (entry) => entry.payment_method || 'Não informada',

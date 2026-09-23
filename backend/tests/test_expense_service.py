@@ -14,7 +14,7 @@ def make_entry(**overrides) -> SimpleNamespace:
         type="expense",
         amount=100.0,
         category="Essenciais",
-        destination=None,
+        subcategory=None,
         classification="Essencial",
         date=date.today(),
         description=None,
@@ -79,9 +79,9 @@ class SummaryTests(unittest.IsolatedAsyncioTestCase):
     async def test_current_month_totals_and_balance(self) -> None:
         today = date.today()
         entries = [
-            make_entry(id=1, type="expense", amount=100.0, category="Essenciais", destination="Casa", date=today),
-            make_entry(id=2, type="income", amount=300.0, category="Receita", destination=None, date=today),
-            make_entry(id=3, type="expense", amount=120.0, category="Lazer", destination=None, date=today, installments=3),
+            make_entry(id=1, type="expense", amount=100.0, category="Essenciais", subcategory="Casa", date=today),
+            make_entry(id=2, type="income", amount=300.0, category="Receita", subcategory=None, date=today),
+            make_entry(id=3, type="expense", amount=120.0, category="Lazer", subcategory=None, date=today, installments=3),
         ]
         service = ExpenseService(session=None)
         service.repository = FakeExpenseRepository(entries)
@@ -97,9 +97,9 @@ class SummaryTests(unittest.IsolatedAsyncioTestCase):
         categories = {item.category: item.total for item in summary.by_category}
         self.assertEqual(categories["Essenciais"], 100.0)
         self.assertEqual(categories["Lazer"], 40.0)
-        destinations = {item.category: item.total for item in summary.by_destination}
-        self.assertEqual(destinations["Casa"], 100.0)
-        self.assertEqual(destinations["Sem destino"], 40.0)
+        subcategories = {item.category: item.total for item in summary.by_subcategory}
+        self.assertEqual(subcategories["Casa"], 100.0)
+        self.assertEqual(subcategories["Sem subcategoria"], 40.0)
         # a média considera só os meses com movimento: 300 num único mês -> 300.0
         self.assertEqual(summary.avg_monthly_income, 300.0)
         month_cats = {item.category: item.total for item in summary.month_by_category}

@@ -4,8 +4,8 @@ import { resolveExpenseIcon } from '../../utils/expenseIcons';
 import styles from './SpendBreakdownCard.module.css';
 
 const GROUP_OPTIONS: { value: GroupBy; label: string }[] = [
-  { value: 'grupo', label: 'por grupo' },
-  { value: 'destino', label: 'por destino' },
+  { value: 'categoria', label: 'por categoria' },
+  { value: 'subcategoria', label: 'por subcategoria' },
   { value: 'classificacao', label: 'por classificação' },
   { value: 'desc', label: 'por descrição' },
   { value: 'origem', label: 'por forma de pagamento' },

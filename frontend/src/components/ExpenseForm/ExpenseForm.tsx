@@ -18,7 +18,8 @@ import type { ExpenseSuggestion } from '../../utils/expenseSuggestions';
 import styles from './ExpenseForm.module.css';
 
 const CLASSIFICATIONS = ['Essencial', 'Lazer'];
-const GROUPS = [
+const DEFAULT_CATEGORIES = ['Outros'];
+const SUBCATEGORIES = [
   'Condomínio',
   'Água',
   'Luz',
@@ -80,7 +81,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const [amountCents, setAmountCents] = useState(initialData ? Math.round(initialData.amount * 100) : 0);
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [category, setCategory] = useState(initialData?.category ?? '');
-  const [destination, setDestination] = useState(initialData?.destination ?? '');
+  const [subcategory, setSubcategory] = useState(initialData?.subcategory ?? '');
   const [classification, setClassification] = useState(initialData?.classification ?? '');
   const [date, setDate] = useState(initialData?.date ?? todayAsInputValue());
   const [paymentMethod, setPaymentMethod] = useState(initialData?.payment_method ?? '');
@@ -103,11 +104,11 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const descriptionSuggestions = useMemo(() => buildDescriptionSuggestions(entries), [entries]);
   const placeSuggestions = useMemo(() => buildPlaceSuggestions(entries), [entries]);
   const categoryOptions = useMemo(
-    () => distinctFieldValues(entries, 'category', GROUPS),
+    () => distinctFieldValues(entries, 'category', DEFAULT_CATEGORIES),
     [entries],
   );
-  const destinationOptions = useMemo(
-    () => distinctFieldValues(entries, 'destination', []),
+  const subcategoryOptions = useMemo(
+    () => distinctFieldValues(entries, 'subcategory', SUBCATEGORIES),
     [entries],
   );
   const classificationOptions = useMemo(
@@ -128,7 +129,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     date: date.length === 0,
     description: description.trim().length === 0,
     category: category.length === 0,
-    destination: destination.length === 0,
+    subcategory: subcategory.length === 0,
     classification: classification.length === 0,
     paymentMethod: paymentMethod.length === 0,
     place: place.trim().length === 0,
@@ -142,7 +143,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     const fill = findSuggestion(descriptionSuggestions, value)?.fill;
     if (!fill) return;
     if (fill.category) setCategory(fill.category);
-    if (fill.destination) setDestination(fill.destination);
+    if (fill.subcategory) setSubcategory(fill.subcategory);
     if (fill.classification) setClassification(fill.classification);
     if (fill.paymentMethod) setPaymentMethod(fill.paymentMethod);
     if (fill.place) setPlace(fill.place);
@@ -156,7 +157,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     if (!fill) return;
     if (fill.address) setAddress(fill.address);
     if (fill.category && !category) setCategory(fill.category);
-    if (fill.destination && !destination) setDestination(fill.destination);
+    if (fill.subcategory && !subcategory) setSubcategory(fill.subcategory);
     if (fill.classification && !classification) setClassification(fill.classification);
     if (fill.paymentMethod && !paymentMethod) setPaymentMethod(fill.paymentMethod);
   };
@@ -173,7 +174,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       type: 'expense' as const,
       amount: amountNumber,
       category,
-      destination,
+      subcategory,
       classification,
       date,
       description: description.trim(),
@@ -277,7 +278,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
 
       <div className={styles.row}>
         <div className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Grupo *</span>
+          <span className={styles.label}>Categoria *</span>
           <ComboSelect
             value={category}
             onChange={setCategory}
@@ -291,18 +292,18 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
           {invalid('category') && <span className={styles.fieldError}>Obrigatório</span>}
         </div>
         <div className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Destino *</span>
+          <span className={styles.label}>Subcategoria *</span>
           <ComboSelect
-            value={destination}
-            onChange={setDestination}
-            options={destinationOptions}
+            value={subcategory}
+            onChange={setSubcategory}
+            options={subcategoryOptions}
             searchPlaceholder="Buscar ou criar..."
             emptyLabel="Digite para criar um novo"
             allowCreate
-            maxLength={50}
-            invalid={invalid('destination')}
+            maxLength={100}
+            invalid={invalid('subcategory')}
           />
-          {invalid('destination') && <span className={styles.fieldError}>Obrigatório</span>}
+          {invalid('subcategory') && <span className={styles.fieldError}>Obrigatório</span>}
         </div>
         <div className={`${styles.field} ${styles.grow}`}>
           <span className={styles.label}>Classificação *</span>

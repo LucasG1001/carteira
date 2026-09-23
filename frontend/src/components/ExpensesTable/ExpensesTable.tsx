@@ -172,10 +172,10 @@ export function ExpensesTable({
             </div>
 
             {group.rows.map(({ entry, amount }) => {
-              const Icon = resolveExpenseIcon(entry.category);
+              const Icon = resolveExpenseIcon(entry.subcategory || entry.category);
               const meta = [
                 entry.category,
-                entry.destination,
+                entry.subcategory,
                 entry.payment_method,
                 installmentLabel(entry, year, month),
               ]

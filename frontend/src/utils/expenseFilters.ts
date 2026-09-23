@@ -1,5 +1,5 @@
 import type { BackendExpenseEntry } from '../services/api';
-import { isLocked, SEM_CLASSIFICACAO, SEM_DESTINO } from './expenseView';
+import { isLocked, SEM_CLASSIFICACAO, SEM_SUBCATEGORIA } from './expenseView';
 import { normalizeText } from './text';
 
 export const TIPO_LOCKED = 'Travado / parcelado';
@@ -9,8 +9,8 @@ export const TIPO_OPTIONS = [TIPO_LOCKED, TIPO_FREE];
 export type ExpenseFilterState = {
   tipo: string[];
   origem: string[];
-  grupo: string[];
-  destino: string[];
+  categoria: string[];
+  subcategoria: string[];
   classificacao: string[];
 };
 
@@ -19,8 +19,8 @@ export type FilterGroup = keyof ExpenseFilterState;
 export const EMPTY_FILTERS: ExpenseFilterState = {
   tipo: [],
   origem: [],
-  grupo: [],
-  destino: [],
+  categoria: [],
+  subcategoria: [],
   classificacao: [],
 };
 
@@ -28,8 +28,8 @@ export function filterCount(state: ExpenseFilterState): number {
   return (
     state.tipo.length +
     state.origem.length +
-    state.grupo.length +
-    state.destino.length +
+    state.categoria.length +
+    state.subcategoria.length +
     state.classificacao.length
   );
 }
@@ -56,7 +56,7 @@ export function matchesFilters(
     const haystack = [
       entry.description,
       entry.category,
-      entry.destination,
+      entry.subcategory,
       entry.classification,
       entry.place,
     ]
@@ -74,11 +74,11 @@ export function matchesFilters(
     return false;
   }
 
-  if (state.grupo.length > 0 && !state.grupo.includes(entry.category)) {
+  if (state.categoria.length > 0 && !state.categoria.includes(entry.category)) {
     return false;
   }
 
-  if (state.destino.length > 0 && !state.destino.includes(entry.destination ?? SEM_DESTINO)) {
+  if (state.subcategoria.length > 0 && !state.subcategoria.includes(entry.subcategory || SEM_SUBCATEGORIA)) {
     return false;
   }
 
