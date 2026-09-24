@@ -7,8 +7,6 @@ export type SuggestionFill = {
   classification?: string;
   paymentMethod?: string;
   place?: string;
-  address?: string;
-  tags?: string;
 };
 
 export type ExpenseSuggestion = {
@@ -73,8 +71,6 @@ function groupFill(group: Group): SuggestionFill {
     classification: latestValue(group, (entry) => entry.classification),
     paymentMethod: latestValue(group, (entry) => entry.payment_method),
     place: latestValue(group, (entry) => entry.place),
-    address: latestValue(group, (entry) => entry.address),
-    tags: latestValue(group, (entry) => entry.tags),
   };
 }
 
@@ -98,7 +94,7 @@ export function buildPlaceSuggestions(entries: BackendExpenseEntry[]): ExpenseSu
     const fill = groupFill(group);
     return {
       label: group.label,
-      hint: fill.address ?? '',
+      hint: joinHint([fill.category, fill.subcategory]),
       fill,
     };
   });

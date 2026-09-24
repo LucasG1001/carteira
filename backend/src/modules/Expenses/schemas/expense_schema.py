@@ -20,9 +20,7 @@ class ExpenseCreateRequest(BaseModel):
     is_recurring: bool = False
     recurrence: Optional[RecurrenceType] = None
     place: Optional[str] = Field(default=None, max_length=150)
-    address: Optional[str] = Field(default=None, max_length=255)
     notes: Optional[str] = None
-    tags: Optional[str] = Field(default=None, max_length=255)
 
 
 class ExpenseUpdateRequest(BaseModel):
@@ -38,9 +36,7 @@ class ExpenseUpdateRequest(BaseModel):
     is_recurring: Optional[bool] = None
     recurrence: Optional[RecurrenceType] = None
     place: Optional[str] = Field(default=None, max_length=150)
-    address: Optional[str] = Field(default=None, max_length=255)
     notes: Optional[str] = None
-    tags: Optional[str] = Field(default=None, max_length=255)
 
 
 class ExpenseResponse(BaseModel):
@@ -58,9 +54,7 @@ class ExpenseResponse(BaseModel):
     is_recurring: bool
     recurrence: Optional[str] = None
     place: Optional[str] = None
-    address: Optional[str] = None
     notes: Optional[str] = None
-    tags: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

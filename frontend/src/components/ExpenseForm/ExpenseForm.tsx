@@ -18,43 +18,6 @@ import type { ExpenseSuggestion } from '../../utils/expenseSuggestions';
 import styles from './ExpenseForm.module.css';
 
 const CLASSIFICATIONS = ['Essencial', 'Lazer'];
-const DEFAULT_CATEGORIES = ['Outros'];
-const SUBCATEGORIES = [
-  'Condomínio',
-  'Água',
-  'Luz',
-  'Gás',
-  'Internet',
-  'Manutenção',
-  'Móveis',
-  'Padaria',
-  'Café',
-  'Mercado',
-  'Transporte Público',
-  'Uber',
-  'Manutenção Veículo',
-  'Estacionamento',
-  'Pedágio',
-  'Financiamento',
-  'Seguro Veículo',
-  'Farmácia',
-  'Consulta',
-  'Academia',
-  'Cinema',
-  'Viagens',
-  'Hobbies',
-  'Barbearia/Salão',
-  'Netflix',
-  'Spotify',
-  'IFood',
-  'Show',
-  'Cursos',
-  'Livros',
-  'Roupa',
-  'Cuidados Pessoais',
-  'Presente',
-  'Pets',
-];
 const PAYMENT_METHODS = ['Dinheiro', 'Pix', 'Débito', 'Crédito', 'Boleto', 'Transferência'];
 const RECURRENCES: { value: RecurrenceType; label: string }[] = [
   { value: 'monthly', label: 'Mensal' },
@@ -91,9 +54,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     (initialData?.recurrence as RecurrenceType) ?? 'monthly',
   );
   const [place, setPlace] = useState(initialData?.place ?? '');
-  const [address, setAddress] = useState(initialData?.address ?? '');
   const [notes, setNotes] = useState(initialData?.notes ?? '');
-  const [tags, setTags] = useState(initialData?.tags ?? '');
 
   const [attempted, setAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -104,11 +65,11 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
   const descriptionSuggestions = useMemo(() => buildDescriptionSuggestions(entries), [entries]);
   const placeSuggestions = useMemo(() => buildPlaceSuggestions(entries), [entries]);
   const categoryOptions = useMemo(
-    () => distinctFieldValues(entries, 'category', DEFAULT_CATEGORIES),
+    () => distinctFieldValues(entries, 'category', []),
     [entries],
   );
   const subcategoryOptions = useMemo(
-    () => distinctFieldValues(entries, 'subcategory', SUBCATEGORIES),
+    () => distinctFieldValues(entries, 'subcategory', []),
     [entries],
   );
   const classificationOptions = useMemo(
@@ -133,7 +94,6 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     classification: classification.length === 0,
     paymentMethod: paymentMethod.length === 0,
     place: place.trim().length === 0,
-    address: address.trim().length === 0,
   };
   const hasMissing = Object.values(missing).some(Boolean);
   const invalid = (field: keyof typeof missing) => attempted && missing[field];
@@ -147,15 +107,12 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
     if (fill.classification) setClassification(fill.classification);
     if (fill.paymentMethod) setPaymentMethod(fill.paymentMethod);
     if (fill.place) setPlace(fill.place);
-    if (fill.address) setAddress(fill.address);
-    if (fill.tags) setTags(fill.tags);
   };
 
   const applyPlaceFill = (value: string) => {
     setPlace(value);
     const fill = findSuggestion(placeSuggestions, value)?.fill;
     if (!fill) return;
-    if (fill.address) setAddress(fill.address);
     if (fill.category && !category) setCategory(fill.category);
     if (fill.subcategory && !subcategory) setSubcategory(fill.subcategory);
     if (fill.classification && !classification) setClassification(fill.classification);
@@ -183,9 +140,7 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
       is_recurring: isRecurring,
       recurrence: isRecurring ? recurrence : null,
       place: place.trim(),
-      address: address.trim(),
       notes: notes.trim() || null,
-      tags: tags.trim() || null,
     };
     try {
       if (isEdit) {
@@ -361,31 +316,18 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
         </label>
       </div>
 
-      <div className={styles.row}>
-        <div className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Local / estabelecimento *</span>
-          <Autocomplete
-            value={place}
-            onChange={setPlace}
-            onSelect={applyPlaceFill}
-            options={placeSuggestions.map((item) => ({ value: item.label, hint: item.hint }))}
-            placeholder="Ex: Supermercado X"
-            maxLength={150}
-            invalid={invalid('place')}
-          />
-          {invalid('place') && <span className={styles.fieldError}>Obrigatório</span>}
-        </div>
-        <label className={`${styles.field} ${styles.grow}`}>
-          <span className={styles.label}>Endereço *</span>
-          <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className={controlClass('address')}
-            placeholder="Ex: Av. Brasil, 900"
-            maxLength={255}
-          />
-          {invalid('address') && <span className={styles.fieldError}>Obrigatório</span>}
-        </label>
+      <div className={styles.field}>
+        <span className={styles.label}>Local / estabelecimento *</span>
+        <Autocomplete
+          value={place}
+          onChange={setPlace}
+          onSelect={applyPlaceFill}
+          options={placeSuggestions.map((item) => ({ value: item.label, hint: item.hint }))}
+          placeholder="Ex: Supermercado X"
+          maxLength={150}
+          invalid={invalid('place')}
+        />
+        {invalid('place') && <span className={styles.fieldError}>Obrigatório</span>}
       </div>
 
       <div className={styles.field}>
@@ -416,19 +358,6 @@ export function ExpenseForm({ onClose, onSaved, mode = 'create', initialData, on
           )}
         </div>
       </div>
-
-      <label className={styles.field}>
-        <span className={styles.label}>
-          Tags <span className={styles.optional}>(separadas por vírgula, opcional)</span>
-        </span>
-        <input
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          className={styles.input}
-          placeholder="trabalho, urgente"
-          maxLength={255}
-        />
-      </label>
 
       <label className={styles.field}>
         <span className={styles.label}>

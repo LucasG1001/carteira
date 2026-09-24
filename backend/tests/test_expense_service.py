@@ -23,9 +23,7 @@ def make_entry(**overrides) -> SimpleNamespace:
         is_recurring=False,
         recurrence=None,
         place=None,
-        address=None,
         notes=None,
-        tags=None,
         created_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
         updated_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
     )

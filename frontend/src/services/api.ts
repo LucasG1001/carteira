@@ -239,9 +239,7 @@ export type BackendExpenseEntry = {
   is_recurring: boolean;
   recurrence: string | null;
   place: string | null;
-  address: string | null;
   notes: string | null;
-  tags: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -280,9 +278,7 @@ export type ExpenseCreatePayload = {
   is_recurring?: boolean;
   recurrence?: RecurrenceType | null;
   place?: string | null;
-  address?: string | null;
   notes?: string | null;
-  tags?: string | null;
 };
 
 export async function getExpensesSummary(): Promise<BackendExpenseSummary> {

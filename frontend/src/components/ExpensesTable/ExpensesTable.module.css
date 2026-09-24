@@ -27,6 +27,24 @@
   composes: kicker from '../../styles/controls.module.css';
 }
 
+.headEnd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.addBtn {
+  composes: btnGhost from '../../styles/controls.module.css';
+  gap: 6px;
+}
+
+@media (max-width: 480px) {
+  .addBtn span {
+    display: none;
+  }
+}
+
 .summary {
   font-size: var(--font-size-base);
   color: var(--color-neutral-400);

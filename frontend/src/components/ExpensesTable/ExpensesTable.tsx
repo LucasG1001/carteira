@@ -1,5 +1,5 @@
 import { Fragment, useState, type ReactNode } from 'react';
-import { TrendingDown, TrendingUp, ArrowUpDown } from 'lucide-react';
+import { TrendingDown, TrendingUp, ArrowUpDown, Plus } from 'lucide-react';
 import { useExpenses } from '../../context/expensesStore';
 import { usePrivacy } from '../../context/privacyStore';
 import type { BackendExpenseEntry } from '../../services/api';
@@ -80,6 +80,7 @@ export function ExpensesTable({
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [editing, setEditing] = useState<BackendExpenseEntry | null>(null);
+  const [creating, setCreating] = useState(false);
 
   if (!data) return null;
 
@@ -134,9 +135,15 @@ export function ExpensesTable({
       <header className={styles.header}>
         <div className={styles.headTop}>
           <span className={styles.kicker}>Lançamentos</span>
-          <span className={styles.summary}>
-            {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'} · {fmt(total)}
-          </span>
+          <div className={styles.headEnd}>
+            <span className={styles.summary}>
+              {rows.length} {rows.length === 1 ? 'lançamento' : 'lançamentos'} · {fmt(total)}
+            </span>
+            <button type="button" className={styles.addBtn} onClick={() => setCreating(true)}>
+              <Plus size={14} />
+              <span>Adicionar lançamento</span>
+            </button>
+          </div>
         </div>
 
         <div className={styles.headMain}>
@@ -205,6 +212,8 @@ export function ExpensesTable({
 
         {rows.length === 0 && <p className={styles.empty}>Nenhum lançamento com esse filtro.</p>}
       </div>
+
+      {creating && <ExpenseForm onClose={() => setCreating(false)} onSaved={refresh} />}
 
       {editing && (
         <ExpenseForm

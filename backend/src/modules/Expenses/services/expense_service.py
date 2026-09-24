@@ -40,9 +40,7 @@ class ExpenseService:
             is_recurring=payload.is_recurring,
             recurrence=payload.recurrence,
             place=payload.place.strip() if payload.place else None,
-            address=payload.address.strip() if payload.address else None,
             notes=payload.notes.strip() if payload.notes else None,
-            tags=payload.tags.strip() if payload.tags else None,
         )
         expense = await self.repository.create(expense)
         await self.session.commit()
@@ -69,9 +67,7 @@ class ExpenseService:
             "description",
             "payment_method",
             "place",
-            "address",
             "notes",
-            "tags",
         ):
             if field in data:
                 value = data[field]

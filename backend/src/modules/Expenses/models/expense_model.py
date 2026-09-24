@@ -21,8 +21,6 @@ class Expense(Base):
     is_recurring = Column(Boolean, nullable=False, default=False)
     recurrence = Column(String(20), nullable=True)
     place = Column(String(150), nullable=True)
-    address = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
-    tags = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
