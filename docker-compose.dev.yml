@@ -1,0 +1,25 @@
+# Postgres local para desenvolvimento, isolado do banco da VPS.
+# Projeto "carteira-dev": volume e container próprios, não colide com a stack "carteira".
+#   docker compose -f docker-compose.dev.yml up -d
+name: carteira-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: carteira
+      POSTGRES_PASSWORD: carteira
+      POSTGRES_DB: carteira_dev
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carteira -d carteira_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

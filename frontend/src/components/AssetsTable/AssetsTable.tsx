@@ -10,6 +10,7 @@ import { usePortfolio } from '../../context/portfolioStore';
 import { usePrivacy } from '../../context/privacyStore';
 import { useDragScroll } from '../../hooks/useDragScroll';
 import type { BackendAssetSummary } from '../../services/api';
+import { summarizeAssets } from '../../utils/portfolioView';
 import styles from './AssetsTable.module.css';
 
 type SortKey = keyof BackendAssetSummary;
@@ -77,6 +78,34 @@ export function AssetsTable() {
       return 0;
     });
 
+  const isFiltered = search !== '' || filtroTipo !== 'Todos';
+  const summary = summarizeAssets(filteredAtivos, data.general_current_value);
+  const signedPct = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  const toneOf = (value: number) => (value >= 0 ? styles.lpPositive : styles.lpNegative);
+
+  const summaryItems: { label: string; value: number; sub?: string; subClass?: string }[] = [
+    {
+      label: 'Valor atual',
+      value: summary.currentValue,
+      sub: isFiltered ? `${summary.shareOfPortfolio.toFixed(1)}% da carteira` : undefined,
+      subClass: styles.summaryMuted,
+    },
+    { label: 'Investido', value: summary.invested },
+    {
+      label: 'Variação',
+      value: summary.variationValue,
+      sub: signedPct(summary.variationPct),
+      subClass: toneOf(summary.variationValue),
+    },
+    { label: 'Proventos', value: summary.dividends },
+    {
+      label: 'Rentabilidade',
+      value: summary.profitabilityValue,
+      sub: signedPct(summary.profitabilityPct),
+      subClass: toneOf(summary.profitabilityValue),
+    },
+  ];
+
   const renderSortIcon = (col: SortKey) => {
     if (sortKey !== col) return <ArrowUpDown size={12} className={styles.sortIconInactive} />;
     return sortDir === 'asc' ? (
@@ -92,7 +121,9 @@ export function AssetsTable() {
         <div className={styles.cardHeader}>
           <div className={styles.titleRow}>
             <h3 className={styles.title}>Detalhamento de Ativos</h3>
-            <span className={styles.count}>{filteredAtivos.length} ativos</span>
+            <span className={styles.count}>
+              {isFiltered ? `${summary.count} de ${data.assets.length} ativos` : `${summary.count} ativos`}
+            </span>
           </div>
 
           <div className={styles.controls}>
@@ -124,6 +155,18 @@ export function AssetsTable() {
             </div>
           </div>
         </div>
+
+        {summary.count > 0 && (
+          <dl className={styles.summary}>
+            {summaryItems.map((item) => (
+              <div key={item.label} className={styles.summaryItem}>
+                <dt className={styles.summaryLabel}>{item.label}</dt>
+                <dd className={styles.summaryValue}>{fmt(item.value)}</dd>
+                {item.sub && <dd className={`${styles.summarySub} ${item.subClass ?? ''}`}>{item.sub}</dd>}
+              </div>
+            ))}
+          </dl>
+        )}
 
         <div className={styles.tableWrapper} ref={scrollRef}>
           <table className={styles.table}>

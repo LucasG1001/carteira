@@ -403,6 +403,45 @@
   opacity: 0.75;
 }
 
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-base) var(--spacing-xl);
+  margin: 0;
+  padding: var(--spacing-base) var(--spacing-xl);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.summaryLabel {
+  composes: kicker from '../../styles/controls.module.css';
+}
+
+.summaryValue {
+  composes: money from '../../styles/controls.module.css';
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.summarySub {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryMuted {
+  color: var(--text-muted);
+}
+
 /* Expenses table extras */
 .saldoValue {
   font-size: 0.8rem;
@@ -467,6 +506,11 @@
   .searchInput {
     width: 100%;
     flex: 1;
+  }
+
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: var(--spacing-md) var(--spacing-base);
   }
 
   .table thead th,

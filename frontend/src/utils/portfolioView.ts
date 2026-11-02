@@ -161,3 +161,42 @@ export function monthlyDividendAverage(monthly: { month: string; value: number }
   if (paid.length === 0) return 0;
   return round2(paid.reduce((sum, point) => sum + point.value, 0) / paid.length);
 }
+
+export interface AssetsSummary {
+  count: number;
+  invested: number;
+  currentValue: number;
+  variationValue: number;
+  variationPct: number;
+  dividends: number;
+  profitabilityValue: number;
+  profitabilityPct: number;
+  shareOfPortfolio: number;
+}
+
+export function summarizeAssets(assets: BackendAssetSummary[], portfolioValue: number): AssetsSummary {
+  let invested = 0;
+  let currentValue = 0;
+  let variationValue = 0;
+  let dividends = 0;
+  let profitabilityValue = 0;
+  for (const asset of assets) {
+    invested += asset.total_invested;
+    currentValue += asset.current_value;
+    variationValue += asset.variation_value;
+    dividends += asset.total_dividends;
+    profitabilityValue += asset.profitability_value;
+  }
+  const pctOfInvested = (value: number) => (invested > 0 ? (value / invested) * 100 : 0);
+  return {
+    count: assets.length,
+    invested,
+    currentValue,
+    variationValue,
+    variationPct: pctOfInvested(variationValue),
+    dividends,
+    profitabilityValue,
+    profitabilityPct: pctOfInvested(profitabilityValue),
+    shareOfPortfolio: portfolioValue > 0 ? (currentValue / portfolioValue) * 100 : 0,
+  };
+}
