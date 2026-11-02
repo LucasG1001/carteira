@@ -57,6 +57,8 @@ const GROUP_NOUN: Record<AllocationGroupBy, { one: string; many: string }> = {
   setor: { one: "setor", many: "setores" },
 };
 
+const SHOW_MONTHLY_RESULT = false;
+
 const RESULT_QUICK_OPTIONS = [
   { value: "last6", label: "Últimos 6 meses" },
   { value: "last12", label: "Últimos 12 meses" },
@@ -449,15 +451,15 @@ export function InvestmentsPage() {
         />
       </div>
 
-      {resultStatus === "loading" && (
+      {SHOW_MONTHLY_RESULT && resultStatus === "loading" && (
         <div className={styles.cardState}>Carregando o resultado...</div>
       )}
-      {resultStatus === "error" && (
+      {SHOW_MONTHLY_RESULT && resultStatus === "error" && (
         <div className={`${styles.cardState} ${styles.error}`}>
           Não foi possível carregar o resultado do período.
         </div>
       )}
-      {resultStatus === "ready" && resultPoints.length > 0 && (
+      {SHOW_MONTHLY_RESULT && resultStatus === "ready" && resultPoints.length > 0 && (
         <MonthlyBarsCard
           kicker={resultKicker}
           diverging
