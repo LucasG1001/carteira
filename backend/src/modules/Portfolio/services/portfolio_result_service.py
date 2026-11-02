@@ -166,7 +166,7 @@ class PortfolioResultService:
         return PerformanceContribution(
             bucket=key,
             ticker=PortfolioService.normalize_ticker(position),
-            asset_type=PortfolioService.classify_ticker(position),
+            asset_type=PortfolioService.classify_ticker(position, PortfolioService.info_name(info)),
             sector=getattr(info, "sector", None),
             value=self._round(value),
             price_value=self._round(price_value),

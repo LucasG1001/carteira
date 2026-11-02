@@ -1,7 +1,8 @@
 import hashlib
+import re
 import uuid
 from datetime import date, timedelta
-from typing import Dict, List
+from typing import Dict, List, Mapping
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,6 +28,8 @@ from src.modules.Portfolio.schemas.portfolio_schema import (
 from src.modules.Upload.models.upload_model import Upload
 from src.modules.Upload.repositories.upload_repository import UploadRepository
 
+FUND_NAME_PATTERN = re.compile(r"\b(fundos?|funds?|fii|fiagro|fdi|fic|fi-infra|indice|etf)\b|imobiliari")
+
 
 class PortfolioService:
     def __init__(self, session: AsyncSession):
@@ -47,11 +50,14 @@ class PortfolioService:
         return normalized
 
     @classmethod
-    def classify_ticker(cls, ticker: str) -> str:
+    def classify_ticker(cls, ticker: str, name: str | None = None) -> str:
         upper_ticker = cls.normalize_ticker(ticker)
         if upper_ticker.endswith("11") or upper_ticker.endswith("11B"):
             if upper_ticker.endswith("B11"):
                 return "ETF"
+            # Units (TAEE11, KLBN11) também terminam em 11; só o nome do yfinance as separa de fundos.
+            if name and not FUND_NAME_PATTERN.search(normalize_text(name)):
+                return "Acao"
             return "FII"
         if upper_ticker.endswith("39"):
             return "ETF"
@@ -63,6 +69,21 @@ class PortfolioService:
             return "Acao"
 
         return "Outros"
+
+    @staticmethod
+    def info_name(info: TickerInfo | None) -> str | None:
+        if info is None:
+            return None
+        return info.long_name or info.short_name
+
+    @classmethod
+    def classify_with_infos(cls, ticker: str, ticker_infos: Mapping[str, TickerInfo]) -> str:
+        market_ticker = cls._market_data_ticker(cls._position_ticker(ticker))
+        return cls.classify_ticker(ticker, cls.info_name(ticker_infos.get(market_ticker)))
+
+    async def _ticker_infos_for(self, transactions: List[Transaction]) -> Dict[str, TickerInfo]:
+        market_tickers = sorted({self._market_data_ticker(self._position_ticker(t.ticker)) for t in transactions})
+        return await self.repository.get_ticker_infos_by_tickers(market_tickers)
 
     @staticmethod
     def _round(value: float, digits: int = 2) -> float:
@@ -316,17 +337,14 @@ class PortfolioService:
         dividend_yield_12m = (dividends_per_share_12m / current_price * 100) if current_price > 0 else 0.0
         yield_on_cost_12m = (dividends_per_share_12m / average_price * 100) if average_price > 0 else 0.0
 
-        name = None
-        sector = None
-        if ticker_info is not None:
-            name = ticker_info.long_name or ticker_info.short_name
-            sector = ticker_info.sector
+        name = self.info_name(ticker_info)
+        sector = ticker_info.sector if ticker_info is not None else None
 
         return AssetSummary(
             ticker=self.normalize_ticker(ticker),
             name=name,
             sector=sector,
-            asset_type=self.classify_ticker(ticker),
+            asset_type=self.classify_ticker(ticker, name),
             total_quantity=self._round(total_quantity, 4),
             average_price=self._round(average_price, 4),
             total_invested=self._round(total_invested, 2),
@@ -397,16 +415,17 @@ class PortfolioService:
 
     async def get_dividends(self, user_id: str) -> List[DividendEntry]:
         transactions = await self.repository.get_all_by_user(user_id)
+        incomes = [transaction for transaction in transactions if self._is_income_transaction(transaction)]
+        ticker_infos = await self._ticker_infos_for(incomes)
         entries = [
             DividendEntry(
                 ticker=self.normalize_ticker(transaction.ticker),
-                asset_type=self.classify_ticker(transaction.ticker),
+                asset_type=self.classify_with_infos(transaction.ticker, ticker_infos),
                 date=transaction.date,
                 type=transaction.operation_type,
                 value=self._round(self._transaction_value(transaction), 2),
             )
-            for transaction in transactions
-            if self._is_income_transaction(transaction)
+            for transaction in incomes
         ]
         entries.sort(key=lambda entry: entry.date, reverse=True)
         return entries
@@ -437,7 +456,9 @@ class PortfolioService:
     def _is_manual_filename(filename: str | None) -> bool:
         return bool(filename) and filename.startswith("manual-")
 
-    def _to_transaction_item(self, transaction: Transaction, source: str) -> TransactionListItem:
+    def _to_transaction_item(
+        self, transaction: Transaction, source: str, ticker_infos: Mapping[str, TickerInfo]
+    ) -> TransactionListItem:
         other_costs = 0.0
         if source == "manual":
             base = (transaction.quantity or 0.0) * (transaction.unit_price or 0.0)
@@ -445,7 +466,7 @@ class PortfolioService:
         return TransactionListItem(
             id=transaction.id,
             ticker=transaction.ticker,
-            asset_type=self.classify_ticker(transaction.ticker),
+            asset_type=self.classify_with_infos(transaction.ticker, ticker_infos),
             operation_type=transaction.operation_type,
             entry_side=transaction.entry_side,
             date=transaction.date,
@@ -460,9 +481,12 @@ class PortfolioService:
         transactions = await self.repository.get_all_by_user(user_id)
         uploads = await self.upload_repository.list_by_user(user_id)
         manual_upload_ids = {upload.id for upload in uploads if self._is_manual_filename(upload.filename)}
+        ticker_infos = await self._ticker_infos_for(transactions)
         ordered = sorted(transactions, key=lambda item: (item.date, item.id), reverse=True)
         return [
-            self._to_transaction_item(transaction, "manual" if transaction.upload_id in manual_upload_ids else "b3")
+            self._to_transaction_item(
+                transaction, "manual" if transaction.upload_id in manual_upload_ids else "b3", ticker_infos
+            )
             for transaction in ordered
         ]
 
@@ -486,7 +510,8 @@ class PortfolioService:
 
         await self.session.commit()
         await self.session.refresh(transaction)
-        return self._to_transaction_item(transaction, "manual")
+        ticker_infos = await self._ticker_infos_for([transaction])
+        return self._to_transaction_item(transaction, "manual", ticker_infos)
 
     async def delete_transaction(self, user_id: str, transaction_id: int) -> None:
         transaction = await self.repository.get_by_id(transaction_id, user_id)

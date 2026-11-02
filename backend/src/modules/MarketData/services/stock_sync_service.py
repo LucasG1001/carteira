@@ -23,7 +23,9 @@ class StockSyncService:
         start_hour: int,
         end_hour: int,
         submission_delay_seconds: float,
+        extra_tickers: tuple[str, ...] = (),
     ):
+        self.extra_tickers = extra_tickers
         self.client = client
         self.repository = repository
         self.logger = logger
@@ -94,7 +96,7 @@ class StockSyncService:
         return results
 
     def _resolve_tickers(self) -> list[str]:
-        return resolve_market_tickers(self.repository, self.logger)
+        return resolve_market_tickers(self.repository, self.logger, self.extra_tickers)
 
     def _sync_ticker_infos(self, tickers: list[str]) -> None:
         now = datetime.now(resolve_timezone(self.timezone_name))

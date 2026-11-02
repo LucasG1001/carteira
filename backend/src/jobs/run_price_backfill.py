@@ -31,6 +31,7 @@ def main() -> None:
     load_dotenv()
 
     from src.core.config import settings
+    from src.modules.Benchmarks.schemas.benchmark_schema import IBOV_TICKER
     from src.modules.MarketData.repositories.market_data_repository import MarketDataRepository
     from src.modules.MarketData.services.logging_config import setup_stock_sync_logging
     from src.modules.MarketData.services.price_backfill_service import PriceBackfillService
@@ -47,6 +48,7 @@ def main() -> None:
         timezone_name=settings.MARKET_DATA_TIMEZONE,
         chunk_size=args.chunk_size,
         submission_delay_seconds=settings.STOCK_SYNC_SUBMISSION_DELAY_SECONDS,
+        extra_tickers=(IBOV_TICKER,),
     )
 
     service.run(start_date=args.start, end_date=args.end, tickers=args.tickers)

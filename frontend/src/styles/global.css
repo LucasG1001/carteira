@@ -35,6 +35,10 @@
   --color-asset-cripto: #dd9a7f;
   --color-asset-rf: #68bda9;
 
+  --color-bench-cdi: #199e70;
+  --color-bench-ibov: #c98500;
+  --color-bench-ipca: #d55181;
+
   --color-warn: oklch(0.68 0.13 12);
   --color-warn-strong: oklch(0.6 0.14 12);
   --color-warn-tint: color-mix(in srgb, var(--color-warn) 12%, transparent);

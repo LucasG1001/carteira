@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDownUp } from "lucide-react";
 import { AssetsTable } from "../../components/AssetsTable/AssetsTable";
+import { LineChartCard } from "../../components/LineChartCard/LineChartCard";
+import type { LineSeries } from "../../components/LineChartCard/LineChartCard";
 import { MonthlyBarsCard } from "../../components/MonthlyBarsCard/MonthlyBarsCard";
 import { PeriodFilter } from "../../components/PeriodFilter/PeriodFilter";
 import type { PeriodGroup } from "../../components/PeriodFilter/PeriodFilter";
@@ -33,6 +35,8 @@ import {
 } from "../../utils/portfolioView";
 import type { AllocationGroupBy } from "../../utils/portfolioView";
 import { usePerformance } from "./usePerformance";
+import { useBenchmarks } from "./useBenchmarks";
+import { buildComparison, comparableMonths, comparisonYears, lastValueAt } from "../../utils/benchmarkView";
 import styles from "./InvestmentsPage.module.css";
 
 const ALLOCATION_OPTIONS: { value: AllocationGroupBy; label: string }[] = [
@@ -66,6 +70,18 @@ function resultRangeOf(value: string): PerformanceRange {
   if (value === "last6") return { kind: "last", count: 6 };
   if (value === "last24") return { kind: "last", count: 24 };
   return { kind: "last", count: 12 };
+}
+
+function formatPct(value: number): string {
+  const sign = value > 0.05 ? "+" : value < -0.05 ? "−" : "";
+  return `${sign}${Math.abs(value).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+}
+
+function compareLabelEvery(count: number, isMobile: boolean): number {
+  if (isMobile) return Math.max(1, Math.ceil(count / 4));
+  if (count <= 12) return 1;
+  if (count <= 24) return 3;
+  return 6;
 }
 
 function signed(value: number): string {
@@ -147,6 +163,26 @@ export function InvestmentsPage() {
   const windowSeries = useMemo(
     () => monthSeries(monthBuckets, resultRangeOf(resultRange)),
     [monthBuckets, resultRange],
+  );
+
+  const { benchmarks, status: benchmarkStatus } = useBenchmarks();
+  const [compareRange, setCompareRange] = useState("last12");
+  const comparison = useMemo(
+    () => buildComparison(benchmarks, monthBuckets, resultRangeOf(compareRange)),
+    [benchmarks, monthBuckets, compareRange],
+  );
+  const compareGroups: PeriodGroup[] = useMemo(
+    () => [
+      { title: "Filtros rápidos", options: RESULT_QUICK_OPTIONS },
+      {
+        title: "Filtro anual",
+        options: comparisonYears(comparableMonths(benchmarks)).map((year) => ({
+          value: `year:${year}`,
+          label: String(year),
+        })),
+      },
+    ],
+    [benchmarks],
   );
 
   const drilling = loadedMonth !== null;
@@ -350,6 +386,33 @@ export function InvestmentsPage() {
     note: contributionNote(row),
   }));
 
+  const compareLabels = ["", ...comparison.months.map(monthLabel)];
+  const compareSeries: LineSeries[] = [
+    { key: "carteira", label: "Carteira", color: "var(--color-accent)", emphasis: true, values: comparison.lines.carteira },
+    { key: "cdi", label: "CDI", color: "var(--color-bench-cdi)", dash: "6 4", values: comparison.lines.cdi },
+    { key: "ibov", label: "IBOV", color: "var(--color-bench-ibov)", values: comparison.lines.ibov },
+    { key: "ipca", label: "IPCA", color: "var(--color-bench-ipca)", dash: "1 4", values: comparison.lines.ipca },
+  ];
+  const compareNote = (index: number): string | null => {
+    const portfolio = lastValueAt(comparison.lines.carteira, index);
+    const cdi = lastValueAt(comparison.lines.cdi, index);
+    const ipca = lastValueAt(comparison.lines.ipca, index);
+    if (!portfolio || index === 0) return null;
+    const parts: string[] = [];
+    if (cdi && cdi.value > 0) {
+      parts.push(`carteira rendeu ${Math.round((portfolio.value / cdi.value) * 100)}% do CDI`);
+    }
+    if (ipca && ipca.index > 0) {
+      const gap = portfolio.value - ipca.value;
+      parts.push(
+        `${Math.abs(gap).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p. ${
+          gap >= 0 ? "acima" : "abaixo"
+        } da inflação${ipca.index < index ? ` (IPCA até ${compareLabels[ipca.index]})` : ""}`,
+      );
+    }
+    return parts.length > 0 ? parts.join(" · ") : null;
+  };
+
   const resultStatus = drilling ? daysStatus : monthlyStatus;
   const resultKicker = drilling ? "Resultado dia a dia" : "Resultado mês a mês";
   const resultLegend = drilling
@@ -414,6 +477,28 @@ export function InvestmentsPage() {
               )}
               <PeriodFilter groups={resultGroups} value={resultRange} onChange={setResultRange} />
             </>
+          }
+        />
+      )}
+
+      {benchmarkStatus === "error" && (
+        <div className={`${styles.cardState} ${styles.error}`}>
+          Não foi possível carregar o comparativo com CDI, IBOV e IPCA.
+        </div>
+      )}
+      {benchmarkStatus === "ready" && monthlyStatus === "ready" && comparison.months.length > 0 && (
+        <LineChartCard
+          kicker="Carteira vs CDI, IBOV e IPCA"
+          labels={compareLabels}
+          series={compareSeries}
+          formatValue={formatPct}
+          labelEvery={compareLabelEvery(comparison.months.length, isMobile)}
+          note={compareNote}
+          readoutLabel={(index) =>
+            index === 0 ? "início do período" : `acumulado até ${compareLabels[index]}`
+          }
+          filter={
+            <PeriodFilter groups={compareGroups} value={compareRange} onChange={setCompareRange} />
           }
         />
       )}

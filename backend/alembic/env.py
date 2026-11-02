@@ -29,6 +29,7 @@ from src.modules.MarketData.models.market_data_model import StockPrice, TickerIn
 from src.modules.Expenses.models.expense_model import Expense
 from src.modules.Expenses.models.budget_model import Budget
 from src.modules.Goals.models.goal_model import Goal
+from src.modules.Benchmarks.models.benchmark_model import BenchmarkRate
 
 target_metadata = Base.metadata
 

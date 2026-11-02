@@ -127,6 +127,17 @@ export async function getEvolution(): Promise<BackendEvolutionPoint[]> {
   return request('/portfolio/evolution');
 }
 
+export type BackendBenchmarkMonth = {
+  month: string;
+  cdi: number | null;
+  ipca: number | null;
+  ibov: number | null;
+};
+
+export async function getBenchmarks(): Promise<BackendBenchmarkMonth[]> {
+  return request('/benchmarks/monthly');
+}
+
 export type PerformanceGranularity = 'month' | 'day';
 
 export type BackendPerformanceBucket = {

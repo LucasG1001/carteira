@@ -1,0 +1,170 @@
+.card {
+  composes: card from '../../styles/controls.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.kicker {
+  composes: kicker from '../../styles/controls.module.css';
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.readoutLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-md) var(--spacing-xl);
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.statLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.swatch {
+  width: 18px;
+  height: 6px;
+  flex-shrink: 0;
+}
+
+.statValue,
+.statValueStrong {
+  composes: money from '../../styles/controls.module.css';
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.statValueStrong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.note {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.plot {
+  position: relative;
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+
+.svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: color-mix(in srgb, var(--color-text) 7%, transparent);
+  stroke-width: 1;
+}
+
+.zeroLine {
+  stroke: color-mix(in srgb, var(--color-text) 22%, transparent);
+  stroke-width: 1;
+}
+
+.guide {
+  stroke: color-mix(in srgb, var(--color-text) 28%, transparent);
+  stroke-width: 1;
+}
+
+.dot {
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.tickLabel {
+  position: absolute;
+  left: 0;
+  transform: translateY(calc(-100% - 2px));
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-500);
+  pointer-events: none;
+}
+
+.endLabel,
+.endLabelStrong {
+  position: absolute;
+  transform: translateY(-50%);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.endLabelStrong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.axis {
+  position: relative;
+  height: 16px;
+}
+
+.axisLabel,
+.axisLabelEnd {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+}
+
+.axisLabelEnd {
+  transform: translateX(-100%);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

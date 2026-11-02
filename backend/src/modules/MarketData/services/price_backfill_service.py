@@ -24,7 +24,9 @@ class PriceBackfillService:
         timezone_name: str,
         chunk_size: int = 10,
         submission_delay_seconds: float = 1.0,
+        extra_tickers: tuple[str, ...] = (),
     ):
+        self.extra_tickers = extra_tickers
         self.client = client
         self.repository = repository
         self.logger = logger
@@ -45,7 +47,7 @@ class PriceBackfillService:
             self.logger.info("Backfill | Sem transações; nada a preencher")
             return []
 
-        resolved_tickers = tickers or resolve_market_tickers(self.repository, self.logger)
+        resolved_tickers = tickers or resolve_market_tickers(self.repository, self.logger, self.extra_tickers)
         if not resolved_tickers:
             self.logger.info("Backfill | Sem tickers na carteira; nada a preencher")
             return []

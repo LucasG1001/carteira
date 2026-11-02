@@ -30,6 +30,10 @@ def main() -> None:
     load_dotenv()
 
     from src.core.config import settings
+    from src.modules.Benchmarks.repositories.benchmark_sync_repository import BenchmarkSyncRepository
+    from src.modules.Benchmarks.schemas.benchmark_schema import IBOV_TICKER
+    from src.modules.Benchmarks.services.bcb_client import BcbClient
+    from src.modules.Benchmarks.services.benchmark_sync_service import BenchmarkSyncService
     from src.modules.MarketData.repositories.market_data_repository import MarketDataRepository
     from src.modules.MarketData.services.logging_config import setup_stock_sync_logging
     from src.modules.MarketData.services.stock_sync_scheduler import StockSyncScheduler
@@ -48,13 +52,21 @@ def main() -> None:
         start_hour=settings.STOCK_SYNC_START_HOUR,
         end_hour=settings.STOCK_SYNC_END_HOUR,
         submission_delay_seconds=settings.STOCK_SYNC_SUBMISSION_DELAY_SECONDS,
+        extra_tickers=(IBOV_TICKER,),
+    )
+
+    benchmark_service = BenchmarkSyncService(
+        client=BcbClient(),
+        repository=BenchmarkSyncRepository(settings.SYNC_DATABASE_URL),
+        logger=logger,
     )
 
     if args.once:
         service.run_once(force=args.force)
+        benchmark_service.run_once()
         return
 
-    scheduler = StockSyncScheduler(service=service, logger=logger)
+    scheduler = StockSyncScheduler(service=service, logger=logger, benchmark_service=benchmark_service)
     scheduler.run_forever()
 
 

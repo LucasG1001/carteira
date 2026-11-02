@@ -128,6 +128,37 @@ class PortfolioServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(summary.dividends_per_share_12m, 0.0)
         self.assertEqual(summary.dividend_yield_12m, 0.0)
 
+    def test_classify_ticker_separates_units_from_funds_by_name(self) -> None:
+        classify = PortfolioService.classify_ticker
+        self.assertEqual(classify("TAEE11", "Transmissora Aliança de Energia Elétrica S.A."), "Acao")
+        self.assertEqual(classify("MXRF11", "Maxi Renda Fundo De Investimento Imobiliaro - FII"), "FII")
+        self.assertEqual(classify("KNCA11", "Kinea Credito Agro Fiagro-Imobiliario"), "FII")
+        self.assertEqual(classify("IFRA11", "Itau FDI Em Cotas De Fundos Incentivados De Infra"), "FII")
+        self.assertEqual(classify("BTHF11", "Btg Pactual Real Estate Hedge Fund Fii Fundo"), "FII")
+        self.assertEqual(classify("IVVB11", "ISHARES S&P 500 CLASSE DE ÍNDICE EM COTAS DE FUNDO"), "ETF")
+        self.assertEqual(classify("BCFF11", None), "FII")
+        self.assertEqual(classify("PETR4", "Petróleo Brasileiro S.A."), "Acao")
+
+    async def test_portfolio_summary_classifies_unit_with_ticker_info(self) -> None:
+        transactions = [
+            self._transaction(ticker="TAEE11", operation_type="compra", tx_date=date(2026, 1, 10), quantity=10, unit_price=35.0, operation_value=350.0),
+        ]
+        info = TickerInfo()
+        info.ticker = "TAEE11.SA"
+        info.long_name = "Transmissora Aliança de Energia Elétrica S.A."
+        info.short_name = None
+        info.sector = "Utilities"
+        service = PortfolioService(session=None)
+        service.repository = FakeTransactionRepository(
+            transactions=transactions,
+            latest_prices={"TAEE11.SA": self._price("TAEE11.SA", 36.0)},
+            ticker_infos={"TAEE11.SA": info},
+        )
+
+        summary = await service.get_portfolio_summary("user-1")
+
+        self.assertEqual(summary.assets[0].asset_type, "Acao")
+
     async def test_asset_detail_uses_matching_market_ticker(self) -> None:
         transactions = [
             self._transaction(ticker="VALE3", operation_type="compra", tx_date=date(2026, 1, 10), quantity=5, unit_price=20.0, operation_value=100.0),

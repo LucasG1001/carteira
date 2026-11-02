@@ -26,12 +26,13 @@ npm run dev                                # http://localhost:5173 (proxy /api �
 
 ```bash
 cd backend
-python -m src.jobs.run_stock_sync --once --force   # sincroniza uma vez (ignora janela de mercado)
+python -m src.jobs.run_stock_sync --once --force   # sincroniza uma vez (ignora janela de mercado) + CDI/IPCA do BCB
 python -m src.jobs.run_stock_sync                  # roda agendado (a cada 30 min, em pregão)
 
 # Backfill histórico (manual, uma vez): preenche stock_prices desde a 1ª transação
 python -m src.jobs.run_price_backfill
 python -m src.jobs.run_price_backfill --start 2022-05-01 --tickers PETR4.SA
+python -m src.jobs.run_price_backfill --start 2022-04-01 --tickers ^BVSP   # IBOV desde 1 mês antes da 1ª transação
 ```
 
 ### Build & Lint
@@ -72,8 +73,9 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 - **`core/security.py`** — `get_current_user_id()` retorna `settings.SINGLE_USER_ID` (app sem autenticação)
 - **`core/exceptions.py`** — `BusinessException` + handlers globais
 - **`modules/Upload/`** — importação de Excel da B3 (`b3_parser_service.py` com openpyxl; hash SHA256 anti-duplicado)
-- **`modules/Portfolio/`** — cálculo da carteira (`portfolio_service.py`: agrupa por ticker, custo médio, dividendos, rentabilidade) + lançamento manual
-- **`modules/MarketData/`** — cotações via `yfinance_client.py`; `stock_sync_service.py` + `stock_sync_scheduler.py` (worker)
+- **`modules/Portfolio/`** — cálculo da carteira (`portfolio_service.py`: agrupa por ticker, custo médio, dividendos, rentabilidade) + lançamento manual. `classify_ticker(ticker, name)`: ticker terminado em 11 é FII, exceto quando o nome do `ticker_info` não indica fundo (fundo/FII/fiagro/FDI/índice) — aí é unit e vira `Acao`; quem classifica precisa passar o nome (`classify_with_infos`)
+- **`modules/MarketData/`** — cotações via `yfinance_client.py`; `stock_sync_service.py` + `stock_sync_scheduler.py` (worker). `^BVSP` entra no sync/backfill como `extra_tickers` injetado pelos jobs (a resolução de tickers da carteira não o inclui)
+- **`modules/Benchmarks/`** — CDI (SGS 12, diário) e IPCA (SGS 433, mensal) do BCB em `benchmark_rates` via `bcb_client.py` (urllib, sem dependência); o worker sincroniza a cada 6h e no start, rebuscando 45 dias para pegar IPCA atrasado. `benchmark_service.py` agrega por mês: CDI composto, IPCA direto, IBOV fechamento a fechamento de `stock_prices`
 - **`jobs/run_stock_sync.py`** — entrypoint do worker (`--once`, `--force`)
 - **`jobs/run_price_backfill.py`** — entrypoint do backfill histórico (`--start`, `--end`, `--tickers`, `--chunk-size`)
 - **`Portfolio/services/portfolio_result_service.py`** — resultado por período e atribuição por ativo: um fold sobre as transações vira checkpoints por posição (qty, custo, fluxo e proventos acumulados), consultados por busca binária nas fronteiras dos períodos
@@ -89,7 +91,7 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 - **`pages/ExpensesPage/`** — `ExpensesLayout` (envolve `ExpensesProvider` ou `GoalsProvider` conforme a rota) + `ExpensesPage` (gastos do mês: cards, breakdown e tabela filtrável) e `pages/GoalsPage/` (caixinhas). Resumo, "travado x escolha sua" e compromissos são sempre o mês corrente; o "ritmo mês a mês" tem seu `PeriodFilter` (janela deslizante). Há um único `MonthYearPicker`, no header da `ExpensesTable` (`tableScope`, estado local da página): ele governa a tabela, o "para onde o dinheiro vai" e o `DailySpendCard` (gasto por dia), que não têm seletor próprio. Clicar num grupo filtra a tabela; clicar numa barra do ritmo move o `tableScope`. "Para onde o dinheiro vai" e compromissos ficam lado a lado (`.splitGrid`, listas com `--card-list-max`); abaixo, a `ExpensesTable` (lista com `--ledger-max`) com o `DailySpendCard` à direita (`.ledgerGrid`). Os dois grids empilham em ≤900px. No `DailySpendCard` o calendário e as barras somam só os gastos variáveis por data; recorrentes e parcelas ficam só no quadro "fixos + parcelados", assim dias + quadro = total do mês. O `<select>` de eixo do breakdown precisa de `option { background }` explícito — sem isso o popup nativo do Chrome sai branco com texto claro
 - **`components/`** — cards genéricos usados pelas telas de investimentos (`SummaryHeroCard`, `SplitBarCard`, `MonthlyBarsCard` — props opcionais `diverging`/`labelEvery`/`showValues`, cujos defaults preservam o modo original —, `RankedBarsCard`), tabelas (`AssetsTable`, `DividendsTable`; `ExpensesTable` não é tabela — é lista de extrato agrupada por dia, com ícone pela subcategoria via `utils/expenseIcons.tsx` e cabeçalho de dia sticky com total), cards dos gastos (`MonthSummaryCard`, `FixedVariableCard`, `MonthlyPaceCard`, `SpendBreakdownCard`, `CommitmentsCard`, `DailySpendCard`) e o resto (`PortfolioActions`, `ExpenseForm`, `MonthStepper`, `GoalCard`). Os cards dos gastos são tipados no domínio de gastos — não reaproveite entre os dois lados
 - **`styles/controls.module.css`** — primitivos consumidos por `composes` (`card`, `kicker`, `divider`, `btnPrimary/Secondary/Ghost/Danger/Icon`, `money`); não redeclare fundo/raio/sombra de card localmente
-- **Gráficos são CSS puro** (grid + divs). Não há biblioteca de charts no projeto — `recharts` foi removido junto com os componentes `BigNumbers`/`Charts`
+- **Gráficos são CSS puro** (grid + divs), exceto o `LineChartCard` (SVG à mão, medido via `ResizeObserver` para tracejados não distorcerem). Não há biblioteca de charts no projeto — `recharts` foi removido junto com os componentes `BigNumbers`/`Charts`. Na carteira, "Carteira vs CDI, IBOV e IPCA" usa o `LineChartCard` com retorno acumulado; o retorno mensal da carteira é Dietz modificado sobre os buckets de `/performance` (`utils/benchmarkView.ts`). Cores das referências: tokens `--color-bench-*` (validados para CVD; CDI tracejado e IPCA pontilhado como segunda pista)
 - **`context/`** — um provider por domínio (`Portfolio`, `Expenses`, `Goals`, `Privacy`, `QuickAdd`); o `*Store.ts` ao lado exporta o contexto e o hook `use*`
 - **`services/api.ts`** — `fetch` para `import.meta.env.VITE_API_URL ?? '/api/v1'`
 - **`styles/global.css`** — design tokens (`--color-*`) e keyframes globais
@@ -103,13 +105,15 @@ Arquitetura modular limpa: cada feature em `modules/<Feature>/` com `router → 
 - `GET /api/v1/portfolio/performance?granularity=month|day&month=AAAA-MM` — resultado por período + contribuição por ativo (rotas nomeadas precisam vir **antes** do catch-all `GET /:ticker`)
 - `POST /api/v1/portfolio/manual` — lançamento manual
 - `GET /api/v1/portfolio/:ticker` — detalhe de um ativo
+- `GET /api/v1/benchmarks/monthly` — CDI/IPCA/IBOV (% no mês) desde o mês da 1ª transação
 - `GET /health` — healthcheck
 
 ### Database Schema
 
 `uploads` — `id` PK, `user_id`, `filename`, `file_hash`, `created_at`
 `transactions` — `id` PK, `upload_id` FK→uploads (cascade), `user_id`, `ticker`, `operation_type`, `entry_side`, `date`, `quantity`, `unit_price`, `operation_value`
-`stock_prices` — `(ticker, date)` PK, `open`, `high`, `low`, `close`, `volume`, `created_at`
+`stock_prices` — `(ticker, date)` PK, `open`, `high`, `low`, `close`, `volume`, `created_at` (inclui `^BVSP`)
+`benchmark_rates` — `(series, date)` PK, `value` (% no período: diário p/ CDI, mensal datado no dia 1 p/ IPCA), `created_at`
 `expenses` — `id` PK, `user_id`, `type`, `description`, `amount`, `date`, `payment_method`, `installments`, `is_recurring`, `recurrence` + a taxonomia em 3 eixos: `category` = **Categoria** (ampla; `'Outros'` por padrão), `subcategory` = **Subcategoria** (Mercado, Uber — o ícone sai dela via `utils/expenseIcons.tsx`), `classification` = **Classificação** (Essencial/Lazer)
 
 > App de usuário único: `user_id` é sempre `settings.SINGLE_USER_ID` (`"local"`). As colunas existem mas não há escopo multiusuário.
