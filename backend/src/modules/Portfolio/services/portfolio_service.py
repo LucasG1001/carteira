@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import date
+from datetime import date, timedelta
 from typing import Dict, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -108,6 +108,10 @@ class PortfolioService:
             "pagamento de juros",
         )
         return any(keyword in operation for keyword in income_keywords)
+
+    @classmethod
+    def _counts_for_yield(cls, transaction: Transaction) -> bool:
+        return cls._is_income_transaction(transaction) and "leilao de fracao" not in cls._normalized_operation(transaction)
 
     @classmethod
     def _is_neutral_transaction(cls, transaction: Transaction) -> bool:
@@ -243,10 +247,20 @@ class PortfolioService:
             for month in last_months(count)
         ]
 
-    def _build_asset_summary(self, ticker: str, transactions: List[Transaction], latest_price: StockPrice | None, ticker_info: TickerInfo | None = None) -> AssetSummary:
+    def _build_asset_summary(
+        self,
+        ticker: str,
+        transactions: List[Transaction],
+        latest_price: StockPrice | None,
+        ticker_info: TickerInfo | None = None,
+        today: date | None = None,
+    ) -> AssetSummary:
         total_quantity = 0.0
         total_cost = 0.0
         total_dividends = 0.0
+        dividends_per_share_12m = 0.0
+        yield_window_start = (today or date.today()) - timedelta(days=365)
+        tracks_yield = self.classify_ticker(ticker) != "Renda Fixa"
 
         for transaction in transactions:
             quantity = transaction.quantity or 0.0
@@ -254,6 +268,11 @@ class PortfolioService:
 
             if self._is_income_transaction(transaction):
                 total_dividends += operation_value
+                if tracks_yield and self._counts_for_yield(transaction) and transaction.date > yield_window_start:
+                    # Proventos da B3 trazem a quantidade da data-com; sem ela, usa a posição corrente no fold.
+                    base_quantity = quantity if quantity > 0 else total_quantity
+                    if base_quantity > 0:
+                        dividends_per_share_12m += operation_value / base_quantity
                 continue
 
             if self._is_subscription_cost_transaction(transaction):
@@ -294,6 +313,8 @@ class PortfolioService:
         variation_percent = (variation_value / total_invested * 100) if total_invested > 0 else 0.0
         profitability_value = current_value + total_dividends - total_invested
         profitability_percent = (profitability_value / total_invested * 100) if total_invested > 0 else 0.0
+        dividend_yield_12m = (dividends_per_share_12m / current_price * 100) if current_price > 0 else 0.0
+        yield_on_cost_12m = (dividends_per_share_12m / average_price * 100) if average_price > 0 else 0.0
 
         name = None
         sector = None
@@ -318,6 +339,9 @@ class PortfolioService:
             variation_percent=self._round(variation_percent, 2),
             profitability_value=self._round(profitability_value, 2),
             profitability_percent=self._round(profitability_percent, 2),
+            dividends_per_share_12m=self._round(dividends_per_share_12m, 6),
+            dividend_yield_12m=self._round(dividend_yield_12m, 2),
+            yield_on_cost_12m=self._round(yield_on_cost_12m, 2),
         )
 
     async def get_portfolio_summary(self, user_id: str) -> PortfolioSummary:

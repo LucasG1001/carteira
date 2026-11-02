@@ -91,6 +91,43 @@ class PortfolioServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(summary.assets[0].variation_percent, 20.0)
         self.assertEqual(summary.assets[0].profitability_percent, 25.0)
 
+    def test_asset_summary_computes_trailing_yield_per_share(self) -> None:
+        transactions = [
+            self._transaction(ticker="TAEE11", operation_type="compra", tx_date=date(2025, 1, 10), quantity=10, unit_price=30.0, operation_value=300.0),
+            self._transaction(ticker="TAEE11", operation_type="dividendo", tx_date=date(2025, 3, 1), quantity=10, operation_value=50.0),
+            self._transaction(ticker="TAEE11", operation_type="dividendo", tx_date=date(2025, 8, 1), quantity=10, operation_value=10.0),
+            self._transaction(ticker="TAEE11", operation_type="compra", tx_date=date(2025, 9, 1), quantity=10, unit_price=50.0, operation_value=500.0),
+            self._transaction(ticker="TAEE11", operation_type="juros sobre capital proprio", tx_date=date(2026, 2, 1), quantity=20, operation_value=30.0),
+            self._transaction(ticker="TAEE11", operation_type="dividendo", tx_date=date(2026, 3, 1), quantity=0, operation_value=20.0),
+            self._transaction(ticker="TAEE11", operation_type="leilao de fracao", tx_date=date(2026, 3, 5), quantity=0, operation_value=99.0),
+        ]
+        service = PortfolioService(session=None)
+
+        summary = service._build_asset_summary(
+            ticker="TAEE11",
+            transactions=transactions,
+            latest_price=self._price("TAEE11.SA", 35.0),
+            today=date(2026, 4, 16),
+        )
+
+        self.assertEqual(summary.dividends_per_share_12m, 3.5)
+        self.assertEqual(summary.dividend_yield_12m, 10.0)
+        self.assertEqual(summary.yield_on_cost_12m, 8.75)
+        self.assertEqual(summary.total_dividends, 209.0)
+
+    def test_fixed_income_interest_does_not_count_as_yield(self) -> None:
+        transactions = [
+            self._transaction(ticker="CDB", operation_type="aplicacao", tx_date=date(2025, 8, 6), quantity=1500, unit_price=1.0, operation_value=1500.0),
+            self._transaction(ticker="CDB", operation_type="pagamento de juros", tx_date=date(2026, 3, 8), quantity=1500, unit_price=0.41, operation_value=615.0),
+        ]
+        service = PortfolioService(session=None)
+
+        summary = service._build_asset_summary(ticker="CDB", transactions=transactions, latest_price=None, today=date(2026, 4, 16))
+
+        self.assertEqual(summary.total_dividends, 615.0)
+        self.assertEqual(summary.dividends_per_share_12m, 0.0)
+        self.assertEqual(summary.dividend_yield_12m, 0.0)
+
     async def test_asset_detail_uses_matching_market_ticker(self) -> None:
         transactions = [
             self._transaction(ticker="VALE3", operation_type="compra", tx_date=date(2026, 1, 10), quantity=5, unit_price=20.0, operation_value=100.0),

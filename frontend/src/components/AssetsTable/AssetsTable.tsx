@@ -30,6 +30,7 @@ const COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'variation_percent', label: 'Variação' },
   { key: 'profitability_percent', label: 'Rentabilidade' },
   { key: 'total_dividends', label: 'Proventos' },
+  { key: 'dividend_yield_12m', label: 'DY 12m' },
 ];
 
 export function AssetsTable() {
@@ -83,26 +84,32 @@ export function AssetsTable() {
   const signedPct = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
   const toneOf = (value: number) => (value >= 0 ? styles.lpPositive : styles.lpNegative);
 
-  const summaryItems: { label: string; value: number; sub?: string; subClass?: string }[] = [
+  const summaryItems: { label: string; value: string; sub?: string; subClass?: string }[] = [
     {
       label: 'Valor atual',
-      value: summary.currentValue,
+      value: fmt(summary.currentValue),
       sub: isFiltered ? `${summary.shareOfPortfolio.toFixed(1)}% da carteira` : undefined,
       subClass: styles.summaryMuted,
     },
-    { label: 'Investido', value: summary.invested },
+    { label: 'Investido', value: fmt(summary.invested) },
     {
       label: 'Variação',
-      value: summary.variationValue,
+      value: fmt(summary.variationValue),
       sub: signedPct(summary.variationPct),
       subClass: toneOf(summary.variationValue),
     },
-    { label: 'Proventos', value: summary.dividends },
+    { label: 'Proventos', value: fmt(summary.dividends) },
     {
       label: 'Rentabilidade',
-      value: summary.profitabilityValue,
+      value: fmt(summary.profitabilityValue),
       sub: signedPct(summary.profitabilityPct),
       subClass: toneOf(summary.profitabilityValue),
+    },
+    {
+      label: 'DY 12m',
+      value: `${summary.dividendYield12m.toFixed(2)}%`,
+      sub: `YoC ${summary.yieldOnCost12m.toFixed(2)}% · ${fmt(summary.annualIncome12m)}/ano`,
+      subClass: styles.summaryMuted,
     },
   ];
 
@@ -161,7 +168,7 @@ export function AssetsTable() {
             {summaryItems.map((item) => (
               <div key={item.label} className={styles.summaryItem}>
                 <dt className={styles.summaryLabel}>{item.label}</dt>
-                <dd className={styles.summaryValue}>{fmt(item.value)}</dd>
+                <dd className={styles.summaryValue}>{item.value}</dd>
                 {item.sub && <dd className={`${styles.summarySub} ${item.subClass ?? ''}`}>{item.sub}</dd>}
               </div>
             ))}
@@ -236,6 +243,16 @@ export function AssetsTable() {
                       <span className={asset.total_dividends > 0 ? styles.lpPositive : ''}>
                         {fmt(asset.total_dividends)}
                       </span>
+                    </td>
+                    <td className={styles.numCell}>
+                      {asset.dividends_per_share_12m > 0 ? (
+                        <div className={styles.lpCell}>
+                          <span className={styles.bold}>{asset.dividend_yield_12m.toFixed(2)}%</span>
+                          <span className={styles.lpSubValue}>YoC {asset.yield_on_cost_12m.toFixed(2)}%</span>
+                        </div>
+                      ) : (
+                        <span className={styles.summaryMuted}>—</span>
+                      )}
                     </td>
                   </tr>
                 );

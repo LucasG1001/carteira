@@ -54,6 +54,9 @@ class AssetSummary(BaseModel):
     variation_percent: float = 0.0
     profitability_value: float = 0.0
     profitability_percent: float = 0.0
+    dividends_per_share_12m: float = 0.0
+    dividend_yield_12m: float = 0.0
+    yield_on_cost_12m: float = 0.0
 
 
 class MonthlyDividend(BaseModel):

@@ -172,6 +172,9 @@ export interface AssetsSummary {
   profitabilityValue: number;
   profitabilityPct: number;
   shareOfPortfolio: number;
+  annualIncome12m: number;
+  dividendYield12m: number;
+  yieldOnCost12m: number;
 }
 
 export function summarizeAssets(assets: BackendAssetSummary[], portfolioValue: number): AssetsSummary {
@@ -180,12 +183,14 @@ export function summarizeAssets(assets: BackendAssetSummary[], portfolioValue: n
   let variationValue = 0;
   let dividends = 0;
   let profitabilityValue = 0;
+  let annualIncome12m = 0;
   for (const asset of assets) {
     invested += asset.total_invested;
     currentValue += asset.current_value;
     variationValue += asset.variation_value;
     dividends += asset.total_dividends;
     profitabilityValue += asset.profitability_value;
+    annualIncome12m += asset.dividends_per_share_12m * asset.total_quantity;
   }
   const pctOfInvested = (value: number) => (invested > 0 ? (value / invested) * 100 : 0);
   return {
@@ -198,5 +203,8 @@ export function summarizeAssets(assets: BackendAssetSummary[], portfolioValue: n
     profitabilityValue,
     profitabilityPct: pctOfInvested(profitabilityValue),
     shareOfPortfolio: portfolioValue > 0 ? (currentValue / portfolioValue) * 100 : 0,
+    annualIncome12m,
+    dividendYield12m: currentValue > 0 ? (annualIncome12m / currentValue) * 100 : 0,
+    yieldOnCost12m: pctOfInvested(annualIncome12m),
   };
 }

@@ -17,6 +17,9 @@ export type BackendAssetSummary = {
   variation_percent: number;
   profitability_value: number;
   profitability_percent: number;
+  dividends_per_share_12m: number;
+  dividend_yield_12m: number;
+  yield_on_cost_12m: number;
 };
 
 export type BackendPortfolioSummary = {
