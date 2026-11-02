@@ -29,6 +29,7 @@ import {
   yearTotals,
 } from "../../utils/dividendsView";
 import type { DividendFilterState, DividendGroupBy, DividendRange } from "../../utils/dividendsView";
+import { summarizeAssets } from "../../utils/portfolioView";
 import styles from "./DividendsPage.module.css";
 
 type Scope = { year: number; month: number | null };
@@ -166,8 +167,10 @@ export function DividendsPage() {
   }
 
   const monthValue = monthTotal(list, currentYear, currentMonth);
-  const invested = portfolio?.general_total_invested ?? 0;
-  const yieldOnCost = invested > 0 ? (trailing.total / invested) * 100 : null;
+  const holdings = portfolio
+    ? summarizeAssets(portfolio.assets, portfolio.general_current_value)
+    : null;
+  const hasYield = !!holdings && holdings.annualIncome12m > 0;
   const totalAll = list.reduce((sum, entry) => sum + entry.value, 0);
 
   const comparisons: HeroComparison[] = [
@@ -182,6 +185,14 @@ export function DividendsPage() {
       note: `${trailing.monthsWithPayment} ${
         trailing.monthsWithPayment === 1 ? "mês com pagamento" : "meses com pagamento"
       }`,
+    },
+    {
+      label: "DY 12m",
+      value: null,
+      valueText: hasYield ? `${holdings.dividendYield12m.toFixed(2)}%` : "—",
+      note: hasYield
+        ? `YoC ${holdings.yieldOnCost12m.toFixed(2)}% · ${fmt(holdings.annualIncome12m)}/ano no ritmo atual`
+        : "sem proventos na posição atual",
     },
   ];
 
@@ -236,13 +247,7 @@ export function DividendsPage() {
     setActiveGroup(null);
   };
 
-  const footerLines = [
-    {
-      label: "Yield on cost · 12 meses",
-      value: yieldOnCost == null ? "—" : `${yieldOnCost.toFixed(2)}%`,
-    },
-    { label: "Total recebido · histórico", value: fmt(totalAll) },
-  ];
+  const footerLines = [{ label: "Total recebido · histórico", value: fmt(totalAll) }];
 
   return (
     <div className={styles.container}>
