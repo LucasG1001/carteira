@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ArrowDownUp } from "lucide-react";
 import { AssetsTable } from "../../components/AssetsTable/AssetsTable";
 import { MonthlyBarsCard } from "../../components/MonthlyBarsCard/MonthlyBarsCard";
 import { PeriodFilter } from "../../components/PeriodFilter/PeriodFilter";
@@ -92,6 +93,7 @@ export function InvestmentsPage() {
   const [resultRange, setResultRange] = useState("last12");
   const [resultScope, setResultScope] = useState<PerformanceScope>({ kind: "window" });
   const [resultGroupBy, setResultGroupBy] = useState<AllocationGroupBy>("ativo");
+  const [lossFirst, setLossFirst] = useState(true);
   const [resultDrill, setResultDrill] = useState<string | null>(null);
   const [lastResultRange, setLastResultRange] = useState("last12");
 
@@ -339,7 +341,8 @@ export function InvestmentsPage() {
     return parts.join(" · ");
   };
 
-  const contributionGroups: RankedGroup[] = breakdown.rows.map((row) => ({
+  const contributionRows = lossFirst ? breakdown.rows : [...breakdown.rows].reverse();
+  const contributionGroups: RankedGroup[] = contributionRows.map((row) => ({
     name: row.name,
     value: row.value,
     pct: row.pct,
@@ -426,6 +429,17 @@ export function InvestmentsPage() {
               setResultDrill(null);
             },
           }}
+          filter={
+            <button
+              type="button"
+              className={styles.ghostAction}
+              onClick={() => setLossFirst((current) => !current)}
+              aria-label={lossFirst ? "Ordenar do maior lucro ao maior prejuízo" : "Ordenar do maior prejuízo ao maior lucro"}
+            >
+              <ArrowDownUp size={13} />
+              {lossFirst ? "prejuízo → lucro" : "lucro → prejuízo"}
+            </button>
+          }
           subtitle={subtitleParts.join(" · ")}
           groups={contributionGroups}
           onPick={

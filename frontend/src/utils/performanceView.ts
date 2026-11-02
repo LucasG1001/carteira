@@ -205,11 +205,13 @@ export function contributionBreakdown(
     row.pct = movement > 0 ? (Math.abs(row.value) / movement) * 100 : 0;
   }
 
+  const concentration = concentrationOf(rows, movement);
+
   return {
-    rows,
+    rows: rows.sort((left, right) => left.value - right.value),
     total: round2(total),
     movement: round2(movement),
-    concentration: concentrationOf(rows, movement),
+    concentration,
   };
 }
 
